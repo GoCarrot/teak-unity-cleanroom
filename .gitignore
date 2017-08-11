@@ -12,3 +12,14 @@ docs/
 *.mdb*
 
 Assets/AssetStoreTools*
+
+AndroidBuild*
+iOSBuild*
+
+# Teak SDK Files
+Assets/Plugins/Android/res.meta
+Assets/Plugins/Android/res/
+Assets/Plugins/Android/teak.jar
+Assets/Plugins/Android/teak.jar.meta
+Assets/Teak.meta
+Assets/Teak/
