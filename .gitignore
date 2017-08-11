@@ -1,0 +1,14 @@
+Temp/
+Library/
+obj/
+docs/
+*.svd
+*.apk
+.DS_Store
+
+*.pidb*
+*.userprefs*
+*.pdb*
+*.mdb*
+
+Assets/AssetStoreTools*
