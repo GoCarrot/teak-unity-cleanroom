@@ -4,6 +4,13 @@
     <!-- Config -->
     <property environment="env"/>
 
+    <!-- To use 'for' to loop over android devices -->
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="ant-contrib-1.0b3.jar"/>
+        </classpath>
+    </taskdef>
+
     <!-- Unity executable -->
     <condition property="UnityHome" value="${env.UNITY_HOME}">
         <isset property="env.UNITY_HOME" />
@@ -77,11 +84,44 @@
     </target>
 
     <target name="install.android">
-        <exec executable="adb" failonerror="true">
-            <arg line="install"/>
-            <arg line="-r"/>
-            <arg line="teak-unity-cleanroom.apk"/>
+        <exec executable="AndroidResources/androiddevicelist" failonerror="true">
+            <redirector outputproperty="androidlist"/>
         </exec>
+
+        <for param="device" list="${androidlist}">
+            <sequential>
+                <echo message="Device: @{device}"/>
+
+                <exec executable="adb" failonerror="true">
+                    <arg line="-s"/>
+                    <arg line="@{device}"/>
+                    <arg line="uninstall"/>
+                    <arg line="com.teakio.pushtest"/>
+                </exec>
+
+                <exec executable="adb" failonerror="true">
+                    <arg line="-s"/>
+                    <arg line="@{device}"/>
+                    <arg line="install"/>
+                    <arg line="-r"/>
+                    <arg line="teak-unity-cleanroom.apk"/>
+                </exec>
+
+                <exec executable="adb" failonerror="true">
+                    <arg line="-s"/>
+                    <arg line="@{device}"/>
+                    <arg line="shell"/>
+                    <arg line="am"/>
+                    <arg line="start"/>
+                    <arg line="-W"/>
+                    <arg line="-a"/>
+                    <arg line="android.intent.action.VIEW"/>
+                    <arg line="-d"/>
+                    <arg line="https://teakangrybots.jckpt.me/ESW-__uzW"/>
+                    <arg line="com.teakio.pushtest"/>
+                </exec>
+            </sequential>
+        </for>
     </target>
 
     <target name="build.ios">
