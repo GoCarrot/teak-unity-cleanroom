@@ -2,7 +2,9 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+#if !TEAK_NOT_AVAILABLE
 using MiniJSON.Teak;
+#endif
 
 public class MainMenu : MonoBehaviour
 {
@@ -16,6 +18,7 @@ public class MainMenu : MonoBehaviour
     string teakDeepLinkLaunch = null;
     string teakScheduledNotification = null;
 
+#if !TEAK_NOT_AVAILABLE
     void Awake()
     {
         Teak.Instance.RegisterRoute("/store/:sku", "Store", "Open the store to an SKU", (Dictionary<string, object> parameters) => {
@@ -136,4 +139,5 @@ public class MainMenu : MonoBehaviour
 
         GUILayout.EndArea();
     }
+#endif
 }
