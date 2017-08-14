@@ -1,4 +1,5 @@
 require "rake/clean"
+require "shellwords"
 CLEAN.include "**/.DS_Store"
 
 desc "Build Unity package"
@@ -17,7 +18,8 @@ end
 
 def unity(*args)
   # Run Unity.
-  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log -quit -batchmode -nographics -projectPath #{PROJECT_PATH} #{args.join(' ')}"
+  escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
+  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log -quit -batchmode -nographics -projectPath #{PROJECT_PATH} #{escaped_args}"
 end
 
 def unity?
@@ -45,7 +47,7 @@ namespace :package do
       f.puts "-define:TEAK_NOT_AVAILABLE"
     end
 
-    unity "-importPackage Teak.unitypackage"
+    unity "-importPackage", "Teak.unitypackage"
 
     File.delete('Assets/smcs.rsp')
   end
@@ -53,7 +55,7 @@ end
 
 namespace :build do
   task :android do
-    unity "-executeMethod BuildPlayer.Android"
+    unity "-executeMethod", "BuildPlayer.Android"
   end
 
   task ios: [:build, :postprocess, :xcodebuild]
@@ -61,7 +63,7 @@ end
 
 namespace :ios do
   task :build do
-    unity "-executeMethod BuildPlayer.iOS"
+    unity "-executeMethod", "BuildPlayer.iOS"
   end
 
   task :postprocess do
