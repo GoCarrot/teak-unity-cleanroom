@@ -6,7 +6,7 @@ task :default
 
 UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity')
 RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
-PROJECT_PATH = Dir.pwd
+PROJECT_PATH = Rake.application.original_dir
 
 #
 # Helper methods
