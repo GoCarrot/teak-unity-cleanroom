@@ -70,7 +70,7 @@ namespace :ios do
   end
 
   task :xcodebuild do
-    Dir.chdir('iOSBuild') do
+    cd('iOSBuild') do
       xcodebuild "-project Unity-iPhone.xcodeproj -scheme Unity-iPhone -sdk iphoneos -configuration Release clean archive -archivePath build/archive DEVELOPMENT_TEAM=7FLZTACJ82"
     end
   end
