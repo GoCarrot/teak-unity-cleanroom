@@ -4,7 +4,7 @@ CLEAN.include "**/.DS_Store"
 desc "Build Unity package"
 task :default
 
-UNITY_HOME = "#{ENV['UNITY_HOME'] || '/Applications/Unity'}"
+UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity')
 RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
 PROJECT_PATH = Dir.pwd
 
