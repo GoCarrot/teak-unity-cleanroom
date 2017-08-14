@@ -32,13 +32,11 @@ task :clean do
 end
 
 namespace :package do
-  task :download do
-    Rake::Task["clean"].invoke
+  task download: [:clean] do
     sh "curl -o Teak.unitypackage https://s3.amazonaws.com/teak-build-artifacts/unity/Teak.unitypackage"
   end
 
-  task :copy do
-    Rake::Task["clean"].invoke
+  task copy: [:clean] do
     cp '../teak-unity/Teak.unitypackage', 'Teak.unitypackage'
   end
 
@@ -58,13 +56,7 @@ namespace :build do
     unity "-executeMethod BuildPlayer.Android"
   end
 
-  task :ios do
-    Rake::Task["ios:build"].invoke
-    Rake::Task["ios:postprocess"].invoke
-    Rake::Task["ios:xcodebuild"].invoke
-
-    
-  end
+  task ios: [:build, :postprocess, :xcodebuild]
 end
 
 namespace :ios do
