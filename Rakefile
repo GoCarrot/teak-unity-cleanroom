@@ -58,10 +58,12 @@ namespace :build do
     unity "-executeMethod", "BuildPlayer.Android"
   end
 
-  task ios: [:build, :postprocess, :xcodebuild]
+  task ios: ['ios:all']
 end
 
 namespace :ios do
+  task all: [:build, :postprocess, :xcode, :export]
+
   task :build do
     unity "-executeMethod", "BuildPlayer.iOS"
   end
@@ -71,7 +73,7 @@ namespace :ios do
     sh "ruby iOSResources/AddEntitlements.rb Unity-iPhone"
   end
 
-  task :xcodebuild do
+  task :xcode do
     cd('iOSBuild') do
       xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-sdk", "iphoneos", "-configuration", "Release", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
     end
