@@ -13,11 +13,11 @@ PROJECT_PATH = Rake.application.original_dir
 # Helper methods
 #
 def xcodebuild(*args)
-  sh "xcodebuild #{args.join(' ')}"
+  escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
+  sh "xcodebuild #{escaped_args}"
 end
 
 def unity(*args)
-  # Run Unity.
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
   sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log -quit -batchmode -nographics -projectPath #{PROJECT_PATH} #{escaped_args}"
 end
@@ -73,7 +73,7 @@ namespace :ios do
 
   task :xcodebuild do
     cd('iOSBuild') do
-      xcodebuild "-project Unity-iPhone.xcodeproj -scheme Unity-iPhone -sdk iphoneos -configuration Release clean archive -archivePath build/archive DEVELOPMENT_TEAM=7FLZTACJ82"
+      xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-sdk", "iphoneos", "-configuration", "Release", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
     end
   end
 
@@ -89,7 +89,7 @@ namespace :ios do
         ENV.delete(var)
       end
       ENV['PATH'] = ENV['PATH'].split(':').reject { |elem| elem =~ /\.rvm/ }.join(':')
-      xcodebuild '-exportArchive -archivePath iOSBuild/build/archive.xcarchive -exportOptionsPlist iOSResources/exportOptions.plist -exportPath iOSBuild/build/'
+      xcodebuild "-exportArchive", "-archivePath", "iOSBuild/build/archive.xcarchive", "-exportOptionsPlist", "iOSResources/exportOptions.plist", "-exportPath", "iOSBuild/build/"
     ensure
       old.each do |key, value|
         ENV[key] = value
