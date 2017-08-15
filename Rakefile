@@ -49,7 +49,7 @@ namespace :package do
 
     unity "-importPackage", "Teak.unitypackage"
 
-    File.delete('Assets/smcs.rsp')
+    File.delete(*Dir.glob('Assets/smcs.rsp*'))
   end
 end
 
