@@ -5,6 +5,7 @@
 
 using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 class BuildPlayer
 {
@@ -12,14 +13,14 @@ class BuildPlayer
 
     static void Android()
     {
-        string buildPath = "teak-unity-cleanroom.apk";
+        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../teak-unity-cleanroom.apk");
 
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.Android, BuildOptions.Development);
     }
 
     static void iOS()
     {
-        string buildPath = "iOSBuild";
+        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../iOSBuild");
         Directory.CreateDirectory(buildPath);
 #if UNITY_5
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.iOS, BuildOptions.Development);
