@@ -141,6 +141,7 @@ PlayerSettings:
   targetPixelDensity: 0
   resolutionScalingMode: 0
   applicationIdentifier:
+    Android: com.teakio.pushtest
     iOS: com.teakio.pushtest
   buildNumber: {}
   AndroidBundleVersionCode: 1

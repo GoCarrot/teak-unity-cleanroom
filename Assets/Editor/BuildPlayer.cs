@@ -13,6 +13,10 @@ class BuildPlayer
 
     static void Android()
     {
+#if UNITY_5
+        PlayerSettings.applicationIdentifier = "com.teakio.pushtest";
+#endif
+
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../teak-unity-cleanroom.apk");
 
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.Android, BuildOptions.Development);
@@ -23,6 +27,7 @@ class BuildPlayer
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../iOSBuild");
         Directory.CreateDirectory(buildPath);
 #if UNITY_5
+        PlayerSettings.applicationIdentifier = "com.teakio.pushtest";
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.iOS, BuildOptions.Development);
 #else
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.iPhone, BuildOptions.Development);
