@@ -40,5 +40,7 @@
   <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-  <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+
+  <!-- Work-around to stop Unity 5 from adding these permissions -->
+  <uses-permission android:name="android.permission.READ_PHONE_STATE" android:maxSdkVersion="1" />
 </manifest>
