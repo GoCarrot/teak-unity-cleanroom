@@ -23,6 +23,8 @@ public class MainMenu : MonoBehaviour
     string teakDeepLinkLaunch = null;
     string teakScheduledNotification = null;
 
+    const string TeakUserIdKey = "Teak.UserId";
+
 #if !TEAK_NOT_AVAILABLE
     void Awake()
     {
@@ -33,7 +35,21 @@ public class MainMenu : MonoBehaviour
 
     void Start()
     {
-        teakUserId = SystemInfo.deviceUniqueIdentifier;
+        if (!PlayerPrefs.HasKey(TeakUserIdKey))
+        {
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            char[] stringChars = new char[8];
+            System.Random random = new System.Random();
+
+            for (int i = 0; i < stringChars.Length; i++)
+            {
+                stringChars[i] = chars[random.Next(chars.Length)];
+            }
+
+            PlayerPrefs.SetString(TeakUserIdKey, new string(stringChars));
+            PlayerPrefs.Save();
+        }
+        teakUserId = PlayerPrefs.GetString(TeakUserIdKey);
         teakSdkVersion = "Teak SDK Version: " + Teak.Version;
 
         Teak.Instance.IdentifyUser(teakUserId);
