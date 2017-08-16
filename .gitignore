@@ -13,6 +13,9 @@ docs/
 
 Assets/AssetStoreTools*
 
+# Symlink
+ProjectSettings
+
 # Teak SDK Files
 Assets/Plugins/Android/res.meta
 Assets/Plugins/Android/res/
