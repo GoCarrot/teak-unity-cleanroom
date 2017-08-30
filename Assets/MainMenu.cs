@@ -79,14 +79,14 @@ public class MainMenu : MonoBehaviour
     // To use this callback example, simply register it during Start() like so:
     //     Teak.Instance.OnReward += OnReward;
     // You can register as many listeners to an event as you like.
-    void OnReward(Dictionary<string, object> notificationPayload)
+    void OnReward(Dictionary<string, object> rewardPayload)
     {
         // Check to make sure the status is 'grant_reward', a list of other possible status
         // and the meaning is located at:
         // https://teak.io/docs/claiming_rewards/
-        if (notificationPayload["status"] as string == "grant_reward")
+        if (rewardPayload["status"] as string == "grant_reward")
         {
-            Dictionary<string, object> rewards = notificationPayload["reward"] as Dictionary<string, object>;
+            Dictionary<string, object> rewards = rewardPayload["reward"] as Dictionary<string, object>;
             foreach(KeyValuePair<string, object> entry in rewards)
             {
                 Debug.Log("OnReward -- Give the user " + entry.Value + " instances of " + entry.Key);
