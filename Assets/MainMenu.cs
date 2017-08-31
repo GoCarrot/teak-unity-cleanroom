@@ -81,16 +81,46 @@ public class MainMenu : MonoBehaviour
     // You can register as many listeners to an event as you like.
     void OnReward(Dictionary<string, object> rewardPayload)
     {
-        // Check to make sure the status is 'grant_reward', a list of other possible status
-        // and the meaning is located at:
-        // https://teak.io/docs/claiming_rewards/
-        if (rewardPayload["status"] as string == "grant_reward")
-        {
-            Dictionary<string, object> rewards = rewardPayload["reward"] as Dictionary<string, object>;
-            foreach(KeyValuePair<string, object> entry in rewards)
-            {
-                Debug.Log("OnReward -- Give the user " + entry.Value + " instances of " + entry.Key);
+        switch (rewardPayload["status"] as string) {
+            case "grant_reward": {
+                // The user has been issued this reward by Teak
+                Dictionary<string, object> rewards = rewardPayload["reward"] as Dictionary<string, object>;
+                foreach(KeyValuePair<string, object> entry in rewards)
+                {
+                    Debug.Log("OnReward -- Give the user " + entry.Value + " instances of " + entry.Key);
+                }
             }
+            break;
+
+            case "self_click": {
+                // The user has attempted to claim a reward from their own social post
+            }
+            break;
+
+            case "already_clicked": {
+                // The user has already been issued this reward
+            }
+            break;
+
+            case "too_many_clicks": {
+                // The reward has already been claimed its maximum number of times globally
+            }
+            break;
+
+            case "exceed_max_clicks_for_day": {
+                // The user has already claimed their maximum number of rewards of this type for the day
+            }
+            break;
+
+            case "expired": {
+                // This reward has expired and is no longer valid
+            }
+            break;
+
+            case "invalid_post": {
+                //Teak does not recognize this reward id
+            }
+            break;
         }
     }
 
