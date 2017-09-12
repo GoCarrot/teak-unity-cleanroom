@@ -6,6 +6,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 #if !TEAK_NOT_AVAILABLE
 using MiniJSON.Teak;
@@ -25,11 +26,89 @@ public class MainMenu : MonoBehaviour
 
     const string TeakUserIdKey = "Teak.UserId";
 
+    class Test
+    {
+        public string Name { get; set; }
+        public string CreativeId { get; set; }
+        public string VerifyDeepLink { get; set; }
+        public string VerifyReward { get; set; }
+        public int Status { get; set; }
+        public bool NoAutoBackground { get; set; }
+
+        bool onDeepLinkCalled = false;
+        bool onRewardCalled = false;
+        bool onLaunchCalled = false;
+
+        void Prepare()
+        {
+            if(string.IsNullOrEmpty(this.VerifyReward)) onRewardCalled = true;
+            if(string.IsNullOrEmpty(this.VerifyDeepLink)) onDeepLinkCalled = true;
+        }
+
+        bool CheckStatus()
+        {
+            if(onLaunchCalled && onDeepLinkCalled && onRewardCalled)
+            {
+                if(this.Status == 0) this.Status = 1;
+                return true;
+            }
+            return false;
+        }
+
+        public bool OnDeepLink(Dictionary<string, object> parameters)
+        {
+            Prepare();
+            onDeepLinkCalled = true;
+            return CheckStatus();
+        }
+
+        public bool OnReward(Dictionary<string, object> parameters)
+        {
+            Prepare();
+            onRewardCalled = true;
+            return CheckStatus();
+        }
+
+        public bool OnLaunchedFromNotification(Dictionary<string, object> parameters)
+        {
+            Prepare();
+            onLaunchCalled = true;
+            return CheckStatus();
+        }
+    }
+
+    List<Test> masterTestList = new List<Test>
+    {
+        new Test { Name = "Simple Notification", CreativeId = "test_none" },
+        new Test { Name = "Deep Link", CreativeId = "test_deeplink" },
+        new Test { Name = "Reward", CreativeId = "test_reward" },
+        new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink" }
+    };
+
+    List<Test> testList;
+    IEnumerator<Test> testEnumerator;
+
+    List<GUIStyle> statusStyle;
+
+    void SetUpTests()
+    {
+        testList = new List<Test>(masterTestList);
+        testEnumerator = testList.GetEnumerator();
+        testEnumerator.MoveNext();
+    }
+
 #if !TEAK_NOT_AVAILABLE
     void Awake()
     {
         Teak.Instance.RegisterRoute("/store/:sku", "Store", "Open the store to an SKU", (Dictionary<string, object> parameters) => {
             Debug.Log("Got store deep link: " + Json.Serialize(parameters));
+        });
+
+        Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for semi-automated tests", (Dictionary<string, object> parameters) => {
+            if(testEnumerator != null && testEnumerator.Current.OnDeepLink(parameters))
+            {
+                if(!testEnumerator.MoveNext()) testEnumerator = null;
+            }
         });
     }
 
@@ -56,6 +135,14 @@ public class MainMenu : MonoBehaviour
 
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
+
+        statusStyle = new List<GUIStyle>
+        {
+            new GUIStyle { fontSize = 50, normal = new GUIStyleState { textColor = Color.yellow } },
+            new GUIStyle { fontSize = 50, normal = new GUIStyleState { textColor = Color.green } },
+            new GUIStyle { fontSize = 50, normal = new GUIStyleState { textColor = Color.red } }
+        };
+        SetUpTests();
     }
 
     void OnApplicationPause(bool isPaused)
@@ -74,6 +161,12 @@ public class MainMenu : MonoBehaviour
     {
         Debug.Log("OnLaunchedFromNotification: " + Json.Serialize(notificationPayload));
         teakScheduledNotification = null; // To get the UI back
+
+        // Testing automation
+        if(testEnumerator != null &&testEnumerator.Current.OnLaunchedFromNotification(notificationPayload))
+        {
+            if(!testEnumerator.MoveNext()) testEnumerator = null;
+        }
     }
 
     // To use this callback example, simply register it during Start() like so:
@@ -122,6 +215,18 @@ public class MainMenu : MonoBehaviour
             }
             break;
         }
+
+        // Testing automation
+        if(testEnumerator != null)
+        {
+            if(testEnumerator.Current.OnReward(rewardPayload))
+            {
+                if(!testEnumerator.MoveNext())
+                {
+                    testEnumerator = null;
+                }
+            }
+        }
     }
 
 #if UNITY_IOS
@@ -143,6 +248,11 @@ public class MainMenu : MonoBehaviour
     }
 #endif
 
+#if UNITY_IOS
+    [DllImport ("__Internal")]
+    private static extern float TeakIntegrationTestSuspend();
+#endif
+
     void OnGUI()
     {
         GUILayout.BeginArea(new Rect(10, 10, Screen.width - 20, Screen.height - 20));
@@ -158,7 +268,7 @@ public class MainMenu : MonoBehaviour
         }
         else
         {
-            if(GUILayout.Button("Request Push Notifications", GUILayout.Height(buttonHeight)))
+            if(GUILayout.Button("Request Push Permissions", GUILayout.Height(buttonHeight)))
             {
 #if UNITY_5
                 UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
@@ -169,39 +279,35 @@ public class MainMenu : MonoBehaviour
         }
 #endif
 
+        foreach(Test test in testList)
+        {
+            if(test.Status > 0)
+            {
+                GUILayout.Label(test.Name, statusStyle[test.Status]);
+            }
+        }
+
         if(teakScheduledNotification == null)
         {
-            if(GUILayout.Button("Simple Notification", GUILayout.Height(buttonHeight)))
+            if(testEnumerator != null)
             {
-                StartCoroutine(TeakNotification.ScheduleNotification("test_none", "Simple push notification", 10, (string scheduleId) => {
-                    teakScheduledNotification = scheduleId;
-                }));
-            }
+                Test currentTest = testEnumerator.Current;
+                if(GUILayout.Button(currentTest.Name, GUILayout.Height(buttonHeight)))
+                {
+                    StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (string scheduleId) => {
+                        teakScheduledNotification = scheduleId;
 
-            if(GUILayout.Button("Deep Link", GUILayout.Height(buttonHeight)))
-            {
-                StartCoroutine(TeakNotification.ScheduleNotification("test_deeplink", "Push notification with deep link", 10, (string scheduleId) => {
-                    teakScheduledNotification = scheduleId;
-                }));
-            }
-
-            if(GUILayout.Button("Reward", GUILayout.Height(buttonHeight)))
-            {
-                StartCoroutine(TeakNotification.ScheduleNotification("test_reward", "Push notification with reward", 10, (string scheduleId) => {
-                    teakScheduledNotification = scheduleId;
-                }));
-            }
-
-            if(GUILayout.Button("Reward + Deep Link", GUILayout.Height(buttonHeight)))
-            {
-                StartCoroutine(TeakNotification.ScheduleNotification("test_rewarddeeplink", "Push notification with reward and deep link", 10, (string scheduleId) => {
-                    teakScheduledNotification = scheduleId;
-                }));
+                        if(!currentTest.NoAutoBackground)
+                        {
+                            BackgroundApp();
+                        }
+                    }));
+                }
             }
         }
         else
         {
-            if(GUILayout.Button("Cancel Notification " + teakScheduledNotification, GUILayout.Height(buttonHeight)))
+            if(GUILayout.Button("Cancel Test: " + teakScheduledNotification, GUILayout.Height(buttonHeight)))
             {
                 StartCoroutine(TeakNotification.CancelScheduledNotification(teakScheduledNotification, (string scheduleId) => {
                     teakScheduledNotification = null;
@@ -210,6 +316,31 @@ public class MainMenu : MonoBehaviour
         }
 
         GUILayout.EndArea();
+    }
+
+    void BackgroundApp()
+    {
+#if UNITY_EDITOR
+#elif UNITY_IOS
+        TeakIntegrationTestSuspend();
+#elif UNITY_ANDROID
+        using(AndroidJavaClass intentCls = new AndroidJavaClass("android.content.Intent"))
+        {
+            using(AndroidJavaObject intent = new AndroidJavaObject("android.content.Intent"))
+            {
+                intent.Call<AndroidJavaObject>("setAction", intent.GetStatic<string>("ACTION_MAIN"));
+                intent.Call<AndroidJavaObject>("addCategory", intent.GetStatic<string>("CATEGORY_HOME"));
+
+                using(AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                {
+                    using(AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity"))
+                    {
+                        jo.Call("startActivity", intent);
+                    }
+                }
+            }
+        }
+#endif
     }
 #endif
 }
