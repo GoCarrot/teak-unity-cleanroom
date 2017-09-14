@@ -53,6 +53,13 @@ namespace :package do
   end
 end
 
+namespace :config do
+  task :id, [:app_id] do |t, args|
+    args.with_defaults(:app_id => "com.teakio.pushtest")
+    unity "-executeMethod", "BuildPlayer.SetBundleId", args[:app_id]
+  end
+end
+
 namespace :build do
   task :android do
     unity "-executeMethod", "BuildPlayer.Android"
