@@ -26,17 +26,17 @@
     </activity>
     <receiver android:name="io.teak.sdk.Teak" android:exported="true" android:permission="com.google.android.c2dm.permission.SEND">
       <intent-filter>
-        <action android:name="com.teakio.pushtest.intent.TEAK_NOTIFICATION_OPENED" />
-        <action android:name="com.teakio.pushtest.intent.TEAK_NOTIFICATION_CLEARED" />
+        <action android:name="io.teak.sdk.sd.intent.TEAK_NOTIFICATION_OPENED" />
+        <action android:name="io.teak.sdk.sd.intent.TEAK_NOTIFICATION_CLEARED" />
         <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-        <category android:name="com.teakio.pushtest" />
+        <category android:name="io.teak.sdk.sd" />
       </intent-filter>
     </receiver>
     <service android:name="io.teak.sdk.service.RavenService" android:process=":teak.raven" android:exported="false" />
     <meta-data android:name="com.google.android.gms.version" android:value="8487000" />
   </application>
-  <permission android:name="com.teakio.pushtest.permission.C2D_MESSAGE" android:protectionLevel="signature" />
-  <uses-permission android:name="com.teakio.pushtest.permission.C2D_MESSAGE" />
+  <permission android:name="io.teak.sdk.sd.permission.C2D_MESSAGE" android:protectionLevel="signature" />
+  <uses-permission android:name="io.teak.sdk.sd.permission.C2D_MESSAGE" />
   <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

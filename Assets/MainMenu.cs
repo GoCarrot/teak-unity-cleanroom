@@ -23,6 +23,7 @@ public class MainMenu : MonoBehaviour
     string teakSdkVersion = null;
     string teakDeepLinkLaunch = null;
     string teakScheduledNotification = null;
+    string rewardJson = null;
 
     const string TeakUserIdKey = "Teak.UserId";
 
@@ -110,6 +111,8 @@ public class MainMenu : MonoBehaviour
                 if(!testEnumerator.MoveNext()) testEnumerator = null;
             }
         });
+
+        rewardJson = null;
     }
 
     void Start()
@@ -138,9 +141,9 @@ public class MainMenu : MonoBehaviour
 
         statusStyle = new List<GUIStyle>
         {
-            new GUIStyle { fontSize = 50, normal = new GUIStyleState { textColor = Color.yellow } },
-            new GUIStyle { fontSize = 50, normal = new GUIStyleState { textColor = Color.green } },
-            new GUIStyle { fontSize = 50, normal = new GUIStyleState { textColor = Color.red } }
+            new GUIStyle { fontSize = 50, wordWrap = true, normal = new GUIStyleState { textColor = Color.yellow } },
+            new GUIStyle { fontSize = 50, wordWrap = true, normal = new GUIStyleState { textColor = Color.green } },
+            new GUIStyle { fontSize = 50, wordWrap = true, normal = new GUIStyleState { textColor = Color.red } }
         };
         SetUpTests();
     }
@@ -216,6 +219,9 @@ public class MainMenu : MonoBehaviour
             break;
         }
 
+        // Display JSON
+        rewardJson = Json.Serialize(rewardPayload);
+
         // Testing automation
         if(testEnumerator != null)
         {
@@ -261,7 +267,9 @@ public class MainMenu : MonoBehaviour
         GUILayout.Label(teakUserId);
         GUILayout.Label(teakDeepLinkLaunch);
 
+        GUILayout.Label(Application.identifier, statusStyle[0]);
 #if UNITY_IOS
+
         if(pushTokenString != null)
         {
             GUILayout.Label("Push Token: " + pushTokenString);
@@ -313,6 +321,11 @@ public class MainMenu : MonoBehaviour
                     teakScheduledNotification = null;
                 }));
             }
+        }
+
+        if(rewardJson != null)
+        {
+            GUILayout.Label(rewardJson, statusStyle[0]);
         }
 
         GUILayout.EndArea();

@@ -119,9 +119,9 @@ namespace :install do
     devicelist.each do |device|
       adb = lambda { |*args| sh "adb -s #{device} #{args.join(' ')}" }
 
-      adb.call "uninstall com.teakio.pushtest"
+      adb.call "uninstall io.teak.sdk.sd"
       adb.call "install teak-unity-cleanroom.apk"
-      adb.call "shell am start -W -a android.intent.action.VIEW -d https://teakangrybots.jckpt.me/ESW-__uzW com.teakio.pushtest"
+      adb.call "shell am start -W -a android.intent.action.VIEW -d https://teakangrybots.jckpt.me/ihx_k8KPT io.teak.sdk.sd"
     end
   end
 end
