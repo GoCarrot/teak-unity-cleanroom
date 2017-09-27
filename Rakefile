@@ -55,7 +55,7 @@ end
 
 namespace :config do
   task :id, [:app_id] do |t, args|
-    args.with_defaults(:app_id => "com.teakio.pushtest")
+    args.with_defaults(:app_id => "io.teak.sdk.sd")
     unity "-executeMethod", "BuildPlayer.SetBundleId", args[:app_id]
   end
 end
@@ -82,7 +82,7 @@ namespace :ios do
 
   task :xcode do
     cd('iOSBuild') do
-      xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-sdk", "iphoneos", "-configuration", "Release", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
+      xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-sdk", "-allowProvisioningUpdates", "iphoneos", "-configuration", "Release", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
     end
   end
 
@@ -98,7 +98,7 @@ namespace :ios do
         ENV.delete(var)
       end
       ENV['PATH'] = ENV['PATH'].split(':').reject { |elem| elem =~ /\.rvm/ }.join(':')
-      xcodebuild "-exportArchive", "-archivePath", "iOSBuild/build/archive.xcarchive", "-exportOptionsPlist", "iOSResources/exportOptions.plist", "-exportPath", "iOSBuild/build/"
+      xcodebuild "-exportArchive", "-allowProvisioningUpdates", "-archivePath", "iOSBuild/build/archive.xcarchive", "-exportOptionsPlist", "iOSResources/exportOptions.plist", "-exportPath", "iOSBuild/build/"
     ensure
       old.each do |key, value|
         ENV[key] = value
