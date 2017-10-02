@@ -66,6 +66,11 @@ namespace :build do
   end
 
   task ios: ['ios:all']
+
+  task :webgl do
+    # Just needs to build cleanly
+    unity "-executeMethod", "BuildPlayer.WebGL"
+  end
 end
 
 namespace :ios do

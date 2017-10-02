@@ -32,6 +32,13 @@ class BuildPlayer
 #endif
     }
 
+    static void WebGL()
+    {
+        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../WebGlBuild");
+
+        BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.WebGL, BuildOptions.Development);
+    }
+
     static void Android()
     {
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../teak-unity-cleanroom.apk");
