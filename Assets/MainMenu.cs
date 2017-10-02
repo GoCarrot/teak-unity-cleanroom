@@ -23,7 +23,8 @@ public class MainMenu : MonoBehaviour
     string teakSdkVersion = null;
     string teakDeepLinkLaunch = null;
     string teakScheduledNotification = null;
-    string rewardJson = null;
+
+    static string rewardJson = null;
 
     const string TeakUserIdKey = "Teak.UserId";
 
@@ -58,6 +59,13 @@ public class MainMenu : MonoBehaviour
 
         public bool OnDeepLink(Dictionary<string, object> parameters)
         {
+            if(!string.IsNullOrEmpty(this.VerifyDeepLink) &&
+                !this.VerifyDeepLink.Equals(parameters["data"] as string, System.StringComparison.Ordinal))
+            {
+                rewardJson = "Expected '" + this.VerifyDeepLink + "' contents:\n" + Json.Serialize(parameters);
+                this.Status = 2;
+            }
+
             Prepare();
             onDeepLinkCalled = true;
             return CheckStatus();
@@ -81,9 +89,9 @@ public class MainMenu : MonoBehaviour
     List<Test> masterTestList = new List<Test>
     {
         new Test { Name = "Simple Notification", CreativeId = "test_none" },
-        new Test { Name = "Deep Link", CreativeId = "test_deeplink" },
+        new Test { Name = "Deep Link", CreativeId = "test_deeplink", VerifyDeepLink = "link-only" },
         new Test { Name = "Reward", CreativeId = "test_reward" },
-        new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink" }
+        new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink", VerifyDeepLink = "with-reward" }
     };
 
     List<Test> testList;
