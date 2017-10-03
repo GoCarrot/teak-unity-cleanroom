@@ -25,6 +25,7 @@ public class MainMenu : MonoBehaviour
     string teakScheduledNotification = null;
 
     static string rewardJson = null;
+    static string errorText = null;
 
     const string TeakUserIdKey = "Teak.UserId";
 
@@ -60,10 +61,11 @@ public class MainMenu : MonoBehaviour
         public bool OnDeepLink(Dictionary<string, object> parameters)
         {
             if(!string.IsNullOrEmpty(this.VerifyDeepLink) &&
-                !this.VerifyDeepLink.Equals(parameters["data"] as string, System.StringComparison.Ordinal))
+                (!parameters.ContainsKey("data") ||
+                !this.VerifyDeepLink.Equals(parameters["data"] as string, System.StringComparison.Ordinal)))
             {
 #if !TEAK_NOT_AVAILABLE
-                rewardJson = "Expected '" + this.VerifyDeepLink + "' contents:\n" + Json.Serialize(parameters);
+                errorText = "Expected '" + this.VerifyDeepLink + "' contents:\n" + Json.Serialize(parameters);
 #endif
                 this.Status = 2;
             }
@@ -75,6 +77,15 @@ public class MainMenu : MonoBehaviour
 
         public bool OnReward(Dictionary<string, object> parameters)
         {
+            if(!parameters.ContainsKey("teakCreativeName") ||
+                !this.CreativeId.Equals(parameters["teakCreativeName"] as string, System.StringComparison.Ordinal))
+            {
+#if !TEAK_NOT_AVAILABLE
+                errorText = "Expected '" + this.CreativeId + "' contents:\n" + Json.Serialize(parameters);
+#endif
+                this.Status = 2;
+            }
+
             Prepare();
             onRewardCalled = true;
             return CheckStatus();
@@ -86,7 +97,15 @@ public class MainMenu : MonoBehaviour
                 !this.CreativeId.Equals(parameters["teakCreativeName"] as string, System.StringComparison.Ordinal))
             {
 #if !TEAK_NOT_AVAILABLE
-                rewardJson = "Expected '" + this.CreativeId + "' contents:\n" + Json.Serialize(parameters);
+                errorText = "Expected '" + this.CreativeId + "' contents:\n" + Json.Serialize(parameters);
+#endif
+                this.Status = 2;
+            }
+            else if(!string.IsNullOrEmpty(this.VerifyReward) &&
+                (!parameters.ContainsKey("incentivized") || !((bool)parameters["incentivized"])))
+            {
+#if !TEAK_NOT_AVAILABLE
+                errorText = "Expected 'incentivized' contents:\n" + Json.Serialize(parameters);
 #endif
                 this.Status = 2;
             }
@@ -101,8 +120,8 @@ public class MainMenu : MonoBehaviour
     {
         new Test { Name = "Simple Notification", CreativeId = "test_none" },
         new Test { Name = "Deep Link", CreativeId = "test_deeplink", VerifyDeepLink = "link-only" },
-        new Test { Name = "Reward", CreativeId = "test_reward" },
-        new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink", VerifyDeepLink = "with-reward" }
+        new Test { Name = "Reward", CreativeId = "test_reward", VerifyReward = "coins" },
+        new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink", VerifyDeepLink = "with-reward", VerifyReward = "coins" }
     };
 
     List<Test> testList;
@@ -351,6 +370,11 @@ public class MainMenu : MonoBehaviour
         if(rewardJson != null)
         {
             GUILayout.Label(rewardJson, statusStyle[0]);
+        }
+
+        if(errorText != null)
+        {
+            GUILayout.Label(errorText, statusStyle[2]);
         }
 
         GUILayout.EndArea();
