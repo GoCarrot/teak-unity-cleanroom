@@ -94,7 +94,7 @@ namespace :ios do
 
   task :xcode do
     cd('iOSBuild') do
-      xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-sdk", "-allowProvisioningUpdates", "iphoneos", "-configuration", "Release", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
+      xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-allowProvisioningUpdates", "-sdk", "iphoneos", "-configuration", "Debug", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
     end
   end
 
@@ -110,7 +110,7 @@ namespace :ios do
         ENV.delete(var)
       end
       ENV['PATH'] = ENV['PATH'].split(':').reject { |elem| elem =~ /\.rvm/ }.join(':')
-      xcodebuild "-exportArchive", "-allowProvisioningUpdates", "-archivePath", "iOSBuild/build/archive.xcarchive", "-exportOptionsPlist", "iOSResources/exportOptions.plist", "-exportPath", "iOSBuild/build/"
+      xcodebuild "-exportArchive", "-archivePath", "iOSBuild/build/archive.xcarchive", "-exportOptionsPlist", "iOSResources/exportOptions.plist", "-exportPath", "iOSBuild/build/", "-allowProvisioningUpdates"
     ensure
       old.each do |key, value|
         ENV[key] = value
