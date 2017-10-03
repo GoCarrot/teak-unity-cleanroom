@@ -10,6 +10,13 @@ RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
 PROJECT_PATH = Rake.application.original_dir
 
 #
+# Play a sound after finished
+#
+at_exit do
+  sh "afplay /System/Library/Sounds/Submarine.aiff"
+end
+
+#
 # Helper methods
 #
 def xcodebuild(*args)
