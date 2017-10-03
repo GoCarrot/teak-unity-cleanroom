@@ -62,7 +62,9 @@ public class MainMenu : MonoBehaviour
             if(!string.IsNullOrEmpty(this.VerifyDeepLink) &&
                 !this.VerifyDeepLink.Equals(parameters["data"] as string, System.StringComparison.Ordinal))
             {
+#if !TEAK_NOT_AVAILABLE
                 rewardJson = "Expected '" + this.VerifyDeepLink + "' contents:\n" + Json.Serialize(parameters);
+#endif
                 this.Status = 2;
             }
 
@@ -80,6 +82,15 @@ public class MainMenu : MonoBehaviour
 
         public bool OnLaunchedFromNotification(Dictionary<string, object> parameters)
         {
+            if(!parameters.ContainsKey("teakCreativeName") ||
+                !this.CreativeId.Equals(parameters["teakCreativeName"] as string, System.StringComparison.Ordinal))
+            {
+#if !TEAK_NOT_AVAILABLE
+                rewardJson = "Expected '" + this.CreativeId + "' contents:\n" + Json.Serialize(parameters);
+#endif
+                this.Status = 2;
+            }
+
             Prepare();
             onLaunchCalled = true;
             return CheckStatus();
@@ -109,8 +120,10 @@ public class MainMenu : MonoBehaviour
 #if !TEAK_NOT_AVAILABLE
     void Awake()
     {
+        Debug.Log("[Teak Unity Cleanroom] Lifecycle: Awake");
+
         Teak.Instance.RegisterRoute("/store/:sku", "Store", "Open the store to an SKU", (Dictionary<string, object> parameters) => {
-            Debug.Log("Got store deep link: " + Json.Serialize(parameters));
+            Debug.Log("[Teak Unity Cleanroom] Got store deep link: " + Json.Serialize(parameters));
         });
 
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for semi-automated tests", (Dictionary<string, object> parameters) => {
@@ -125,6 +138,8 @@ public class MainMenu : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("[Teak Unity Cleanroom] Lifecycle: Start");
+
         if (!PlayerPrefs.HasKey(TeakUserIdKey))
         {
             var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -158,6 +173,8 @@ public class MainMenu : MonoBehaviour
 
     void OnApplicationPause(bool isPaused)
     {
+        Debug.Log("[Teak Unity Cleanroom] Lifecycle: OnApplicationPause(" + isPaused + ")");
+
         if(isPaused)
         {
             // Pause
@@ -170,7 +187,7 @@ public class MainMenu : MonoBehaviour
 
     void OnLaunchedFromNotification(Dictionary<string, object> notificationPayload)
     {
-        Debug.Log("OnLaunchedFromNotification: " + Json.Serialize(notificationPayload));
+        Debug.Log("[Teak Unity Cleanroom] OnLaunchedFromNotification: " + Json.Serialize(notificationPayload));
         teakScheduledNotification = null; // To get the UI back
 
         // Testing automation
@@ -191,7 +208,7 @@ public class MainMenu : MonoBehaviour
                 Dictionary<string, object> rewards = rewardPayload["reward"] as Dictionary<string, object>;
                 foreach(KeyValuePair<string, object> entry in rewards)
                 {
-                    Debug.Log("OnReward -- Give the user " + entry.Value + " instances of " + entry.Key);
+                    Debug.Log("[Teak Unity Cleanroom] OnReward -- Give the user " + entry.Value + " instances of " + entry.Key);
                 }
             }
             break;
