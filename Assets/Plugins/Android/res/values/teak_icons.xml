@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="io_teak_notification_accent_color">0xfff15a29</integer>
+    <drawable name="io_teak_small_notification_icon">@drawable/icon_normal</drawable>
+</resources>

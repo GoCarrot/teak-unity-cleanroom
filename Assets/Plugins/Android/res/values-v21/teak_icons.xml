@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <drawable name="io_teak_small_notification_icon">@drawable/icon_white</drawable>
+</resources>
