@@ -123,7 +123,8 @@ end
 
 namespace :install do
   task :ios do
-    sh "ideviceinstaller -i teak-unity-cleanroom.ipa"
+    sh "ideviceinstaller --uninstall io.teak.sdk.sd"
+    sh "ideviceinstaller --install teak-unity-cleanroom.ipa"
   end
 
   task :android do
