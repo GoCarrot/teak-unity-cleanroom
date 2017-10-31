@@ -346,7 +346,7 @@ public class MainMenu : MonoBehaviour
                 Test currentTest = testEnumerator.Current;
                 if(GUILayout.Button(currentTest.Name, GUILayout.Height(buttonHeight)))
                 {
-                    StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (string scheduleId) => {
+                    StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (string scheduleId, string status) => {
                         teakScheduledNotification = scheduleId;
 
                         if(!currentTest.NoAutoBackground)
@@ -361,10 +361,17 @@ public class MainMenu : MonoBehaviour
         {
             if(GUILayout.Button("Cancel Test: " + teakScheduledNotification, GUILayout.Height(buttonHeight)))
             {
-                StartCoroutine(TeakNotification.CancelScheduledNotification(teakScheduledNotification, (string scheduleId) => {
+                StartCoroutine(TeakNotification.CancelScheduledNotification(teakScheduledNotification, (string scheduleId, string status) => {
                     teakScheduledNotification = null;
                 }));
             }
+        }
+
+        if(GUILayout.Button("Cancel All Notifications", GUILayout.Height(buttonHeight)))
+        {
+            StartCoroutine(TeakNotification.CancelAllScheduledNotifications((string data, string status) => {
+                errorText = status + "\n" + data;
+            }));
         }
 
         if(rewardJson != null)
