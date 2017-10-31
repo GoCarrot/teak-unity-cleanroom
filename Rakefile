@@ -69,6 +69,7 @@ end
 
 namespace :build do
   task :android do
+    FileUtils.rm_f('teak-unity-cleanroom.apk')
     unity "-executeMethod", "BuildPlayer.Android"
   end
 
@@ -84,6 +85,7 @@ namespace :ios do
   task all: [:build, :postprocess, :xcode, :export]
 
   task :build do
+    FileUtils.rm_f('teak-unity-cleanroom.ipa')
     unity "-executeMethod", "BuildPlayer.iOS"
   end
 
