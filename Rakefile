@@ -21,7 +21,7 @@ end
 #
 def xcodebuild(*args)
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
-  sh "xcodebuild #{escaped_args}"
+  sh "xcodebuild #{escaped_args} | xcpretty"
 end
 
 def unity(*args)
