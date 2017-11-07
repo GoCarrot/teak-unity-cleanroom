@@ -19,21 +19,19 @@ ProjectSettings
 # Teak SDK Files
 Assets/Plugins/Android/res/layout.meta
 Assets/Plugins/Android/res/layout/
-Assets/Plugins/Android/res/values-v21/teak_styles.xml
-Assets/Plugins/Android/res/values-v21/teak_styles.xml.meta
-Assets/Plugins/Android/res/values/teak.xml
-Assets/Plugins/Android/res/values/teak.xml.meta
-Assets/Plugins/Android/res/values/teak_styles.xml
-Assets/Plugins/Android/res/values/teak_styles.xml.meta
-Assets/Plugins/Android/res/values/teak_unity_version.xml
-Assets/Plugins/Android/res/values/teak_unity_version.xml.meta
-Assets/Plugins/Android/teak.jar
-Assets/Plugins/Android/teak.jar.meta
+Assets/Plugins/Android/res/values-v21/teak_styles.xml*
+Assets/Plugins/Android/res/values.meta
+Assets/Plugins/Android/res/values/teak.xml*
+Assets/Plugins/Android/res/values/teak_styles.xml*
+Assets/Plugins/Android/res/values/teak_unity_version.xml*
+Assets/Plugins/Android/teak.jar*
+Assets/Plugins/WebGL*
 Assets/Teak.meta
 Assets/Teak/
 
 # Generated Files
 iOSBuild*
+WebGLBuild*
 Teak.unitypackage
 teak-unity-cleanroom.ipa
 teak-unity-cleanroom.apk

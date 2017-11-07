@@ -24,7 +24,6 @@ public class MainMenu : MonoBehaviour
     string teakDeepLinkLaunch = null;
     string teakScheduledNotification = null;
 
-    static string rewardJson = null;
     static string errorText = null;
 
     const string TeakUserIdKey = "Teak.UserId";
@@ -75,14 +74,12 @@ public class MainMenu : MonoBehaviour
             return CheckStatus();
         }
 
-        public bool OnReward(Dictionary<string, object> parameters)
-        {
-            if(!parameters.ContainsKey("teakCreativeName") ||
-                !this.CreativeId.Equals(parameters["teakCreativeName"] as string, System.StringComparison.Ordinal))
-            {
 #if !TEAK_NOT_AVAILABLE
-                errorText = "Expected '" + this.CreativeId + "' contents:\n" + Json.Serialize(parameters);
-#endif
+        public bool OnReward(TeakReward reward)
+        {
+            if(!this.CreativeId.Equals(reward.CreativeId, System.StringComparison.Ordinal))
+            {
+                errorText = "Expected '" + this.CreativeId + "' contents: " + reward.CreativeId;
                 this.Status = 2;
             }
 
@@ -91,22 +88,16 @@ public class MainMenu : MonoBehaviour
             return CheckStatus();
         }
 
-        public bool OnLaunchedFromNotification(Dictionary<string, object> parameters)
+        public bool OnLaunchedFromNotification(TeakNotification notification)
         {
-            if(!parameters.ContainsKey("teakCreativeName") ||
-                !this.CreativeId.Equals(parameters["teakCreativeName"] as string, System.StringComparison.Ordinal))
+            if(!this.CreativeId.Equals(notification.CreativeName, System.StringComparison.Ordinal))
             {
-#if !TEAK_NOT_AVAILABLE
-                errorText = "Expected '" + this.CreativeId + "' contents:\n" + Json.Serialize(parameters);
-#endif
+                errorText = "Expected '" + this.CreativeId + "' got:\n" + Json.Serialize(notification.CreativeName);
                 this.Status = 2;
             }
-            else if(!string.IsNullOrEmpty(this.VerifyReward) &&
-                (!parameters.ContainsKey("incentivized") || !((bool)parameters["incentivized"])))
+            else if(!string.IsNullOrEmpty(this.VerifyReward) && !notification.Incentivized)
             {
-#if !TEAK_NOT_AVAILABLE
-                errorText = "Expected 'incentivized' contents:\n" + Json.Serialize(parameters);
-#endif
+                errorText = "Expected 'incentivized'";
                 this.Status = 2;
             }
 
@@ -114,6 +105,7 @@ public class MainMenu : MonoBehaviour
             onLaunchCalled = true;
             return CheckStatus();
         }
+#endif
     }
 
     List<Test> masterTestList = new List<Test>
@@ -151,8 +143,6 @@ public class MainMenu : MonoBehaviour
                 if(!testEnumerator.MoveNext()) testEnumerator = null;
             }
         });
-
-        rewardJson = null;
     }
 
     void Start()
@@ -204,13 +194,13 @@ public class MainMenu : MonoBehaviour
         }
     }
 
-    void OnLaunchedFromNotification(Dictionary<string, object> notificationPayload)
+    void OnLaunchedFromNotification(TeakNotification notification)
     {
-        Debug.Log("[Teak Unity Cleanroom] OnLaunchedFromNotification: " + Json.Serialize(notificationPayload));
+        Debug.Log("[Teak Unity Cleanroom] OnLaunchedFromNotification: " + notification.ToString());
         teakScheduledNotification = null; // To get the UI back
 
         // Testing automation
-        if(testEnumerator != null &&testEnumerator.Current.OnLaunchedFromNotification(notificationPayload))
+        if(testEnumerator != null &&testEnumerator.Current.OnLaunchedFromNotification(notification))
         {
             if(!testEnumerator.MoveNext()) testEnumerator = null;
         }
@@ -219,57 +209,53 @@ public class MainMenu : MonoBehaviour
     // To use this callback example, simply register it during Start() like so:
     //     Teak.Instance.OnReward += OnReward;
     // You can register as many listeners to an event as you like.
-    void OnReward(Dictionary<string, object> rewardPayload)
+    void OnReward(TeakReward reward)
     {
-        switch (rewardPayload["status"] as string) {
-            case "grant_reward": {
+        switch (reward.Status) {
+            case TeakReward.RewardStatus.GrantReward: {
                 // The user has been issued this reward by Teak
-                Dictionary<string, object> rewards = rewardPayload["reward"] as Dictionary<string, object>;
-                foreach(KeyValuePair<string, object> entry in rewards)
+                foreach(KeyValuePair<string, object> entry in reward.Reward)
                 {
                     Debug.Log("[Teak Unity Cleanroom] OnReward -- Give the user " + entry.Value + " instances of " + entry.Key);
                 }
             }
             break;
 
-            case "self_click": {
+            case TeakReward.RewardStatus.SelfClick: {
                 // The user has attempted to claim a reward from their own social post
             }
             break;
 
-            case "already_clicked": {
+            case TeakReward.RewardStatus.AlreadyClicked: {
                 // The user has already been issued this reward
             }
             break;
 
-            case "too_many_clicks": {
+            case TeakReward.RewardStatus.TooManyClicks: {
                 // The reward has already been claimed its maximum number of times globally
             }
             break;
 
-            case "exceed_max_clicks_for_day": {
+            case TeakReward.RewardStatus.ExceedMaxClicksForDay: {
                 // The user has already claimed their maximum number of rewards of this type for the day
             }
             break;
 
-            case "expired": {
+            case TeakReward.RewardStatus.Expired: {
                 // This reward has expired and is no longer valid
             }
             break;
 
-            case "invalid_post": {
+            case TeakReward.RewardStatus.InvalidPost: {
                 //Teak does not recognize this reward id
             }
             break;
         }
 
-        // Display JSON
-        rewardJson = Json.Serialize(rewardPayload);
-
         // Testing automation
         if(testEnumerator != null)
         {
-            if(testEnumerator.Current.OnReward(rewardPayload))
+            if(testEnumerator.Current.OnReward(reward))
             {
                 if(!testEnumerator.MoveNext())
                 {
@@ -346,10 +332,10 @@ public class MainMenu : MonoBehaviour
                 Test currentTest = testEnumerator.Current;
                 if(GUILayout.Button(currentTest.Name, GUILayout.Height(buttonHeight)))
                 {
-                    StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (string scheduleId, string status) => {
-                        teakScheduledNotification = scheduleId;
+                    StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (TeakNotification.Reply reply) => {
+                        teakScheduledNotification = reply.Notifications[0].ScheduleId;
 
-                        if(!currentTest.NoAutoBackground)
+                        if(reply.Status == TeakNotification.Reply.ReplyStatus.Ok && !currentTest.NoAutoBackground)
                         {
                             BackgroundApp();
                         }
@@ -361,7 +347,7 @@ public class MainMenu : MonoBehaviour
         {
             if(GUILayout.Button("Cancel Test: " + teakScheduledNotification, GUILayout.Height(buttonHeight)))
             {
-                StartCoroutine(TeakNotification.CancelScheduledNotification(teakScheduledNotification, (string scheduleId, string status) => {
+                StartCoroutine(TeakNotification.CancelScheduledNotification(teakScheduledNotification, (TeakNotification.Reply reply) => {
                     teakScheduledNotification = null;
                 }));
             }
@@ -369,14 +355,9 @@ public class MainMenu : MonoBehaviour
 
         if(GUILayout.Button("Cancel All Notifications", GUILayout.Height(buttonHeight)))
         {
-            StartCoroutine(TeakNotification.CancelAllScheduledNotifications((string data, string status) => {
-                errorText = status + "\n" + data;
+            StartCoroutine(TeakNotification.CancelAllScheduledNotifications((TeakNotification.Reply reply) => {
+                errorText = reply.Notifications == null ? reply.Status.ToString() : reply.Notifications.ToString();
             }));
-        }
-
-        if(rewardJson != null)
-        {
-            GUILayout.Label(rewardJson, statusStyle[0]);
         }
 
         if(errorText != null)

@@ -76,7 +76,6 @@ namespace :build do
   task ios: ['ios:all']
 
   task :webgl do
-    # Just needs to build cleanly
     unity "-executeMethod", "BuildPlayer.WebGL"
   end
 end
@@ -140,5 +139,11 @@ namespace :install do
       adb.call "install teak-unity-cleanroom.apk"
       adb.call "shell am start -W -a android.intent.action.VIEW -d https://teakangrybots.jckpt.me/ihx_k8KPT io.teak.sdk.sd"
     end
+  end
+
+  task :webgl do
+    sh "ruby -run -e httpd WebGlBuild -p 8000 &"
+    sh "open http://localhost:8000"
+    sh "fg"
   end
 end

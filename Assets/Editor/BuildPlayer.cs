@@ -34,7 +34,7 @@ class BuildPlayer
 
     static void WebGL()
     {
-        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../WebGlBuild");
+        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../WebGLBuild");
 
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.WebGL, BuildOptions.Development);
     }
