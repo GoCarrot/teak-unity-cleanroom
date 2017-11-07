@@ -34,6 +34,7 @@ class BuildPlayer
 
     static void WebGL()
     {
+        TeakSettings.JustShutUpIKnowWhatImDoing = false;
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../WebGLBuild");
 
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.WebGL, BuildOptions.Development);
@@ -41,6 +42,7 @@ class BuildPlayer
 
     static void Android()
     {
+        TeakSettings.JustShutUpIKnowWhatImDoing = false;
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../teak-unity-cleanroom.apk");
 
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.Android, BuildOptions.Development);
@@ -48,6 +50,8 @@ class BuildPlayer
 
     static void iOS()
     {
+        TeakSettings.JustShutUpIKnowWhatImDoing = false;
+
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../iOSBuild");
         Directory.CreateDirectory(buildPath);
 #if UNITY_5
