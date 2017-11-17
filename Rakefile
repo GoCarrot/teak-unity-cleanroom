@@ -53,10 +53,14 @@ namespace :package do
     File.open('Assets/smcs.rsp', 'w') do |f|
       f.puts "-define:TEAK_NOT_AVAILABLE"
     end
+    File.open('Assets/mcs.rsp', 'w') do |f|
+      f.puts "-define:TEAK_NOT_AVAILABLE"
+    end
 
     unity "-importPackage", "Teak.unitypackage"
 
     File.delete(*Dir.glob('Assets/smcs.rsp*'))
+    File.delete(*Dir.glob('Assets/mcs.rsp*'))
   end
 end
 

@@ -90,9 +90,9 @@ public class MainMenu : MonoBehaviour
 
         public bool OnLaunchedFromNotification(TeakNotification notification)
         {
-            if(!this.CreativeId.Equals(notification.CreativeName, System.StringComparison.Ordinal))
+            if(!this.CreativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal))
             {
-                errorText = "Expected '" + this.CreativeId + "' got:\n" + Json.Serialize(notification.CreativeName);
+                errorText = "Expected '" + this.CreativeId + "' got:\n" + Json.Serialize(notification.CreativeId);
                 this.Status = 2;
             }
             else if(!string.IsNullOrEmpty(this.VerifyReward) && !notification.Incentivized)
