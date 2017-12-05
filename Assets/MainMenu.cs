@@ -131,6 +131,14 @@ public class MainMenu : MonoBehaviour
 #if !TEAK_NOT_AVAILABLE
     void Awake()
     {
+        // Ensure the Prime31 and OpenIAB purchase methods are exposed on Android
+#if UNITY_ANDROID
+        AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
+        teak.CallStatic("prime31PurchaseSucceeded", "{}");
+        teak.CallStatic("openIABPurchaseSucceeded", "{}");
+        teak.CallStatic("pluginPurchaseFailed", 42);
+#endif
+
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Awake");
 
         Teak.Instance.RegisterRoute("/store/:sku", "Store", "Open the store to an SKU", (Dictionary<string, object> parameters) => {
