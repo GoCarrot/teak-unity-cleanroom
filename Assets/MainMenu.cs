@@ -301,9 +301,9 @@ public class MainMenu : MonoBehaviour
     {
         GUILayout.BeginArea(new Rect(10, 10, Screen.width - 20, Screen.height - 20));
 
-        GUILayout.Label(teakSdkVersion);
-        GUILayout.Label(teakUserId);
-        GUILayout.Label(teakDeepLinkLaunch);
+        GUILayout.Label(teakSdkVersion,statusStyle[0]);
+        GUILayout.Label(teakUserId, statusStyle[0]);
+        GUILayout.Label(teakDeepLinkLaunch, statusStyle[0]);
 
         GUILayout.Label(Application.identifier, statusStyle[0]);
 #if UNITY_IOS
