@@ -85,7 +85,7 @@ namespace :build do
 end
 
 namespace :ios do
-  task all: [:build, :postprocess, :xcode, :export]
+  task all: [:build, :postprocess, :add_extensions, :xcode, :export]
 
   task :build do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
@@ -93,12 +93,16 @@ namespace :ios do
   end
 
   task :postprocess do
-    cp 'iOSResources/Unity-iPhone/Unity-iPhone.entitlements', 'iOSBuild/Unity-iPhone/Unity-iPhone.entitlements'
+    cp 'iOSResources/Unity-iPhone/Unity-iPhone.entitlements', 'Unity-iPhone/Unity-iPhone/Unity-iPhone.entitlements'
     sh "ruby iOSResources/AddEntitlements.rb Unity-iPhone"
   end
 
+  task :add_extensions do
+    sh "ruby ../teak-ios/TeakExtensions/add_teak_extensions.rb iOSBuild/Unity-iPhone.xcodeproj"
+  end
+
   task :xcode do
-    cd('iOSBuild') do
+    cd('Unity-iPhone') do
       xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-allowProvisioningUpdates", "-sdk", "iphoneos", "-configuration", "Debug", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
     end
   end
@@ -115,14 +119,14 @@ namespace :ios do
         ENV.delete(var)
       end
       ENV['PATH'] = ENV['PATH'].split(':').reject { |elem| elem =~ /\.rvm/ }.join(':')
-      xcodebuild "-exportArchive", "-archivePath", "iOSBuild/build/archive.xcarchive", "-exportOptionsPlist", "iOSResources/exportOptions.plist", "-exportPath", "iOSBuild/build/", "-allowProvisioningUpdates"
+      xcodebuild "-exportArchive", "-archivePath", "Unity-iPhone/build/archive.xcarchive", "-exportOptionsPlist", "iOSResources/exportOptions.plist", "-exportPath", "Unity-iPhone/build/", "-allowProvisioningUpdates"
     ensure
       old.each do |key, value|
         ENV[key] = value
       end
     end
 
-    cp 'iOSBuild/build/Unity-iPhone.ipa', 'teak-unity-cleanroom.ipa'
+    cp 'Unity-iPhone/build/Unity-iPhone.ipa', 'teak-unity-cleanroom.ipa'
   end
 end
 

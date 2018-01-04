@@ -2,7 +2,7 @@
 require 'xcodeproj'
 
 name = ARGV[0]
-projectpath = "iOSBuild/" + name + ".xcodeproj"
+projectpath = "Unity-iPhone/" + name + ".xcodeproj"
 puts "Adding entitlement push to " + name
 puts "Opening " + projectpath
 proj = Xcodeproj::Project.open(projectpath)

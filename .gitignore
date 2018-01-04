@@ -30,7 +30,7 @@ Assets/Teak.meta
 Assets/Teak/
 
 # Generated Files
-iOSBuild*
+Unity-iPhone*
 WebGLBuild*
 Teak.unitypackage
 teak-unity-cleanroom.ipa

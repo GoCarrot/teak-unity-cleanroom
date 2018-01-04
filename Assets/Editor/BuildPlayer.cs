@@ -57,7 +57,7 @@ class BuildPlayer
 #if !TEAK_NOT_AVAILABLE
         TeakSettings.JustShutUpIKnowWhatImDoing = false;
 #endif
-        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../iOSBuild");
+        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../Unity-iPhone");
         Directory.CreateDirectory(buildPath);
 #if UNITY_5
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.iOS, BuildOptions.Development);
