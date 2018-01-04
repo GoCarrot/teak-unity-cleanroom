@@ -135,7 +135,7 @@ public class MainMenu : MonoBehaviour
 #if UNITY_ANDROID
         AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
         teak.CallStatic("prime31PurchaseSucceeded", "{}");
-        teak.CallStatic("openIABPurchaseSucceeded", "{}");
+        teak.CallStatic("openIABPurchaseSucceeded", "{\"originalJson\":\"{}\"}");
         teak.CallStatic("pluginPurchaseFailed", 42);
 #endif
 
