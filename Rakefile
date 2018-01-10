@@ -98,7 +98,7 @@ namespace :ios do
   end
 
   task :add_extensions do
-    sh "ruby ../teak-ios/TeakExtensions/add_teak_extensions.rb iOSBuild/Unity-iPhone.xcodeproj"
+    sh "ruby ../teak-ios/TeakExtensions/add_teak_extensions.rb --bundle-id=io.teak.sdk.sd Unity-iPhone/Unity-iPhone.xcodeproj"
   end
 
   task :xcode do
