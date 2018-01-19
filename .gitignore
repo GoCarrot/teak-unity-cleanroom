@@ -17,17 +17,29 @@ Assets/AssetStoreTools*
 ProjectSettings
 
 # Teak SDK Files
-Assets/Plugins/Android/res/layout.meta
-Assets/Plugins/Android/res/layout/
-Assets/Plugins/Android/res/values-v21/teak_styles.xml*
 Assets/Plugins/Android/res/values.meta
 Assets/Plugins/Android/res/values/teak.xml*
-Assets/Plugins/Android/res/values/teak_styles.xml*
-Assets/Plugins/Android/res/values/teak_unity_version.xml*
 Assets/Plugins/Android/teak.aar*
 Assets/Plugins/WebGL*
 Assets/Teak.meta
 Assets/Teak/
+
+# Play Services Resolver
+Assets/Plugins/Android/android.arch.core.common-*
+Assets/Plugins/Android/android.arch.lifecycle.common-*
+Assets/Plugins/Android/android.arch.lifecycle.runtime-*
+Assets/Plugins/Android/com.android.support.support-annotations-*
+Assets/Plugins/Android/com.android.support.support-compat-*
+Assets/Plugins/Android/com.android.support.support-core-ui-*
+Assets/Plugins/Android/com.android.support.support-core-utils-*
+Assets/Plugins/Android/com.android.support.support-fragment-*
+Assets/Plugins/Android/com.android.support.support-media-compat-*
+Assets/Plugins/Android/com.android.support.support-v4-*
+Assets/Plugins/Android/com.google.android.gms.play-services-base-*
+Assets/Plugins/Android/com.google.android.gms.play-services-basement-*
+Assets/Plugins/Android/com.google.android.gms.play-services-gcm-*
+Assets/Plugins/Android/com.google.android.gms.play-services-iid-*
+Assets/Plugins/Android/com.google.android.gms.play-services-tasks-*
 
 # Generated Files
 Unity-iPhone*
