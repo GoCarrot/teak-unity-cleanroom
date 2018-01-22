@@ -72,9 +72,13 @@ namespace :config do
 end
 
 namespace :build do
-  task :android do
+  task :dependencies do
+    #unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.ResolveDependencies"
+  end
+
+  task android: [:dependencies] do
     FileUtils.rm_f('teak-unity-cleanroom.apk')
-    unity "-executeMethod", "BuildPlayer.Android"
+    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android"
   end
 
   task ios: ['ios:all']
@@ -89,7 +93,7 @@ namespace :ios do
 
   task :build do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
-    unity "-executeMethod", "BuildPlayer.iOS"
+    unity "-buildTarget", "iOS", "-executeMethod", "BuildPlayer.iOS"
   end
 
   task :postprocess do

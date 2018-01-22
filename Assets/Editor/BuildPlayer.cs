@@ -6,6 +6,7 @@
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using GooglePlayServices;
 
 class BuildPlayer
 {
@@ -22,7 +23,7 @@ class BuildPlayer
             appId = args[argIdx + 1];
         }
 
-        System.Console.WriteLine("Setting App Identifier to " + appId);
+        Debug.Log("[teak-unity-cleanroom] Setting App Identifier to " + appId);
 
 #if UNITY_5
         PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, appId);
@@ -30,6 +31,21 @@ class BuildPlayer
 #else
         PlayerSettings.bundleIdentifier = appId;
 #endif
+    }
+
+    static void ResolveDependencies()
+    {
+        Debug.Log("[teak-unity-cleanroom] Resolving dependencies with Play Services Resolver");
+        PlayServicesResolver.Resolve(
+            resolutionCompleteWithResult: (success) => {
+                if (!success) {
+                    Debug.Log("[teak-unity-cleanroom] FAILED to resolve dependencies");
+                    // TODO: Abort build
+                } else {
+                    Debug.Log("[teak-unity-cleanroom] Resolved dependencies");
+                }
+            },
+            forceResolution: false);
     }
 
     static void WebGL()
