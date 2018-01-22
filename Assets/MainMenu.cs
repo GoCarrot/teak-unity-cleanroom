@@ -343,6 +343,11 @@ public class MainMenu : MonoBehaviour
                     StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (TeakNotification.Reply reply) => {
                         teakScheduledNotification = reply.Notifications[0].ScheduleId;
 
+                        if (reply.Notifications[0].ScheduleId == null)
+                        {
+                            errorText = "ScheduleId was null";
+                        }
+
                         if(reply.Status == TeakNotification.Reply.ReplyStatus.Ok && !currentTest.NoAutoBackground)
                         {
                             BackgroundApp();
@@ -356,6 +361,11 @@ public class MainMenu : MonoBehaviour
             if(GUILayout.Button("Cancel Test: " + teakScheduledNotification, GUILayout.Height(buttonHeight)))
             {
                 StartCoroutine(TeakNotification.CancelScheduledNotification(teakScheduledNotification, (TeakNotification.Reply reply) => {
+                    if (reply.Notifications[0].ScheduleId == null)
+                    {
+                        errorText = "ScheduleId was null";
+                    }
+
                     teakScheduledNotification = null;
                 }));
             }
