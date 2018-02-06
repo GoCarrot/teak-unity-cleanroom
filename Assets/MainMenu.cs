@@ -204,6 +204,9 @@ public class MainMenu : MonoBehaviour
         else
         {
             // Resume
+
+            // Badge count test
+            Teak.Instance.SetBadgeCount(42);
         }
     }
 
