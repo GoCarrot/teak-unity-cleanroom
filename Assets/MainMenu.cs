@@ -181,6 +181,8 @@ public class MainMenu : MonoBehaviour
 
         Teak.Instance.IdentifyUser(teakUserId);
 
+        Teak.Instance.TrackEvent("some_boolean", null, null);
+
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
 
