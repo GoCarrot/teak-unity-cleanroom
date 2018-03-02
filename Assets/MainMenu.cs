@@ -14,7 +14,7 @@ using MiniJSON.Teak;
 
 public class MainMenu : MonoBehaviour
 {
-    public int buttonHeight = 250;
+    private int buttonHeightInPx = Screen.height / 5;
 
 #if UNITY_IOS
     string pushTokenString = null;
@@ -186,11 +186,12 @@ public class MainMenu : MonoBehaviour
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
 
+        int fontSize = 50;
         statusStyle = new List<GUIStyle>
         {
-            new GUIStyle { fontSize = 50, wordWrap = true, normal = new GUIStyleState { textColor = Color.yellow } },
-            new GUIStyle { fontSize = 50, wordWrap = true, normal = new GUIStyleState { textColor = Color.green } },
-            new GUIStyle { fontSize = 50, wordWrap = true, normal = new GUIStyleState { textColor = Color.red } }
+            new GUIStyle { fontSize = fontSize, wordWrap = true, normal = new GUIStyleState { textColor = Color.yellow } },
+            new GUIStyle { fontSize = fontSize, wordWrap = true, normal = new GUIStyleState { textColor = Color.green } },
+            new GUIStyle { fontSize = fontSize, wordWrap = true, normal = new GUIStyleState { textColor = Color.red } }
         };
         SetUpTests();
     }
@@ -324,7 +325,7 @@ public class MainMenu : MonoBehaviour
         }
         else
         {
-            if(GUILayout.Button("Request Push Permissions", GUILayout.Height(buttonHeight)))
+            if(GUILayout.Button("Request Push Permissions", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
             {
 #if UNITY_5
                 UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
@@ -348,7 +349,7 @@ public class MainMenu : MonoBehaviour
             if(testEnumerator != null)
             {
                 Test currentTest = testEnumerator.Current;
-                if(GUILayout.Button(currentTest.Name, GUILayout.Height(buttonHeight)))
+                if(GUILayout.Button(currentTest.Name, new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
                 {
                     StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (TeakNotification.Reply reply) => {
                         teakScheduledNotification = reply.Notifications[0].ScheduleId;
@@ -368,7 +369,7 @@ public class MainMenu : MonoBehaviour
         }
         else
         {
-            if(GUILayout.Button("Cancel Test: " + teakScheduledNotification, GUILayout.Height(buttonHeight)))
+            if(GUILayout.Button("Cancel Test: " + teakScheduledNotification, new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
             {
                 StartCoroutine(TeakNotification.CancelScheduledNotification(teakScheduledNotification, (TeakNotification.Reply reply) => {
                     if (reply.Notifications[0].ScheduleId == null)
@@ -381,7 +382,7 @@ public class MainMenu : MonoBehaviour
             }
         }
 
-        if(GUILayout.Button("Cancel All Notifications", GUILayout.Height(buttonHeight)))
+        if(GUILayout.Button("Cancel All Notifications", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
         {
             StartCoroutine(TeakNotification.CancelAllScheduledNotifications((TeakNotification.Reply reply) => {
                 errorText = reply.Notifications == null ? reply.Status.ToString() : reply.Notifications.ToString();
