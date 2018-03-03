@@ -90,6 +90,7 @@ end
 
 namespace :ios do
   task all: [:build, :postprocess, :add_extensions, :xcode, :export]
+  task min: [:build, :postprocess, :add_extensions, :xcode_open]
 
   task :build do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
@@ -109,6 +110,10 @@ namespace :ios do
     cd('Unity-iPhone') do
       xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-allowProvisioningUpdates", "-sdk", "iphoneos", "-configuration", "Debug", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
     end
+  end
+
+  task :xcode_open do
+    sh "open Unity-iPhone/Unity-iPhone.xcodeproj"
   end
 
   task :export do
