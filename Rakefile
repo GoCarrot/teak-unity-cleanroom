@@ -141,6 +141,7 @@ end
 
 namespace :install do
   task :ios do
+    # # https://github.com/libimobiledevice/libimobiledevice/issues/510#issuecomment-347175312
     sh "ideviceinstaller -i teak-unity-cleanroom.ipa"
   end
 
