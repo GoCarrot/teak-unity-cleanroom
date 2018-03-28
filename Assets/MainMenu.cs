@@ -164,16 +164,8 @@ public class MainMenu : MonoBehaviour
 
         if (!PlayerPrefs.HasKey(TeakUserIdKey))
         {
-            var chars = "ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-            char[] stringChars = new char[8];
-            System.Random random = new System.Random();
-
-            for (int i = 0; i < stringChars.Length; i++)
-            {
-                stringChars[i] = chars[random.Next(chars.Length)];
-            }
-
-            PlayerPrefs.SetString(TeakUserIdKey, new string(stringChars));
+            string randomUserId = RandomNonConfusingCharacterString(8);
+            PlayerPrefs.SetString(TeakUserIdKey, randomUserId);
             PlayerPrefs.Save();
         }
         teakUserId = PlayerPrefs.GetString(TeakUserIdKey);
@@ -395,6 +387,20 @@ public class MainMenu : MonoBehaviour
         }
 
         GUILayout.EndArea();
+    }
+
+    string RandomNonConfusingCharacterString(int length)
+    {
+        var chars = "ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        char[] stringChars = new char[length];
+        System.Random random = new System.Random();
+
+        for (int i = 0; i < stringChars.Length; i++)
+        {
+            stringChars[i] = chars[random.Next(chars.Length)];
+        }
+
+        return new string(stringChars);
     }
 
     void BackgroundApp()
