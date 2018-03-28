@@ -397,7 +397,7 @@ public class MainMenu : MonoBehaviour
 
     string RandomNonConfusingCharacterString(int length)
     {
-        var chars = "ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        var chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghkmnpqrstuvwxyz23456789";
         char[] stringChars = new char[length];
         System.Random random = new System.Random();
 
