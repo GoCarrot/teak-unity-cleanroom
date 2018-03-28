@@ -328,6 +328,12 @@ public class MainMenu : MonoBehaviour
         }
 #endif
 
+        if(GUILayout.Button("User Profile Test", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
+        {
+            Teak.Instance.SetNumericAttribute("coins", (double) Random.Range(0.0f, 1000000.0f));
+            Teak.Instance.SetStringAttribute("last_slot", RandomNonConfusingCharacterString(10));
+        }
+
         foreach(Test test in testList)
         {
             if(test.Status > 0)
