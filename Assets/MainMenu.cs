@@ -164,7 +164,7 @@ public class MainMenu : MonoBehaviour
 
         if (!PlayerPrefs.HasKey(TeakUserIdKey))
         {
-            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var chars = "ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
             char[] stringChars = new char[8];
             System.Random random = new System.Random();
 
