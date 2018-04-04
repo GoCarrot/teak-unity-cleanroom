@@ -154,8 +154,12 @@ namespace :install do
         adb.call "uninstall io.teak.sdk.sd"
       rescue
       end
+      begin
+        adb.call "uninstall com.teakio.pushtest"
+      rescue
+      end
       adb.call "install teak-unity-cleanroom.apk"
-      adb.call "shell am start -W -a android.intent.action.VIEW -d https://teakangrybots.jckpt.me/ihx_k8KPT io.teak.sdk.sd"
+      adb.call "shell am start -n io.teak.sdk.sd/io.teak.sdk.wrapper.unity.TeakUnityPlayerActivity"
     end
   end
 
