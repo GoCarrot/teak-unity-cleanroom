@@ -16,12 +16,14 @@ TEAK_CREDENTIALS = {
   'dev' => {
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
-    teak_gcm_sender_id: '944348058057'
+    teak_gcm_sender_id: '944348058057',
+    teak_short_url_domain: 'teakangrybots.jckpt.me'
   },
   'prod' => {
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
-    teak_gcm_sender_id: '944348058057'
+    teak_gcm_sender_id: '944348058057',
+    teak_short_url_domain: 'teakangrybots.jckpt.me'
   }
 }
 
