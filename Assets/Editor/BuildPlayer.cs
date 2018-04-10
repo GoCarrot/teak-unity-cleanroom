@@ -14,7 +14,7 @@ class BuildPlayer
 
     static void SetBundleId()
     {
-        string appId = "com.teakio.pushtest";
+        string appId = null;
 
         string[] args = System.Environment.GetCommandLineArgs();
         int argIdx = System.Array.IndexOf(args, "BuildPlayer.SetBundleId");
@@ -64,6 +64,19 @@ class BuildPlayer
         TeakSettings.JustShutUpIKnowWhatImDoing = false;
 #endif
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../teak-unity-cleanroom.apk");
+
+        int targetApiVersion = 0;
+        string[] args = System.Environment.GetCommandLineArgs();
+        int argIdx = System.Array.IndexOf(args, "BuildPlayer.Android");
+        if(argIdx > -1 && args.Length > argIdx && System.Int32.TryParse(args[argIdx + 1], out targetApiVersion))
+        {
+            Debug.Log("[teak-unity-cleanroom] Setting Target API Level to " + args[argIdx + 1]);
+            PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)targetApiVersion;
+        }
+        else
+        {
+            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
+        }
 
         BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.Android, BuildOptions.Development);
     }

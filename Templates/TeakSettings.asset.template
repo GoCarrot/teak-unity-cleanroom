@@ -11,7 +11,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11c5533ff99a246a88b789b8e59a35f9, type: 3}
   m_Name: TeakSettings
   m_EditorClassIdentifier: 
-  mAppId: 1136371193060244
-  mAPIKey: 1f3850f794b9093864a0778009744d03
-  mGCMSenderId: 944348058057
+  mAppId: {{teak_app_id}}
+  mAPIKey: {{teak_api_key}}
+  mGCMSenderId: {{teak_gcm_sender_id}}
   mJustShutUpIKnowWhatImDoing: 0

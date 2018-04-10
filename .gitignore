@@ -49,3 +49,7 @@ Teak.unitypackage
 teak-unity-cleanroom.ipa
 teak-unity-cleanroom.apk
 unity.log
+
+# Generated Configuration Files
+Assets/Plugins/Android/AndroidManifest.xml*
+Assets/Resources/TeakSettings.asset*

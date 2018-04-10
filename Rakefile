@@ -1,5 +1,6 @@
 require "rake/clean"
 require "shellwords"
+require "mustache"
 CLEAN.include "**/.DS_Store"
 
 desc "Build Unity package"
@@ -8,6 +9,33 @@ task :default
 UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity')
 RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
 PROJECT_PATH = Rake.application.original_dir
+BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
+PACKAGE_NAME = BUILD_TYPE == 'dev' ? 'io.teak.app.unity.dev' : 'io.teak.app.unity.prod'
+TARGET_API = ENV.fetch('TARGET_API', 25)
+TEAK_CREDENTIALS = {
+  'dev' => {
+    teak_app_id: '1136371193060244',
+    teak_api_key: '1f3850f794b9093864a0778009744d03',
+    teak_gcm_sender_id: '944348058057'
+  },
+  'prod' => {
+    teak_app_id: '1136371193060244',
+    teak_api_key: '1f3850f794b9093864a0778009744d03',
+    teak_gcm_sender_id: '944348058057'
+  }
+}
+
+#
+# Template parameters
+#
+def template_parameters
+  teak_version = File.read(File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')).match(/return "(.*)"/).captures[0]
+  TEAK_CREDENTIALS[BUILD_TYPE].merge({
+    package_name: PACKAGE_NAME,
+    app_name: "#{BUILD_TYPE.capitalize} #{teak_version}",
+    target_api: TARGET_API
+  })
+end
 
 #
 # Play a sound after finished
@@ -65,9 +93,15 @@ namespace :package do
 end
 
 namespace :config do
-  task :id, [:app_id] do |t, args|
-    args.with_defaults(:app_id => "io.teak.sdk.sd")
-    unity "-executeMethod", "BuildPlayer.SetBundleId", args[:app_id]
+  task all: [:id, :settings]
+
+  task :id do
+    unity "-executeMethod", "BuildPlayer.SetBundleId", PACKAGE_NAME
+  end
+
+  task :settings do
+    template = File.read(File.join(PROJECT_PATH, 'Templates', 'TeakSettings.asset.template'))
+    File.write(File.join(PROJECT_PATH, 'Assets', 'Resources', 'TeakSettings.asset'), Mustache.render(template, template_parameters))
   end
 end
 
@@ -78,7 +112,11 @@ namespace :build do
 
   task android: [:dependencies] do
     FileUtils.rm_f('teak-unity-cleanroom.apk')
-    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android"
+
+    template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
+    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
+
+    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", TARGET_API
   end
 
   task ios: ['ios:all']
@@ -151,15 +189,11 @@ namespace :install do
       adb = lambda { |*args| sh "adb -s #{device} #{args.join(' ')}" }
 
       begin
-        adb.call "uninstall io.teak.sdk.sd"
-      rescue
-      end
-      begin
-        adb.call "uninstall com.teakio.pushtest"
+        adb.call "uninstall #{PACKAGE_NAME}"
       rescue
       end
       adb.call "install teak-unity-cleanroom.apk"
-      adb.call "shell am start -n io.teak.sdk.sd/io.teak.sdk.wrapper.unity.TeakUnityPlayerActivity"
+      adb.call "shell am start -n #{PACKAGE_NAME}/io.teak.sdk.wrapper.unity.TeakUnityPlayerActivity"
     end
   end
 
