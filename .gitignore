@@ -53,3 +53,4 @@ unity.log
 # Generated Configuration Files
 Assets/Plugins/Android/AndroidManifest.xml*
 Assets/Resources/TeakSettings.asset*
+iOSResources/Unity-iPhone/Unity-iPhone.entitlements

@@ -138,12 +138,15 @@ namespace :ios do
   end
 
   task :postprocess do
+    template = File.read(File.join(PROJECT_PATH, 'Templates', 'Unity-iPhone.entitlements.template'))
+    File.write(File.join(PROJECT_PATH, 'iOSResources', 'Unity-iPhone', 'Unity-iPhone.entitlements'), Mustache.render(template, template_parameters))
+
     cp 'iOSResources/Unity-iPhone/Unity-iPhone.entitlements', 'Unity-iPhone/Unity-iPhone/Unity-iPhone.entitlements'
     sh "ruby iOSResources/AddEntitlements.rb Unity-iPhone"
   end
 
   task :add_extensions do
-    sh "ruby ../teak-ios/TeakExtensions/add_teak_extensions.rb --bundle-id=io.teak.sdk.sd Unity-iPhone/Unity-iPhone.xcodeproj"
+    sh "ruby ../teak-ios/TeakExtensions/add_teak_extensions.rb --bundle-id=#{PACKAGE_NAME} Unity-iPhone/Unity-iPhone.xcodeproj"
   end
 
   task :xcode do
