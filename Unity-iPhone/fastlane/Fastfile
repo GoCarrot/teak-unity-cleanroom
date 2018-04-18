@@ -8,12 +8,85 @@
 
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
+FASTFILE_PATH = File.expand_path(File.dirname(File.dirname(__FILE__)))
+CONFIG_TYPE = "development"
+TEAK_APP_EXTENSIONS = ["TeakNotificationService", "TeakNotificationContent"]
 
 default_platform(:ios)
 
 platform :ios do
-  desc "Description of what the lane does"
-  lane :custom_lane do
-    # add actions here: https://docs.fastlane.tools/actions
+  desc "Setup"
+  lane :setup do
+    ["io.teak.app.unity.dev", "io.teak.app.unity.prod"].each do |app_id|
+      TEAK_APP_EXTENSIONS.each do |app_extension_name|
+        produce(
+          app_identifier: "#{app_id}.#{app_extension_name}",
+          app_name: app_extension_name,
+          skip_itc: true
+        )
+        match(
+          app_identifier: "#{app_id}.#{app_extension_name}",
+          type: CONFIG_TYPE,
+          force: true
+        )
+      end
+    end
+  end
+
+  desc "Build targeting Dev profile"
+  lane :dev do
+    # Create/fetch and store provisioning profiles
+    ios_provisioning_profile = {}
+    ["io.teak.app.unity.dev"].each do |app_id|
+      match(
+        app_identifier: app_id,
+        type: CONFIG_TYPE,
+        force: true
+      )
+      provisioning_profile_env = Match::Utils.environment_variable_name_profile_path(
+        app_identifier: app_id,
+        type: CONFIG_TYPE
+      )
+      ios_provisioning_profile["Unity-iPhone"] = ENV[provisioning_profile_env]
+
+      TEAK_APP_EXTENSIONS.each do |app_extension_name|
+        match(
+          app_identifier: "#{app_id}.#{app_extension_name}",
+          type: CONFIG_TYPE,
+          force: true
+        )
+
+        provisioning_profile_env = Match::Utils.environment_variable_name_profile_path(
+          app_identifier: "#{app_id}.#{app_extension_name}",
+          type: CONFIG_TYPE
+        )
+        ios_provisioning_profile[app_extension_name] = ENV[provisioning_profile_env]
+      end
+    end
+
+    # Update entitlements
+    update_entitlements(
+      push_enabled: true,
+      push_ios: true,
+      push_development: true,
+      entitlements_project_path: File.join(FASTFILE_PATH, '..', "Unity-iPhone.xcodeproj")
+    )
+
+    #disable_automatic_code_signing
+
+    TEAK_APP_EXTENSIONS.concat(["Unity-iPhone"]).each do |target|
+      update_project_provisioning(
+        target_filter: target,
+        profile: ios_provisioning_profile[target]
+      )
+    end
+
+    build_ios_app(
+      scheme: "Unity-iPhone",
+      clean: true,
+      output_directory: File.join(FASTFILE_PATH, '..'),
+      output_name: "teak-unity-cleanroom.ipa",
+      export_method: CONFIG_TYPE
+    )
   end
 end
