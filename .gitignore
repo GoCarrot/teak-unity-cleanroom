@@ -43,7 +43,8 @@ Assets/Plugins/Android/com.google.android.gms.play-services-iid-*
 Assets/Plugins/Android/com.google.android.gms.play-services-tasks-*
 
 # Generated Files
-Unity-iPhone*
+Unity-iPhone/*
+!Unity-iPhone/fastlane
 WebGLBuild*
 Teak.unitypackage
 teak-unity-cleanroom.ipa

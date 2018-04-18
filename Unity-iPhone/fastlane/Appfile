@@ -1,0 +1,14 @@
+apple_id 'pat@teak.io'
+
+for_platform :ios do
+  team_id '7FLZTACJ82'
+  for_lane :dev do
+    app_identifier 'io.teak.app.unity.dev'
+  end
+  for_lane :prod do
+    app_identifier 'io.teak.app.unity.prod'
+  end
+end
+
+# you can even provide different app identifiers, Apple IDs and team names per lane:
+# More information: https://docs.fastlane.tools/advanced/#appfile
