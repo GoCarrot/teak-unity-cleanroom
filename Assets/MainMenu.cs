@@ -326,7 +326,7 @@ public class MainMenu : MonoBehaviour
             Teak.Instance.SetNumericAttribute("coins", (double) Random.Range(0.0f, 1000000.0f));
             Teak.Instance.SetStringAttribute("last_slot", RandomNonConfusingCharacterString(10));
         }
-/*
+
         if(!Teak.Instance.AreNotificationsEnabled())
         {
             if(GUILayout.Button("Open Settings App", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx / 1.5f) }))
@@ -334,7 +334,7 @@ public class MainMenu : MonoBehaviour
                 Teak.Instance.OpenSettingsAppToThisAppsSettings();
             }
         }
-*/
+
         foreach(Test test in testList)
         {
             if(test.Status > 0)
