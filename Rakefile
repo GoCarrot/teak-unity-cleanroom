@@ -10,22 +10,24 @@ UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity')
 RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
 PROJECT_PATH = Rake.application.original_dir
 BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
-PACKAGE_NAME = BUILD_TYPE == 'dev' ? 'io.teak.app.unity.dev' : 'io.teak.app.unity.prod'
 TARGET_API = ENV.fetch('TARGET_API', 25)
 TEAK_CREDENTIALS = {
   'dev' => {
-    teak_app_id: '1136371193060244',
-    teak_api_key: '1f3850f794b9093864a0778009744d03',
+    package_name: 'io.teak.app.unity.dev',
+    teak_app_id: '613659812345256',
+    teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
     teak_gcm_sender_id: '944348058057',
-    teak_short_url_domain: 'teakangrybots.jckpt.me'
+    teak_short_url_domain: 'teak-dev.playw.it'
   },
   'prod' => {
+    package_name: 'io.teak.app.unity.prod',
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
     teak_gcm_sender_id: '944348058057',
-    teak_short_url_domain: 'teakangrybots.jckpt.me'
+    teak_short_url_domain: 'teak-prod.playw.it'
   }
 }
+PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
 
 #
 # Template parameters
@@ -33,7 +35,6 @@ TEAK_CREDENTIALS = {
 def template_parameters
   teak_version = File.read(File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')).match(/return "(.*)"/).captures[0]
   TEAK_CREDENTIALS[BUILD_TYPE].merge({
-    package_name: PACKAGE_NAME,
     app_name: "#{BUILD_TYPE.capitalize} #{teak_version}",
     target_api: TARGET_API
   })
