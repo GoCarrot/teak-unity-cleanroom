@@ -39,8 +39,8 @@ platform :ios do
   desc "Test things"
   lane :test do
     teak_extensions(
-      teak_extensions_project_path:XCODE_PROJECT,
-      #teak_extensions_source:"~/Code/teak-ios"
+      xcodeproj:XCODE_PROJECT,
+      #source:"~/Code/teak-ios"
     )
   end
 
@@ -81,6 +81,12 @@ platform :ios do
       push_ios: true,
       push_development: true,
       entitlements_project_path: XCODE_PROJECT
+    )
+
+    # Add Teak app extensions
+    teak_extensions(
+      xcodeproj:XCODE_PROJECT,
+      #source:"~/Code/teak-ios"
     )
 
     disable_automatic_code_signing(

@@ -130,12 +130,11 @@ namespace :build do
 end
 
 namespace :ios do
-  task all: [:build, :postprocess, :add_extensions, :xcode, :export]
-  task min: [:build, :postprocess, :add_extensions, :xcode_open]
-  task fastlane: [:build, :postprocess, :add_extensions, :fastlane_dev]
+  task all: [:build, :postprocess, :fastlane]
 
   task :build do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
+    FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
     unity "-buildTarget", "iOS", "-executeMethod", "BuildPlayer.iOS"
   end
 
@@ -147,44 +146,8 @@ namespace :ios do
     sh "ruby iOSResources/AddEntitlements.rb Unity-iPhone"
   end
 
-  task :fastlane_dev do
+  task :fastlane do
     sh 'fastlane dev'
-  end
-
-  task :add_extensions do
-    sh "ruby ../teak-ios/TeakExtensions/add_teak_extensions.rb --bundle-id=#{PACKAGE_NAME} Unity-iPhone/Unity-iPhone.xcodeproj"
-  end
-
-  task :xcode do
-    cd('Unity-iPhone') do
-      xcodebuild "-project", "Unity-iPhone.xcodeproj", "-scheme", "Unity-iPhone", "-allowProvisioningUpdates", "-sdk", "iphoneos", "-configuration", "Debug", "clean", "archive", "-archivePath", "build/archive", "DEVELOPMENT_TEAM=7FLZTACJ82"
-    end
-  end
-
-  task :xcode_open do
-    sh "open Unity-iPhone/Unity-iPhone.xcodeproj"
-  end
-
-  task :export do
-    old = {}
-    RVM_VARS.each do |key|
-      old[key] = ENV[key]
-    end
-    old['PATH'] = ENV['PATH']
-
-    begin
-      %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH).each do |var|
-        ENV.delete(var)
-      end
-      ENV['PATH'] = ENV['PATH'].split(':').reject { |elem| elem =~ /\.rvm/ }.join(':')
-      xcodebuild "-exportArchive", "-archivePath", "Unity-iPhone/build/archive.xcarchive", "-exportOptionsPlist", "iOSResources/exportOptions.plist", "-exportPath", "Unity-iPhone/build/", "-allowProvisioningUpdates"
-    ensure
-      old.each do |key, value|
-        ENV[key] = value
-      end
-    end
-
-    cp 'Unity-iPhone/build/Unity-iPhone.ipa', 'teak-unity-cleanroom.ipa'
   end
 end
 
