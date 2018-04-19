@@ -132,6 +132,7 @@ end
 namespace :ios do
   task all: [:build, :postprocess, :add_extensions, :xcode, :export]
   task min: [:build, :postprocess, :add_extensions, :xcode_open]
+  task fastlane: [:build, :postprocess, :add_extensions, :fastlane_dev]
 
   task :build do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
@@ -144,6 +145,12 @@ namespace :ios do
 
     cp 'iOSResources/Unity-iPhone/Unity-iPhone.entitlements', 'Unity-iPhone/Unity-iPhone/Unity-iPhone.entitlements'
     sh "ruby iOSResources/AddEntitlements.rb Unity-iPhone"
+  end
+
+  task :fastlane_dev do
+    cd('Unity-iPhone') do
+      sh 'fastlane dev'
+    end
   end
 
   task :add_extensions do

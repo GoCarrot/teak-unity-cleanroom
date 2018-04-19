@@ -44,12 +44,13 @@ Assets/Plugins/Android/com.google.android.gms.play-services-tasks-*
 
 # Generated Files
 Unity-iPhone/*
-!Unity-iPhone/fastlane
 WebGLBuild*
 Teak.unitypackage
 teak-unity-cleanroom.ipa
 teak-unity-cleanroom.apk
 unity.log
+fastlane/README.md
+fastlane/report.xml
 
 # Generated Configuration Files
 Assets/Plugins/Android/AndroidManifest.xml*

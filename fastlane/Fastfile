@@ -9,7 +9,9 @@
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
 FASTFILE_PATH = File.expand_path(File.dirname(File.dirname(__FILE__)))
+XCODE_PROJECT = File.join(FASTFILE_PATH, "..", "Unity-iPhone", "Unity-iPhone.xcodeproj")
 CONFIG_TYPE = "development"
+TEAM_ID = "7FLZTACJ82"
 TEAK_APP_EXTENSIONS = ["TeakNotificationService", "TeakNotificationContent"]
 
 default_platform(:ios)
@@ -69,22 +71,27 @@ platform :ios do
       push_enabled: true,
       push_ios: true,
       push_development: true,
-      entitlements_project_path: File.join(FASTFILE_PATH, '..', "Unity-iPhone.xcodeproj")
+      entitlements_project_path: XCODE_PROJECT
     )
 
-    #disable_automatic_code_signing
+    enable_automatic_code_signing(
+      path: XCODE_PROJECT,
+      team_id: TEAM_ID
+    )
 
     TEAK_APP_EXTENSIONS.concat(["Unity-iPhone"]).each do |target|
       update_project_provisioning(
+        xcodeproj: XCODE_PROJECT,
         target_filter: target,
         profile: ios_provisioning_profile[target]
       )
     end
 
     build_ios_app(
+      project: XCODE_PROJECT,
       scheme: "Unity-iPhone",
       clean: true,
-      output_directory: File.join(FASTFILE_PATH, '..'),
+      output_directory: File.join(FASTFILE_PATH, ".."),
       output_name: "teak-unity-cleanroom.ipa",
       export_method: CONFIG_TYPE
     )
