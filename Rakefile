@@ -148,9 +148,7 @@ namespace :ios do
   end
 
   task :fastlane_dev do
-    cd('Unity-iPhone') do
-      sh 'fastlane dev'
-    end
+    sh 'fastlane dev'
   end
 
   task :add_extensions do

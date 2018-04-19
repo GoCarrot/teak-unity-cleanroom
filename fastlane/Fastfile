@@ -13,6 +13,7 @@ XCODE_PROJECT = File.join(FASTFILE_PATH, "..", "Unity-iPhone", "Unity-iPhone.xco
 CONFIG_TYPE = "development"
 TEAM_ID = "7FLZTACJ82"
 TEAK_APP_EXTENSIONS = ["TeakNotificationService", "TeakNotificationContent"]
+BUILD_CONFIGURATIONS = ["Debug", "Release", "ReleaseForRunning", "ReleaseForProfiling"]
 
 default_platform(:ios)
 
@@ -33,6 +34,14 @@ platform :ios do
         )
       end
     end
+  end
+
+  desc "Test things"
+  lane :test do
+    teak_extensions(
+      teak_extensions_project_path:XCODE_PROJECT,
+      #teak_extensions_source:"~/Code/teak-ios"
+    )
   end
 
   desc "Build targeting Dev profile"
@@ -74,21 +83,26 @@ platform :ios do
       entitlements_project_path: XCODE_PROJECT
     )
 
-    enable_automatic_code_signing(
-      path: XCODE_PROJECT,
-      team_id: TEAM_ID
+    disable_automatic_code_signing(
+      path: XCODE_PROJECT
     )
 
+    puts (Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING] || {}).inspect
+
     TEAK_APP_EXTENSIONS.concat(["Unity-iPhone"]).each do |target|
-      update_project_provisioning(
-        xcodeproj: XCODE_PROJECT,
-        target_filter: target,
-        profile: ios_provisioning_profile[target]
-      )
+      BUILD_CONFIGURATIONS.each do |configuration|
+        update_project_provisioning(
+          xcodeproj: XCODE_PROJECT,
+          target_filter: target,
+          profile: ios_provisioning_profile[target],
+          build_configuration: configuration
+        )
+      end
     end
 
     build_ios_app(
       project: XCODE_PROJECT,
+      xcargs: '-allowProvisioningUpdates',
       scheme: "Unity-iPhone",
       clean: true,
       output_directory: File.join(FASTFILE_PATH, ".."),
