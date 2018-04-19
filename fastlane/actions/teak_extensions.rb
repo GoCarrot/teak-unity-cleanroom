@@ -12,10 +12,12 @@ module Fastlane
     class TeakExtensionsAction < Action
       def self.run(params)
         FastlaneCore::PrintTable.print_values(config: params, title: "Summary for Teak Extensions")
-        teak_extensions_project_path = params[:teak_extensions_project_path]
-        teak_extensions_source = params[:teak_extensions_source]
-        teak_extensions_source_path = params[:teak_extensions_source_path]
-        teak_extensions_branch = params[:teak_extensions_branch]
+        teak_extensions_project_path = params[:xcodeproj]
+        teak_extensions_source = params[:source]
+        teak_extensions_source_path = params[:source_path]
+        teak_extensions_branch = params[:branch]
+        teak_extensions_team_id = params[:team_id]
+        teak_extensions_bundle_identifier = params[:app_identifier]
 
         # Open Xcode project
         xcode_proj = Xcodeproj::Project.open(teak_extensions_project_path)
@@ -101,18 +103,16 @@ module Fastlane
 
             # Assign build configurations
             target.build_configurations.each do |config|
-              build_settings = xcode_proj.native_targets.detect { |e| e.name == xcode_proj.root_object.name }.build_settings(config.name)
-              next if not build_settings
               config.build_settings = {
                 :ARCHS => "arm64", # armv7 and armv7s do not support Notification Content Extensions
                 :IPHONEOS_DEPLOYMENT_TARGET => 10.0,
-                :DEVELOPMENT_TEAM => build_settings['DEVELOPMENT_TEAM'],
+                :DEVELOPMENT_TEAM => teak_extensions_team_id,
                 :LIBRARY_SEARCH_PATHS => [
                     "$(SRCROOT)/Libraries/Teak/Plugins/iOS" # Unity path
                 ],
                 :INFOPLIST_FILE => "#{service}/Info.plist",
                 :LD_RUNPATH_SEARCH_PATHS => "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks",
-                :PRODUCT_BUNDLE_IDENTIFIER => "$(CFBundleIdentifier).#{service}",
+                :PRODUCT_BUNDLE_IDENTIFIER => "#{teak_extensions_bundle_identifier}.#{service}",
                 :PRODUCT_NAME => "$(TARGET_NAME)",
                 :SKIP_INSTALL => :YES,
                 :TARGETED_DEVICE_FAMILY => "1,2",
@@ -147,23 +147,41 @@ module Fastlane
 
       def self.available_options
         [
-          FastlaneCore::ConfigItem.new(key: :teak_extensions_project_path,
+          FastlaneCore::ConfigItem.new(key: :xcodeproj,
                                        env_name: "FL_TEAK_EXTENSIONS_PROJECT_PATH",
-                                       description: "Xcode project path"),
-          FastlaneCore::ConfigItem.new(key: :teak_extensions_source,
+                                       description: "Path to your Xcode project",
+                                       code_gen_sensitive: true,
+                                       default_value: Dir['*.xcodeproj'].first,
+                                       default_value_dynamic: true,
+                                       verify_block: proc do |value|
+                                         UI.user_error!("Please pass the path to the project, not the workspace") unless value.end_with?(".xcodeproj")
+                                         UI.user_error!("Could not find Xcode project") unless File.exist?(value)
+                                       end),
+          FastlaneCore::ConfigItem.new(key: :app_identifier,
+                                       env_name: "FL_TEAK_EXTENSIONS_BUNDLE_IDENTIFIER",
+                                       description: 'The app Identifier you want to set',
+                                       code_gen_sensitive: true,
+                                       default_value: ENV['PRODUCE_APP_IDENTIFIER'] || CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier),
+                                       default_value_dynamic: true),
+          FastlaneCore::ConfigItem.new(key: :source,
                                        env_name: "FL_TEAK_EXTENSIONS_SOURCE",
                                        description: "Path to a local checkout of the `teak-ios` repository, or git URL",
                                        default_value: "https://github.com/GoCarrot/teak-ios.git",
                                        optional: true),
-          FastlaneCore::ConfigItem.new(key: :teak_extensions_source_path,
+          FastlaneCore::ConfigItem.new(key: :source_path,
                                        env_name: "FL_TEAK_EXTENSIONS_SOURCE_PATH",
                                        description: "If `teak_extensions_source` is a git URL, the path to the extensions inside that repository",
                                        default_value: "TeakExtensions/",
                                        optional: true),
-          FastlaneCore::ConfigItem.new(key: :teak_extensions_branch,
+          FastlaneCore::ConfigItem.new(key: :branch,
                                        env_name: "FL_TEAK_EXTENSIONS_SOURCE_BRANCH",
                                        description: "If `teak_extensions_source` is a git URL, the branch to use in that repository",
                                        default_value: "HEAD",
+                                       optional: true),
+          FastlaneCore::ConfigItem.new(key: :team_id,
+                                       env_name: "FL_TEAK_EXTENSIONS_TEAM_ID",
+                                       description: "The ID of your Developer Portal team if you're in multiple teams",
+                                       default_value: CredentialsManager::AppfileConfig.try_fetch_value(:team_id),
                                        optional: true)
           
         ]
