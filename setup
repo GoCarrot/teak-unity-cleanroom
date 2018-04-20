@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+brew tap caskroom/cask
+brew update
+
+if [ "$(which aws)" == "" ]; then brew install awscli; fi
+
+# Install Unity 5
+if [ ! -f /Applications/Unity/Unity.app/Contents/Pkginfo ]; then
+  brew cask install unity
+fi
+
+if [ ! -f /Applications/Unity/PlaybackEngines/AndroidPlayer/ivy.xml ]; then
+  brew cask install unity-android-support-for-editor
+fi

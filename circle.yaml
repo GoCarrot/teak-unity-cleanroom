@@ -1,0 +1,22 @@
+machine:
+  xcode:
+    version: 9.0
+  environment:
+    UNITY_HOME: /Applications/Unity
+test:
+  override:
+    - rake pacakage:download package:import config:all build:ios
+dependencies:
+  pre:
+    - ./setup
+    - fastlane setup
+  cache_directories:
+    - ~/Library/Caches/Homebrew/
+checkout:
+  post:
+    - git fetch --tags
+deployment:
+  prod:
+    branch: [master]
+    commands:
+      - aws s3 cp teak-unity-cleanroom.ipa s3://teak-build-artifacts/unity-cleanroom/teak-unity-cleanroom.ipa --acl public-read
