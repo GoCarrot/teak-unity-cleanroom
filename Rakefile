@@ -147,7 +147,7 @@ namespace :ios do
   end
 
   task :fastlane do
-    sh 'fastlane dev'
+    sh 'bundle exec fastlane dev'
   end
 end
 
