@@ -15,3 +15,7 @@ fi
 if [ ! -f /Applications/Unity/PlaybackEngines/AndroidPlayer/ivy.xml ]; then
   brew cask install unity-android-support-for-editor
 fi
+
+if [ ! -f /Applications/Unity/PlaybackEngines/iOSSupport/ivy.xml ]; then
+  brew cask install unity-ios-support-for-editor
+fi
