@@ -7,7 +7,7 @@ machine:
     LANG: en_US.UTF-8
 test:
   override:
-    - rake pacakage:download package:import config:all build:ios
+    - rake package:download package:import config:all build:ios
 dependencies:
   pre:
     - gem install bundler
