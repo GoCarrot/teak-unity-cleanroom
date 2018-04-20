@@ -1,4 +1,4 @@
-git_url("https://github.com/GoCarrot/teak-match-certificates")
+git_url("git@github.com:GoCarrot/teak-match-certificates.git")
 
 type("development") # The default type, can be: appstore, adhoc, enterprise or development
 
