@@ -8,6 +8,7 @@ test:
     - rake pacakage:download package:import config:all build:ios
 dependencies:
   pre:
+    - gem install bundler
     - ./setup
     - fastlane setup
   cache_directories:
