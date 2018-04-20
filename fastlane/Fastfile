@@ -18,6 +18,10 @@ BUILD_CONFIGURATIONS = ["Debug", "Release", "ReleaseForRunning", "ReleaseForProf
 default_platform(:ios)
 
 platform :ios do
+  before_all do
+    setup_circle_ci
+  end
+
   desc "Setup"
   lane :setup do
     ["io.teak.app.unity.dev", "io.teak.app.unity.prod"].each do |app_id|
