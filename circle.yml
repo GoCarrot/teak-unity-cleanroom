@@ -9,6 +9,7 @@ test:
 dependencies:
   pre:
     - gem install bundler
+    - bundle install
     - ./setup
     - bundle exec fastlane match development
   cache_directories:
