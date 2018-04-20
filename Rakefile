@@ -28,6 +28,7 @@ TEAK_CREDENTIALS = {
   }
 }
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
+TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_VERSION')}" : ""
 
 #
 # Template parameters
@@ -73,7 +74,7 @@ end
 
 namespace :package do
   task download: [:clean] do
-    sh "curl -o Teak.unitypackage https://s3.amazonaws.com/teak-build-artifacts/unity/Teak.unitypackage"
+    sh "curl -o Teak.unitypackage https://s3.amazonaws.com/teak-build-artifacts/unity/Teak#{TEAK_SDK_VERSION}.unitypackage"
   end
 
   task copy: [:clean] do
