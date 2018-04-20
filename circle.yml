@@ -10,7 +10,7 @@ dependencies:
   pre:
     - gem install bundler
     - ./setup
-    - bundle exec fastlane setup
+    - bundle exec fastlane match development
   cache_directories:
     - ~/Library/Caches/Homebrew/
 checkout:
