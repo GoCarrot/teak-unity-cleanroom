@@ -3,7 +3,7 @@ git_url("git@github.com:GoCarrot/teak-match-certificates.git")
 type("development") # The default type, can be: appstore, adhoc, enterprise or development
 
 app_identifier(["io.teak.app.unity.dev", "io.teak.app.unity.prod"])
-username("pat@teak.io")
+username("teak.devices@gmail.com")
 team_id("7FLZTACJ82")
 
 # For all available options run `fastlane match --help`
