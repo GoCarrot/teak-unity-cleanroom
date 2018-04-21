@@ -66,6 +66,8 @@ platform :ios do
 
   desc "Build targeting Dev profile"
   lane :dev do
+    BUILD_CONFIGURATION = "Debug"
+
     # Create/fetch and store provisioning profiles
     ios_provisioning_profile = {}
     ["io.teak.app.unity.dev"].each do |app_id|
@@ -109,31 +111,28 @@ platform :ios do
       #source:"~/Code/teak-ios"
     )
 
-    disable_automatic_code_signing(
-      path: XCODE_PROJECT
-    )
-
-    puts (Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING] || {}).inspect
-
     TEAK_APP_EXTENSIONS.concat(["Unity-iPhone"]).each do |target|
-      BUILD_CONFIGURATIONS.each do |configuration|
-        update_project_provisioning(
-          xcodeproj: XCODE_PROJECT,
-          target_filter: target,
-          profile: ios_provisioning_profile[target],
-          build_configuration: configuration
-        )
-      end
+      update_project_provisioning(
+        xcodeproj: XCODE_PROJECT,
+        target_filter: target,
+        profile: ios_provisioning_profile[target],
+        build_configuration: BUILD_CONFIGURATION
+      )
     end
+
+    sync_code_signing
+    disable_automatic_code_signing(path: XCODE_PROJECT)
 
     build_ios_app(
       project: XCODE_PROJECT,
-      xcargs: '-allowProvisioningUpdates',
       scheme: "Unity-iPhone",
+      configuration: BUILD_CONFIGURATION,
       clean: true,
       output_directory: File.join(FASTFILE_PATH, ".."),
       output_name: "teak-unity-cleanroom.ipa",
       export_method: CONFIG_TYPE
     )
+
+    enable_automatic_code_signing(path: XCODE_PROJECT)
   end
 end
