@@ -14,12 +14,13 @@ CONFIG_TYPE = "development"
 TEAM_ID = "7FLZTACJ82"
 TEAK_APP_EXTENSIONS = ["TeakNotificationService", "TeakNotificationContent"]
 BUILD_CONFIGURATIONS = ["Debug", "Release", "ReleaseForRunning", "ReleaseForProfiling"]
+CIRCLE_ARTIFACTS = ENV.fetch('CIRCLE_ARTIFACTS', nil)
 
 default_platform(:ios)
 
 platform :ios do
   before_all do
-    setup_circle_ci
+    setup_circle_ci if !CIRCLE_ARTIFACTS.nil?
   end
 
   desc "Setup"
