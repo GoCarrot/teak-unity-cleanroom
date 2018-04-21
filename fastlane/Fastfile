@@ -26,6 +26,21 @@ platform :ios do
   desc "Setup"
   lane :setup do
     ["io.teak.app.unity.dev", "io.teak.app.unity.prod"].each do |app_id|
+      produce(
+        app_identifier: app_id,
+        app_name: "Teak Unity Cleanroom",
+        skip_itc: true,
+        enable_services: {
+          push_notification: "on",
+          associated_domains: "on"
+        }
+      )
+      match(
+        app_identifier: app_id,
+        type: CONFIG_TYPE,
+        force: true
+      )
+
       TEAK_APP_EXTENSIONS.each do |app_extension_name|
         produce(
           app_identifier: "#{app_id}.#{app_extension_name}",
