@@ -37,10 +37,10 @@ class BuildPlayer
     static void ResolveDependencies()
     {
         string[] args = System.Environment.GetCommandLineArgs();
-        int argIdx = System.Array.IndexOf(args, "-quit");
-        if(argIdx > -1)
+        if(System.Array.IndexOf(args, "-quit") > -1 ||
+           System.Array.IndexOf(args, "-nographcis") > -1)
         {
-            Debug.LogError("[teak-unity-cleanroom] ResolveDependencies must be run without the '-quit' option.");
+            Debug.LogError("[teak-unity-cleanroom] ResolveDependencies must be run without the '-quit' or '-nographics' options.");
             EditorApplication.Exit(1);
         }
 
