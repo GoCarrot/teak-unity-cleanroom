@@ -31,6 +31,14 @@ TEAK_CREDENTIALS = {
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
 TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_VERSION')}" : ""
 
+def unity?
+  File.exist? "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity"
+end
+
+def ci?
+  ENV.fetch('CI', false).to_s == 'true'
+end
+
 #
 # Template parameters
 #
@@ -46,7 +54,7 @@ end
 # Play a sound after finished
 #
 at_exit do
-  sh "afplay /System/Library/Sounds/Submarine.aiff"
+  sh "afplay /System/Library/Sounds/Submarine.aiff" unless ci?
 end
 
 #
@@ -60,10 +68,6 @@ end
 def unity(*args, quit: true, nographics: true)
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
   sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}"
-end
-
-def unity?
-  File.exist? "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity"
 end
 
 #
