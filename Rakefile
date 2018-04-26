@@ -140,7 +140,9 @@ namespace :ios do
   end
 
   task :postprocess do
+    puts "CircleCI thinks PROJECT_PATH = #{PROJECT_PATH}"
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'Unity-iPhone.entitlements.template'))
+    puts template
     File.write(File.join(PROJECT_PATH, 'iOSResources', 'Unity-iPhone', 'Unity-iPhone.entitlements'), Mustache.render(template, template_parameters))
 
     cp 'iOSResources/Unity-iPhone/Unity-iPhone.entitlements', 'Unity-iPhone/Unity-iPhone/Unity-iPhone.entitlements'
