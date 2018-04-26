@@ -56,9 +56,9 @@ def xcodebuild(*args)
   sh "xcodebuild #{escaped_args} | xcpretty"
 end
 
-def unity(*args)
+def unity(*args, quit: true, nographics: true)
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
-  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log -quit -batchmode -nographics -projectPath #{PROJECT_PATH} #{escaped_args}"
+  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}"
 end
 
 def unity?
@@ -111,7 +111,7 @@ end
 
 namespace :build do
   task :dependencies do
-    #unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.ResolveDependencies"
+    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.ResolveDependencies", quit: false, nographics: false
   end
 
   task android: [:dependencies] do

@@ -33,16 +33,27 @@ class BuildPlayer
 #endif
     }
 
+    // Must be run *without* the -quit option
     static void ResolveDependencies()
     {
+        string[] args = System.Environment.GetCommandLineArgs();
+        int argIdx = System.Array.IndexOf(args, "-quit");
+        if(argIdx > -1)
+        {
+            Debug.LogError("[teak-unity-cleanroom] ResolveDependencies must be run without the '-quit' option.");
+            EditorApplication.Exit(1);
+        }
+
         Debug.Log("[teak-unity-cleanroom] Resolving dependencies with Play Services Resolver");
+
         PlayServicesResolver.Resolve(
             resolutionCompleteWithResult: (success) => {
                 if (!success) {
                     Debug.Log("[teak-unity-cleanroom] FAILED to resolve dependencies");
-                    // TODO: Abort build
+                    EditorApplication.Exit(1);
                 } else {
                     Debug.Log("[teak-unity-cleanroom] Resolved dependencies");
+                    EditorApplication.Exit(0);
                 }
             },
             forceResolution: false);
