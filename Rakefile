@@ -6,6 +6,7 @@ CLEAN.include "**/.DS_Store"
 desc "Build Unity package"
 task :default
 
+CIRCLE_ARTIFACTS = ENV.fetch('CIRCLE_ARTIFACTS', nil)
 UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity')
 RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
 PROJECT_PATH = Rake.application.original_dir
@@ -177,5 +178,16 @@ namespace :install do
     sh "ruby -run -e httpd WebGlBuild -p 8000 &"
     sh "open http://localhost:8000"
     sh "fg"
+  end
+end
+
+#
+# Store off unity.log if a task fails
+#
+Rake::Task.tasks.each do |t|
+  t.enhance do
+    return unless CIRCLE_ARTIFACTS
+    cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{t.name.sub(':', '-')}.unity.log")) unless $!.nil?
+    FileUtils.rm_f('unity.log')
   end
 end
