@@ -24,4 +24,5 @@ deployment:
   prod:
     branch: [master]
     commands:
-      - rake deploy:ios deploy:android
+      - rake deploy:android
+      #- rake deploy:ios
