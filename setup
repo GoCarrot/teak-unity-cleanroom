@@ -10,6 +10,13 @@ if [ "$(which android)" == "" ]; then
   brew cask install android-sdk
 fi
 
+# Android SDK components
+echo y | android update sdk -u -a -t tools
+echo y | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-26"
+echo y | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;26.0.2"
+echo y | $ANDROID_HOME/tools/bin/sdkmanager "extras;google;m2repository"
+echo y | $ANDROID_HOME/tools/bin/sdkmanager "extras;android;m2repository"
+
 # Install Unity 5
 if [ ! -f /Applications/Unity/Unity.app/Contents/Pkginfo ]; then
   brew cask install unity
