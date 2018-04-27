@@ -3,6 +3,23 @@ require "shellwords"
 require "mustache"
 CLEAN.include "**/.DS_Store"
 
+#
+# Extend Rake to have current_task
+#
+require 'rake'
+module Rake
+  class Application
+    attr_accessor :current_task
+  end
+  class Task
+    alias :old_execute :execute
+    def execute(args=nil)
+      Rake.application.current_task = @name
+      old_execute(args)
+    end
+  end #class Task
+end #module Rake
+
 desc "Build Unity package"
 task :default
 
@@ -70,7 +87,7 @@ def unity(*args, quit: true, nographics: true)
   sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}"
   ensure
     return unless CIRCLE_ARTIFACTS
-    cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{t.name.sub(':', '-')}.unity.log")) unless $!.nil?
+    cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{Rake.application.current_task.name.sub(':', '-')}.unity.log")) unless $!.nil?
     FileUtils.rm_f('unity.log')
 end
 
