@@ -84,7 +84,7 @@ def xcodebuild(*args)
 end
 
 def unity(*args, quit: true, nographics: true)
-  args.append("-username", UNITY_EMAIL, "-password", UNITY_PASSWORD) if ci?
+  args.append("-username", ENV["UNITY_EMAIL"], "-password", ENV["UNITY_PASSWORD"]) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
   sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}"
