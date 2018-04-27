@@ -14,6 +14,7 @@ dependencies:
     - bundle install
     - ./setup
     - bundle exec fastlane match development
+    - openssl enc -d -aes-256-cbc -in kms/Unity_lic.ulf.data -out /Library/Application\ Support/Unity/Unity_lic.ulf -k `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode`
   cache_directories:
     - ~/Library/Caches/Homebrew/
 checkout:
