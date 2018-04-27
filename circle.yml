@@ -1,8 +1,6 @@
 machine:
   xcode:
     version: 9.0
-  java:
-    version: oraclejdk8
   environment:
     UNITY_HOME: /Applications/Unity
     ANDROID_HOME: /usr/local/share/android-sdk
