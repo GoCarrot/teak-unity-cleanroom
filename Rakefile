@@ -93,7 +93,6 @@ def unity(*args, quit: true, nographics: true)
   ensure
     return unless CIRCLE_ARTIFACTS
     cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{Rake.application.current_task.name.sub(':', '-')}.unity.log")) unless $!.nil?
-    FileUtils.rm_f('unity.log')
 end
 
 def fastlane(*args, env:{})
