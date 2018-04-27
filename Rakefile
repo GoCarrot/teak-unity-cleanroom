@@ -68,6 +68,10 @@ end
 def unity(*args, quit: true, nographics: true)
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
   sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}"
+  ensure
+    return unless CIRCLE_ARTIFACTS
+    cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{t.name.sub(':', '-')}.unity.log")) unless $!.nil?
+    FileUtils.rm_f('unity.log')
 end
 
 #
@@ -182,16 +186,5 @@ namespace :install do
     sh "ruby -run -e httpd WebGlBuild -p 8000 &"
     sh "open http://localhost:8000"
     sh "fg"
-  end
-end
-
-#
-# Store off unity.log if a task fails
-#
-Rake::Task.tasks.each do |t|
-  t.enhance do
-    return unless CIRCLE_ARTIFACTS
-    cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{t.name.sub(':', '-')}.unity.log")) unless $!.nil?
-    FileUtils.rm_f('unity.log')
   end
 end
