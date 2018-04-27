@@ -14,7 +14,7 @@ module Rake
   class Task
     alias :old_execute :execute
     def execute(args=nil)
-      Rake.application.current_task = @name
+      Rake.application.current_task = self
       old_execute(args)
     end
   end #class Task
