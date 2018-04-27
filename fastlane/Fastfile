@@ -56,14 +56,6 @@ platform :ios do
     end
   end
 
-  desc "Test things"
-  lane :test do
-    teak_extensions(
-      xcodeproj:XCODE_PROJECT,
-      #source:"~/Code/teak-ios"
-    )
-  end
-
   desc "Build targeting Dev profile"
   lane :dev do
     BUILD_CONFIGURATION = "Debug"
