@@ -72,7 +72,9 @@ end
 #
 at_exit do
   sh "afplay /System/Library/Sounds/Submarine.aiff" unless ci?
-  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense" if ci?
+  begin
+    sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense" if ci?
+  end
 end
 
 #
