@@ -26,4 +26,4 @@ deployment:
   prod:
     branch: [master]
     commands:
-      - aws s3 cp teak-unity-cleanroom.ipa s3://teak-build-artifacts/unity-cleanroom/teak-unity-cleanroom.ipa --acl public-read
+      - rake deploy:ios deploy:android

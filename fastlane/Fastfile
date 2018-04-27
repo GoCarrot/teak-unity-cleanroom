@@ -18,6 +18,15 @@ CIRCLE_ARTIFACTS = ENV.fetch('CIRCLE_ARTIFACTS', nil)
 
 default_platform(:ios)
 
+desc "Copy or download the Teak SDK"
+lane :sdk do
+  version = teak_sdk(
+    sdk: :unity,
+    destination: '.'
+  )
+  File.write(File.join("..", "TEAK_VERSION"), version)
+end
+
 platform :ios do
   before_all do
     setup_circle_ci if !CIRCLE_ARTIFACTS.nil?

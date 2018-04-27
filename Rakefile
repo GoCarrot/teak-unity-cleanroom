@@ -96,6 +96,14 @@ def unity(*args, quit: true, nographics: true)
     FileUtils.rm_f('unity.log')
 end
 
+def fastlane(*args, env:{})
+  env = {
+    TEAK_AIR_CLEANROOM_BUNDLE_ID: PACKAGE_NAME
+  }.merge(env)
+  escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
+  sh "#{env.map{|k,v| "#{k}='#{v}'"}.join(' ')} bundle exec fastlane #{escaped_args}"
+end
+
 #
 # Tasks
 #
@@ -105,11 +113,11 @@ end
 
 namespace :package do
   task download: [:clean] do
-    sh "curl -o Teak.unitypackage https://s3.amazonaws.com/teak-build-artifacts/unity/Teak#{TEAK_SDK_VERSION}.unitypackage"
+    fastlane "sdk"
   end
 
   task copy: [:clean] do
-    cp '../teak-unity/Teak.unitypackage', 'Teak.unitypackage'
+    fastlane "sdk", env: {FL_TEAK_SDK_SOURCE: '../teak-unity/'}
   end
 
   task :import do
@@ -181,6 +189,16 @@ namespace :ios do
 
   task :fastlane do
     sh 'bundle exec fastlane dev'
+  end
+end
+
+namespace :deploy do
+  task :ios do
+    sh "aws s3 cp teak-air-cleanroom.ipa s3://teak-build-artifacts/air-cleanroom/teak-air-cleanroom-`cat TEAK_VERSION`.ipa --acl public-read"
+  end
+
+  task :android do
+    sh "aws s3 cp teak-air-cleanroom.apk s3://teak-build-artifacts/air-cleanroom/teak-air-cleanroom-`cat TEAK_VERSION`.apk --acl public-read"
   end
 end
 
