@@ -3,6 +3,7 @@ machine:
     version: 9.0
   environment:
     UNITY_HOME: /Applications/Unity
+    ANDROID_HOME: /usr/local/share/android-sdk
     LC_ALL: en_US.UTF-8
     LANG: en_US.UTF-8
 test:

@@ -6,6 +6,9 @@ brew tap caskroom/cask
 brew update
 
 if [ "$(which aws)" == "" ]; then brew install awscli; fi
+if [ "$(which android)" == "" ]; then
+  brew cask install android-sdk
+fi
 
 # Install Unity 5
 if [ ! -f /Applications/Unity/Unity.app/Contents/Pkginfo ]; then
