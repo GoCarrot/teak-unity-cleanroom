@@ -96,9 +96,6 @@ def unity(*args, quit: true, nographics: true)
 end
 
 def fastlane(*args, env:{})
-  env = {
-    TEAK_AIR_CLEANROOM_BUNDLE_ID: PACKAGE_NAME
-  }.merge(env)
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
   sh "#{env.map{|k,v| "#{k}='#{v}'"}.join(' ')} bundle exec fastlane #{escaped_args}"
 end
@@ -193,11 +190,11 @@ end
 
 namespace :deploy do
   task :ios do
-    sh "aws s3 cp teak-air-cleanroom.ipa s3://teak-build-artifacts/air-cleanroom/teak-air-cleanroom-`cat TEAK_VERSION`.ipa --acl public-read"
+    sh "aws s3 cp teak-unity-cleanroom.ipa s3://teak-build-artifacts/unity-cleanroom/teak-unity-cleanroom-`cat TEAK_VERSION`.ipa --acl public-read"
   end
 
   task :android do
-    sh "aws s3 cp teak-air-cleanroom.apk s3://teak-build-artifacts/air-cleanroom/teak-air-cleanroom-`cat TEAK_VERSION`.apk --acl public-read"
+    sh "aws s3 cp teak-unity-cleanroom.apk s3://teak-build-artifacts/unity-cleanroom/teak-unity-cleanroom-`cat TEAK_VERSION`.apk --acl public-read"
   end
 end
 
