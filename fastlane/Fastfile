@@ -31,39 +31,6 @@ lane :sdk do
 end
 
 platform :ios do
-  desc "Setup"
-  lane :setup do
-    ["io.teak.app.unity.dev", "io.teak.app.unity.prod"].each do |app_id|
-      produce(
-        app_identifier: app_id,
-        app_name: "Teak Unity Cleanroom",
-        skip_itc: true,
-        enable_services: {
-          push_notification: "on",
-          associated_domains: "on"
-        }
-      )
-      match(
-        app_identifier: app_id,
-        type: CONFIG_TYPE,
-        force: true
-      )
-
-      TEAK_APP_EXTENSIONS.each do |app_extension_name|
-        produce(
-          app_identifier: "#{app_id}.#{app_extension_name}",
-          app_name: app_extension_name,
-          skip_itc: true
-        )
-        match(
-          app_identifier: "#{app_id}.#{app_extension_name}",
-          type: CONFIG_TYPE,
-          force: true
-        )
-      end
-    end
-  end
-
   desc "Build targeting Dev profile"
   lane :dev do
     BUILD_CONFIGURATION = "Debug"
@@ -96,14 +63,6 @@ platform :ios do
         ios_provisioning_profile[app_extension_name] = ENV[provisioning_profile_env]
       end
     end
-
-    # Update entitlements
-    # update_entitlements(
-    #   push_enabled: true,
-    #   push_ios: true,
-    #   push_development: true,
-    #   entitlements_project_path: XCODE_PROJECT
-    # )
 
     # Add Teak app extensions
     teak_extensions(
