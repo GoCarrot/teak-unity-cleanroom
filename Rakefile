@@ -73,7 +73,9 @@ end
 at_exit do
   sh "afplay /System/Library/Sounds/Submarine.aiff" unless ci?
   begin
-    sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense" if ci?
+    sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false if ci?
+    puts "Released Unity license..."
+  rescue
   end
 end
 
@@ -89,7 +91,7 @@ def unity(*args, quit: true, nographics: true)
   args.push("-serial", ENV["UNITY_SERIAL"], "-username", ENV["UNITY_EMAIL"], "-password", ENV["UNITY_PASSWORD"]) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
-  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}"
+  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
   ensure
     return unless CIRCLE_ARTIFACTS
     cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{Rake.application.current_task.name.sub(':', '-')}.unity.log")) unless $!.nil?
@@ -97,7 +99,7 @@ end
 
 def fastlane(*args, env:{})
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
-  sh "#{env.map{|k,v| "#{k}='#{v}'"}.join(' ')} bundle exec fastlane #{escaped_args}"
+  sh "#{env.map{|k,v| "#{k}='#{v}'"}.join(' ')} bundle exec fastlane #{escaped_args}", verbose: false
 end
 
 #
