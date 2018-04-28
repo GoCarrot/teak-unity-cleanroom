@@ -56,6 +56,10 @@ def ci?
   ENV.fetch('CI', false).to_s == 'true'
 end
 
+def add_unity_log_to_artifacts
+  cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{Rake.application.current_task.name.sub(':', '-')}.unity.log")) unless $!.nil?
+end
+
 #
 # Template parameters
 #
@@ -73,6 +77,7 @@ end
 at_exit do
   sh "afplay /System/Library/Sounds/Submarine.aiff" unless ci?
   if ci?
+    add_unity_log_to_artifacts
     sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false rescue nil
     puts "Released Unity license..."
   end
@@ -93,7 +98,7 @@ def unity(*args, quit: true, nographics: true)
   sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
   ensure
     return unless CIRCLE_ARTIFACTS
-    cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{Rake.application.current_task.name.sub(':', '-')}.unity.log")) unless $!.nil?
+    add_unity_log_to_artifacts
 end
 
 def fastlane(*args, env:{})
