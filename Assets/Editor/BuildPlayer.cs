@@ -94,6 +94,7 @@ class BuildPlayer
 
     static void iOS()
     {
+        Debug.Log("I THINK I AM BUILDING IOS, BUT WHO KNOWS BECAUSE I'M UNITY. DERP DE DERP DE DERP.");
 #if !TEAK_NOT_AVAILABLE
         TeakSettings.JustShutUpIKnowWhatImDoing = false;
 #endif

@@ -14,7 +14,7 @@ fi
 echo y | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-26"
 echo y | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;26.0.2"
 
-# Install Unity 5
+# Unity + Android/iOS Support
 if [ ! -f /Applications/Unity/Unity.app/Contents/Pkginfo ]; then
   brew cask install unity
 fi
