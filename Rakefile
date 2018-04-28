@@ -91,7 +91,7 @@ def xcodebuild(*args)
   sh "xcodebuild #{escaped_args} | xcpretty"
 end
 
-def unity(*args, quit: true, nographics: true)
+def unity(*args, quit: true, nographics: false) # HAX 'nographics' should be true
   args.push("-serial", ENV["UNITY_SERIAL"], "-username", ENV["UNITY_EMAIL"], "-password", ENV["UNITY_PASSWORD"]) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
