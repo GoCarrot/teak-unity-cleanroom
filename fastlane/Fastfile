@@ -98,12 +98,12 @@ platform :ios do
     end
 
     # Update entitlements
-    update_entitlements(
-      push_enabled: true,
-      push_ios: true,
-      push_development: true,
-      entitlements_project_path: XCODE_PROJECT
-    )
+    # update_entitlements(
+    #   push_enabled: true,
+    #   push_ios: true,
+    #   push_development: true,
+    #   entitlements_project_path: XCODE_PROJECT
+    # )
 
     # Add Teak app extensions
     teak_extensions(

@@ -72,10 +72,9 @@ end
 #
 at_exit do
   sh "afplay /System/Library/Sounds/Submarine.aiff" unless ci?
-  begin
-    sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false if ci?
+  if ci?
+    sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false rescue nil
     puts "Released Unity license..."
-  rescue
   end
 end
 
