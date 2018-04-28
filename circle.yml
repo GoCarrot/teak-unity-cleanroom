@@ -8,7 +8,7 @@ machine:
     LANG: en_US.UTF-8
 test:
   override:
-    - rake package:download package:import config:all build:android
+    - rake package:download package:import config:all build:android build:ios
 dependencies:
   pre:
     - gem install bundler
@@ -25,4 +25,4 @@ deployment:
     branch: [master]
     commands:
       - rake deploy:android
-      #- rake deploy:ios
+      - rake deploy:ios
