@@ -9,6 +9,7 @@ machine:
 test:
   override:
     - rake package:download package:import config:all build:ios build:android
+        timeout: 1200
 dependencies:
   pre:
     - gem install bundler
