@@ -138,10 +138,14 @@ namespace :package do
 end
 
 namespace :config do
-  task all: [:id, :settings]
+  task all: [:id, :settings, :apple_team_id]
 
   task :id do
     unity "-executeMethod", "BuildPlayer.SetBundleId", PACKAGE_NAME
+  end
+
+  task :apple_team_id do
+    unity "-executeMethod", "BuildPlayer.SetAppleTeamId", "7FLZTACJ82" # TODO: Pull from Fastlane
   end
 
   task :settings do

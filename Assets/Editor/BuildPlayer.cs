@@ -33,6 +33,22 @@ class BuildPlayer
 #endif
     }
 
+    static void SetAppleTeamId()
+    {
+        string appleTeamId = null;
+
+        string[] args = System.Environment.GetCommandLineArgs();
+        int argIdx = System.Array.IndexOf(args, "BuildPlayer.SetAppleTeamId");
+        if(argIdx > -1 && args.Length > argIdx)
+        {
+            appleTeamId = args[argIdx + 1];
+        }
+
+        Debug.Log("[teak-unity-cleanroom] Setting Apple Team Id to " + appleTeamId);
+
+        PlayerSettings.iOS.appleDeveloperTeamID = appleTeamId;
+    }
+
     // Must be run *without* the -quit option
     static void ResolveDependencies()
     {
