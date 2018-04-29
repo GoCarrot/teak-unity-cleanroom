@@ -1,6 +1,7 @@
 require "rake/clean"
 require "shellwords"
 require "mustache"
+require "httparty"
 CLEAN.include "**/.DS_Store"
 
 #
@@ -47,6 +48,9 @@ TEAK_CREDENTIALS = {
 }
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
 TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_VERSION')}" : ""
+
+CIRCLE_TOKEN = ENV.fetch('CIRCLE_TOKEN') { `aws kms decrypt --ciphertext-blob fileb://kms/encrypted_circle_ci_key.data --output text --query Plaintext | base64 --decode` }
+FORCE_CIRCLE_BUILD_ON_FETCH = ENV.fetch('FORCE_CIRCLE_BUILD_ON_FETCH', false)
 
 def unity?
   File.exist? "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity"
@@ -104,6 +108,46 @@ end
 def fastlane(*args, env:{})
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
   sh "#{env.map{|k,v| "#{k}='#{v}'"}.join(' ')} bundle exec fastlane #{escaped_args}", verbose: false
+end
+
+def build_and_fetch(version, extension)
+  filename = "teak-unity-cleanroom-#{version}.#{extension}"
+  if FORCE_CIRCLE_BUILD_ON_FETCH.to_s == 'true' || %x[aws s3 ls s3://teak-build-artifacts/unity-cleanroom/ | grep #{filename}].empty?
+
+    # Kick off a CircleCI build for that version
+    puts "Version #{version} not found in S3, triggering a CircleCI build..."
+    response = HTTParty.post("https://circleci.com/api/v1.1/project/github/GoCarrot/teak-unity-cleanroom/tree/master?circle-token=#{CIRCLE_TOKEN}",
+                              {
+                                body: {
+                                  build_parameters:{
+                                    FL_TEAK_SDK_VERSION: version
+                                  }
+                                }.to_json,
+                                headers: {
+                                  'Content-Type' => 'application/json',
+                                  'Accept' => 'application/json'
+                                }
+                              })
+    build_num = response['build_num']
+    previous_build_time_ms = response['previous_successful_build']['build_time_millis']
+    previous_build_time_sec = previous_build_time_ms * 0.001
+
+    # Sleep for 3/4 of the previous build time
+    puts "Previous successful build took #{previous_build_time_sec} seconds."
+    puts "Waiting #{previous_build_time_sec * 0.90} seconds..."
+    sleep(previous_build_time_sec * 0.90)
+
+    loop do
+      # Get status
+      response = HTTParty.get("https://circleci.com/api/v1.1/project/github/GoCarrot/teak-unity-cleanroom/#{build_num}?circle-token=#{CIRCLE_TOKEN}",
+                              {format: :json})
+      break unless response['status'] == "running"
+      puts "Build status: #{response['status']}, checking again in #{previous_build_time_sec * 0.1} seconds"
+      sleep(previous_build_time_sec * 0.1)
+    end
+  end
+  sh "aws s3 sync s3://teak-build-artifacts/unity-cleanroom/ . --exclude '*' --include '#{filename}'"
+  filename
 end
 
 #
@@ -209,12 +253,20 @@ namespace :deploy do
 end
 
 namespace :install do
-  task :ios do
-    # # https://github.com/libimobiledevice/libimobiledevice/issues/510#issuecomment-347175312
-    sh "ideviceinstaller -i teak-unity-cleanroom.ipa"
+  task :ios, [:version] do |t, args|
+    ipa_path = args[:version] ? build_and_fetch(args[:version], :ipa) : "teak-unity-cleanroom.ipa"
+
+    begin
+      sh "ideviceinstaller --uninstall #{PACKAGE_NAME}"
+    rescue
+    end
+    # https://github.com/libimobiledevice/libimobiledevice/issues/510#issuecomment-347175312
+    sh "ideviceinstaller --install #{ipa_path}"
   end
 
-  task :android do
+  task :android, [:version] do |t, args|
+    apk_path = args[:version] ? build_and_fetch(args[:version], :apk) : "teak-unity-cleanroom.apk"
+
     devicelist = %x[AndroidResources/devicelist].split(',').collect{ |x| x.chomp }
     devicelist.each do |device|
       adb = lambda { |*args| sh "adb -s #{device} #{args.join(' ')}" }
@@ -223,7 +275,7 @@ namespace :install do
         adb.call "uninstall #{PACKAGE_NAME}"
       rescue
       end
-      adb.call "install teak-unity-cleanroom.apk"
+      adb.call "install #{apk_path}"
       adb.call "shell am start -n #{PACKAGE_NAME}/io.teak.sdk.wrapper.unity.TeakUnityPlayerActivity"
     end
   end
