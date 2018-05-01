@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/gocarrot/fastlane-plugin-teak.git
-  revision: 940f1f7c736553cd92f33e043b11c0aa0c52fd33
+  revision: 60fe2350114442fcecae7c7f720dcb8423a365af
   branch: master
   specs:
     fastlane-plugin-teak (0.1.0)
@@ -33,8 +33,8 @@ GEM
       http-cookie (~> 1.0.0)
     faraday_middleware (0.12.2)
       faraday (>= 0.7.4, < 1.0)
-    fastimage (2.1.1)
-    fastlane (2.93.1)
+    fastimage (2.1.3)
+    fastlane (2.94.0)
       CFPropertyList (>= 2.3, < 4.0.0)
       addressable (>= 2.3, < 3.0.0)
       babosa (>= 1.0.2, < 2.0.0)
