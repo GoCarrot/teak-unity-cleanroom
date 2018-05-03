@@ -26,8 +26,6 @@ public class MainMenu : MonoBehaviour
 
     static string errorText = null;
 
-    const string TeakUserIdKey = "Teak.UserId";
-
     class Test
     {
         public string Name { get; set; }
@@ -162,13 +160,8 @@ public class MainMenu : MonoBehaviour
     {
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Start");
 
-        if (!PlayerPrefs.HasKey(TeakUserIdKey))
-        {
-            string randomUserId = RandomNonConfusingCharacterString(8);
-            PlayerPrefs.SetString(TeakUserIdKey, randomUserId);
-            PlayerPrefs.Save();
-        }
-        teakUserId = PlayerPrefs.GetString(TeakUserIdKey);
+        Dictionary<string, object> deviceConfiguration = Teak.Instance.GetDeviceConfiguration();
+        teakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
         teakSdkVersion = "Teak SDK Version: " + Teak.Version;
 
         Teak.Instance.IdentifyUser(teakUserId);
@@ -304,7 +297,7 @@ public class MainMenu : MonoBehaviour
     {
         GUILayout.BeginArea(new Rect(10, 10, Screen.width - 20, Screen.height - 20));
 
-        GUILayout.Label(teakSdkVersion,statusStyle[0]);
+        GUILayout.Label(teakSdkVersion, statusStyle[0]);
         GUILayout.Label(teakUserId, statusStyle[0]);
         GUILayout.Label(teakDeepLinkLaunch, statusStyle[0]);
 
@@ -333,7 +326,7 @@ public class MainMenu : MonoBehaviour
             Teak.Instance.SetNumericAttribute("coins", (double) Random.Range(0.0f, 1000000.0f));
             Teak.Instance.SetStringAttribute("last_slot", RandomNonConfusingCharacterString(10));
         }
-/*
+
         if(!Teak.Instance.AreNotificationsEnabled())
         {
             if(GUILayout.Button("Open Settings App", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx / 1.5f) }))
@@ -341,7 +334,7 @@ public class MainMenu : MonoBehaviour
                 Teak.Instance.OpenSettingsAppToThisAppsSettings();
             }
         }
-*/
+
         foreach(Test test in testList)
         {
             if(test.Status > 0)
