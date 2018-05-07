@@ -1,0 +1,64 @@
+version: 2
+jobs:
+  build:
+    macos:
+      xcode: "8.3.3"
+    shell: /bin/bash --login -eo pipefail
+    environment:
+      UNITY_HOME: /Applications/Unity
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+    steps:
+      - checkout
+      - restore_cache:
+          key: v0-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Fix 'Homebrew must be run under Ruby 2.3!'
+          command: brew update
+      - run:
+          name: Homebrew Depenendcies
+          command: ./setup
+      - run:
+          name: Ruby Gems
+          command: bundle check || bundle install --path vendor/bundle
+      - save_cache:
+          paths:
+            - ~/Library/Caches/Homebrew/
+            - vendor/bundle
+          key: v0-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Fastlane Match
+          command: bundle exec fastlane match development
+      - add_ssh_keys:
+          fingerprints:
+            - "ab:48:b1:f2:a7:e9:0f:ba:81:3b:0c:16:48:6b:91:3d"
+      - run:
+          name: Build Teak Cleanroom
+          command: rake package:download package:import config:all build:ios build:android
+          no_output_timeout: 25m
+      - persist_to_workspace:
+          root: .
+          paths:
+            - teak-unity-cleanroom.ipa
+            - teak-unity-cleanroom.apk
+  deploy:
+    docker:
+      - image: circleci/ruby:latest
+    steps:
+      - attach_workspace:
+          at: .
+      - run: git fetch --tags
+      - run:
+          name: Upload Cleanroom Apps to S3
+          command: rake deploy:ios deploy:android
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: [master, /hotfix.*/]
