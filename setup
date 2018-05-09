@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 brew tap caskroom/cask
-brew update
+brew tap wooga/unityversions
 
 if [ "$(which aws)" == "" ]; then brew install awscli; fi
 if [ "$(which android)" == "" ]; then
