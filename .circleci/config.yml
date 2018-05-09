@@ -27,12 +27,12 @@ jobs:
             - ~/Library/Caches/Homebrew/
             - vendor/bundle
           key: v0-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}
-      - run:
-          name: Fastlane Match
-          command: bundle exec fastlane match development
       - add_ssh_keys:
           fingerprints:
             - "ab:48:b1:f2:a7:e9:0f:ba:81:3b:0c:16:48:6b:91:3d"
+      - run:
+          name: Fastlane Match
+          command: bundle exec fastlane match development
       - run:
           name: Build Teak Cleanroom
           command: rake package:download package:import config:all build:ios build:android
