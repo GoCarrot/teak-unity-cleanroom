@@ -41,6 +41,7 @@ jobs:
           command: |
             mkdir -p /tmp/unity_logs
             cp *.unity.log /tmp/unity_logs
+            bundle exec rake unity:returnlicense
           when: on_fail
       - store_artifacts:
           path: /tmp/unity_logs
