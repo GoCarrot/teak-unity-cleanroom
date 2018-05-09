@@ -50,6 +50,7 @@ jobs:
           paths:
             - teak-unity-cleanroom.ipa
             - teak-unity-cleanroom.apk
+            - TEAK_VERSION
   deploy:
     docker:
       - image: circleci/ruby:latest
