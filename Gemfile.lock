@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/gocarrot/fastlane-plugin-teak.git
-  revision: 60fe2350114442fcecae7c7f720dcb8423a365af
+  revision: 4a7a3d3152618342c7a9b181481520000c7f30b0
   branch: master
   specs:
     fastlane-plugin-teak (0.1.0)
@@ -112,6 +112,7 @@ GEM
     os (0.9.6)
     plist (3.4.0)
     public_suffix (2.0.5)
+    rake (12.3.1)
     representable (3.0.4)
       declarative (< 0.1.0)
       declarative-option (< 0.2.0)
@@ -161,6 +162,7 @@ DEPENDENCIES
   fastlane-plugin-teak!
   httparty
   mustache
+  rake
   xcodeproj
   xcpretty
 
