@@ -54,9 +54,21 @@ jobs:
     docker:
       - image: circleci/ruby:latest
     steps:
+      - restore_cache:
+          key: v0-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Ruby Gems
+          command: bundle check || bundle install --path vendor/bundle
+      - run:
+          name: Install AWS CLI
+          command: if [ "$(which aws)" == "" ]; then brew install awscli; fi
+      - save_cache:
+          paths:
+            - ~/Library/Caches/Homebrew/
+            - vendor/bundle
+          key: v0-{{ checksum "Gemfile.lock" }}
       - attach_workspace:
           at: .
-      - run: git fetch --tags
       - run:
           name: Upload Cleanroom Apps to S3
           command: rake deploy:ios deploy:android
