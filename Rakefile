@@ -24,7 +24,7 @@ end #module Rake
 desc "Build Unity package"
 task :default
 
-UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity')
+UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity-2017.1.0f3')
 RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
 PROJECT_PATH = Rake.application.original_dir
 BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
