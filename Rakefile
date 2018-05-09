@@ -24,7 +24,6 @@ end #module Rake
 desc "Build Unity package"
 task :default
 
-CIRCLE_ARTIFACTS = ENV.fetch('CIRCLE_ARTIFACTS', nil)
 UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity')
 RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
 PROJECT_PATH = Rake.application.original_dir
@@ -61,7 +60,7 @@ def ci?
 end
 
 def add_unity_log_to_artifacts
-  cp('unity.log', File.join(CIRCLE_ARTIFACTS, "#{Rake.application.current_task.name.sub(':', '-')}.unity.log")) unless $!.nil?
+  cp('unity.log', "#{Rake.application.current_task.name.sub(':', '-')}.unity.log") unless $!.nil?
 end
 
 #
@@ -95,13 +94,13 @@ def xcodebuild(*args)
   sh "xcodebuild #{escaped_args} | xcpretty"
 end
 
-def unity(*args, quit: true, nographics: false) # HAX 'nographics' should be true
+def unity(*args, quit: true, nographics: true)
   args.push("-serial", ENV["UNITY_SERIAL"], "-username", ENV["UNITY_EMAIL"], "-password", ENV["UNITY_PASSWORD"]) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
   sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
   ensure
-    return unless CIRCLE_ARTIFACTS
+    return unless ci?
     add_unity_log_to_artifacts
 end
 

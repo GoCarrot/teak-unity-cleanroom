@@ -36,6 +36,13 @@ jobs:
           name: Build Teak Cleanroom
           command: rake package:download package:import config:all build:ios build:android
           no_output_timeout: 25m
+      - run:
+          command: |
+            mkdir -p /tmp/unity_logs
+            cp *.unity.log /tmp/unity_logs
+          when: on_fail
+      - store_artifacts:
+          path: /tmp/unity_logs
       - persist_to_workspace:
           root: .
           paths:
