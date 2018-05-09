@@ -62,10 +62,9 @@ jobs:
           command: bundle check || bundle install --path vendor/bundle
       - run:
           name: Install AWS CLI
-          command: if [ "$(which aws)" == "" ]; then brew install awscli; fi
+          command: sudo apt-get -y -qq install awscli
       - save_cache:
           paths:
-            - ~/Library/Caches/Homebrew/
             - vendor/bundle
           key: v0-{{ checksum "Gemfile.lock" }}
       - attach_workspace:
