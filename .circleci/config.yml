@@ -6,6 +6,7 @@ jobs:
     shell: /bin/bash --login -eo pipefail
     environment:
       UNITY_HOME: /Applications/Unity
+      ANDROID_HOME: /usr/local/share/android-sdk
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
     steps:
