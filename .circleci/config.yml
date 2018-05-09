@@ -5,7 +5,7 @@ jobs:
       xcode: "8.3.3"
     shell: /bin/bash --login -eo pipefail
     environment:
-      UNITY_HOME: /Applications/Unity
+      UNITY_HOME: /Applications/Unity-2017.1.0f3/
       ANDROID_HOME: /usr/local/share/android-sdk
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
