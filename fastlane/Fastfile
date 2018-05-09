@@ -16,10 +16,6 @@ BUILD_CONFIGURATIONS = ["Debug", "Release", "ReleaseForRunning", "ReleaseForProf
 
 default_platform(:ios)
 
-before_all do
-  setup_circle_ci
-end
-
 desc "Copy or download the Teak SDK"
 lane :sdk do
   version = teak_sdk(
@@ -30,6 +26,10 @@ lane :sdk do
 end
 
 platform :ios do
+  before_all do
+    setup_circle_ci
+  end
+
   desc "Build targeting Dev profile"
   lane :dev do
     BUILD_CONFIGURATION = "Debug"
