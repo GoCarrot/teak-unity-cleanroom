@@ -35,7 +35,7 @@ jobs:
           command: bundle exec fastlane match development
       - run:
           name: Build Teak Cleanroom
-          command: rake package:download package:import config:all build:ios build:android
+          command: bundle exec rake package:download package:import config:all build:ios build:android
           no_output_timeout: 25m
       - run:
           command: |
