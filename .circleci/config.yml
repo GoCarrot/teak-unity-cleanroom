@@ -72,7 +72,7 @@ jobs:
           at: .
       - run:
           name: Upload Cleanroom Apps to S3
-          command: rake deploy:android deploy:ios
+          command: bundle exec rake deploy:android deploy:ios
 workflows:
   version: 2
   build_and_deploy:
