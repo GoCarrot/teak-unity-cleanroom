@@ -50,6 +50,8 @@ TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_
 
 KMS_KEY = ENV.fetch('KMS_KEY') { `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode` }
 CIRCLE_TOKEN = ENV.fetch('CIRCLE_TOKEN') { `openssl enc -d -aes-256-cbc -in kms/encrypted_circle_ci_key.data -k #{KMS_KEY}` }
+FB_UPLOAD_TOKEN = ENV.fetch('FB_UPLOAD_TOKEN') { `openssl enc -d -aes-256-cbc -in kms/encrypted_fb_upload_token.data -k #{KMS_KEY}` }
+
 FORCE_CIRCLE_BUILD_ON_FETCH = ENV.fetch('FORCE_CIRCLE_BUILD_ON_FETCH', false)
 
 def unity?
@@ -222,6 +224,8 @@ namespace :build do
 
   task :webgl do
     unity "-executeMethod", "BuildPlayer.WebGL"
+    cp File.join(PROJECT_PATH, 'WebGLResources', 'index.html'), File.join(PROJECT_PATH, 'WebGLBuild')
+    sh 'zip -r WebGLBuild.zip WebGLBuild'
   end
 end
 
@@ -255,6 +259,10 @@ namespace :deploy do
 
   task :android do
     sh "aws s3 cp teak-unity-cleanroom.apk s3://teak-build-artifacts/unity-cleanroom/teak-unity-cleanroom-`cat TEAK_VERSION`.apk --acl public-read"
+  end
+
+  task :webgl do
+    sh "curl -X POST https://graph-video.facebook.com/1136371193060244/assets -F 'access_token=#{FB_UPLOAD_TOKEN}' -F 'type=UNITY_WEBGL' -F 'asset=@./WebGLBuild.zip' -F 'comment=#{`cat TEAK_VERSION`}'"
   end
 end
 
