@@ -225,7 +225,7 @@ namespace :build do
   task :webgl do
     unity "-executeMethod", "BuildPlayer.WebGL"
     cp File.join(PROJECT_PATH, 'WebGLResources', 'index.html'), File.join(PROJECT_PATH, 'WebGLBuild')
-    sh 'zip -r WebGLBuild.zip WebGLBuild'
+    sh 'zip -r teak-unity-cleanroom.zip WebGLBuild'
   end
 end
 
@@ -262,7 +262,7 @@ namespace :deploy do
   end
 
   task :webgl do
-    sh "curl -X POST https://graph-video.facebook.com/1136371193060244/assets -F 'access_token=#{FB_UPLOAD_TOKEN}' -F 'type=UNITY_WEBGL' -F 'asset=@./WebGLBuild.zip' -F 'comment=#{`cat TEAK_VERSION`}'"
+    sh "curl -X POST https://graph-video.facebook.com/1136371193060244/assets -F 'access_token=#{FB_UPLOAD_TOKEN}' -F 'type=UNITY_WEBGL' -F 'asset=@./teak-unity-cleanroom.zip' -F 'comment=#{`cat TEAK_VERSION`}'"
   end
 end
 

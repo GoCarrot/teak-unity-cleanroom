@@ -50,6 +50,7 @@ jobs:
           paths:
             - teak-unity-cleanroom.ipa
             - teak-unity-cleanroom.apk
+            - teak-unity-cleanroom.zip
             - TEAK_VERSION
   deploy:
     docker:
