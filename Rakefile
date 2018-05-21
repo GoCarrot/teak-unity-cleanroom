@@ -48,7 +48,8 @@ TEAK_CREDENTIALS = {
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
 TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_VERSION')}" : ""
 
-CIRCLE_TOKEN = ENV.fetch('CIRCLE_TOKEN') { `aws kms decrypt --ciphertext-blob fileb://kms/encrypted_circle_ci_key.data --output text --query Plaintext | base64 --decode` }
+KMS_KEY = ENV.fetch('KMS_KEY') { `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode` }
+CIRCLE_TOKEN = ENV.fetch('CIRCLE_TOKEN') { `openssl enc -d -aes-256-cbc -in kms/encrypted_circle_ci_key.data -k #{KMS_KEY}` }
 FORCE_CIRCLE_BUILD_ON_FETCH = ENV.fetch('FORCE_CIRCLE_BUILD_ON_FETCH', false)
 
 def unity?
