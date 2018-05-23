@@ -230,7 +230,11 @@ namespace :build do
 end
 
 namespace :ios do
-  task all: [:build, :postprocess, :fastlane]
+  task all: [:fastlane_match, :build, :postprocess, :fastlane]
+
+  task :fastlane_match do
+    sh 'bundle exec fastlane match development' if ci?
+  end
 
   task :build do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
