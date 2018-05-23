@@ -49,6 +49,7 @@ Teak.unitypackage
 teak-unity-cleanroom*.ipa
 teak-unity-cleanroom*.app.dSYM.zip
 teak-unity-cleanroom*.apk
+teak-unity-cleanroom*.zip
 unity.log
 fastlane/README.md
 fastlane/report.xml
