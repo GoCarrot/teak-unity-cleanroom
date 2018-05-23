@@ -3,4 +3,4 @@
 # Ensure this file is checked in to source control!
 
 # bundle config local.fastlane-plugin-teak ~/Code/fastlane-plugin-teak
-gem 'fastlane-plugin-teak', :github => 'gocarrot/fastlane-plugin-teak', :branch => 'master'
+gem 'fastlane-plugin-teak'
