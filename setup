@@ -12,7 +12,7 @@ if [ ! -f /Applications/Unity/Unity.app/Contents/Pkginfo ]; then
 fi
 
 # Android only requirements
-if [ -n "$BUILD_ANDROID" ]; then
+if [[ $RAKE_BUILD_TASKS = *"android"* ]]; then
   # Android SDK
   if [ "$(which android)" == "" ]; then
     brew cask install android-sdk
@@ -29,14 +29,14 @@ if [ -n "$BUILD_ANDROID" ]; then
 fi
 
 # Unity WebGL Support
-if [ -n "$BUILD_WEBGL" ]; then
+if [[ $RAKE_BUILD_TASKS = *"ios"* ]]; then
   if [ ! -f /Applications/Unity/PlaybackEngines/WebGLSupport/ivy.xml ]; then
     brew cask install unity-webgl-support-for-editor@2017.1.0f3
   fi
 fi
 
 # Unity iOS Support
-if [ -n "$BUILD_IOS" ]; then
+if [[ $RAKE_BUILD_TASKS = *"webgl"* ]]; then
   if [ ! -f /Applications/Unity/PlaybackEngines/iOSSupport/ivy.xml ]; then
     brew cask install unity-ios-support-for-editor@2017.1.0f3
   fi

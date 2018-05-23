@@ -12,7 +12,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: v0-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}
+          key: v0-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}-{{ .Environment.RAKE_BUILD_TASKS }}
       - run:
           name: Fix 'Homebrew must be run under Ruby 2.3!'
           command: brew update
@@ -26,7 +26,7 @@ jobs:
           paths:
             - ~/Library/Caches/Homebrew/
             - vendor/bundle
-          key: v0-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}
+          key: v0-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}-{{ .Environment.RAKE_BUILD_TASKS }}
       - add_ssh_keys:
           fingerprints:
             - "ab:48:b1:f2:a7:e9:0f:ba:81:3b:0c:16:48:6b:91:3d"
