@@ -1,32 +1,43 @@
 #!/bin/bash
-set -euo pipefail
+set -eo pipefail
 IFS=$'\n\t'
 
 brew tap caskroom/cask
 brew tap wooga/unityversions
 
 if [ "$(which aws)" == "" ]; then brew install awscli; fi
-if [ "$(which android)" == "" ]; then
-  brew cask install android-sdk
-fi
 
-# Android SDK components
-echo y | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-26"
-echo y | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;26.0.2"
-
-# Unity + Android/iOS Support
 if [ ! -f /Applications/Unity/Unity.app/Contents/Pkginfo ]; then
   brew cask install unity@2017.1.0f3
 fi
 
-if [ ! -f /Applications/Unity/PlaybackEngines/AndroidPlayer/ivy.xml ]; then
-  brew cask install unity-android-support-for-editor@2017.1.0f3
+# Android only requirements
+if [ -n "$BUILD_ANDROID" ]; then
+  # Android SDK
+  if [ "$(which android)" == "" ]; then
+    brew cask install android-sdk
+  fi
+
+  # Android SDK components
+  echo y | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-26"
+  echo y | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;26.0.2"
+
+  # Unity Android support
+  if [ ! -f /Applications/Unity/PlaybackEngines/AndroidPlayer/ivy.xml ]; then
+    brew cask install unity-android-support-for-editor@2017.1.0f3
+  fi
 fi
 
-if [ ! -f /Applications/Unity/PlaybackEngines/WebGLSupport/ivy.xml ]; then
-  brew cask install unity-webgl-support-for-editor@2017.1.0f3
+# Unity WebGL Support
+if [ -n "$BUILD_WEBGL" ]; then
+  if [ ! -f /Applications/Unity/PlaybackEngines/WebGLSupport/ivy.xml ]; then
+    brew cask install unity-webgl-support-for-editor@2017.1.0f3
+  fi
 fi
 
-if [ ! -f /Applications/Unity/PlaybackEngines/iOSSupport/ivy.xml ]; then
-  brew cask install unity-ios-support-for-editor@2017.1.0f3
+# Unity iOS Support
+if [ -n "$BUILD_IOS" ]; then
+  if [ ! -f /Applications/Unity/PlaybackEngines/iOSSupport/ivy.xml ]; then
+    brew cask install unity-ios-support-for-editor@2017.1.0f3
+  fi
 fi
