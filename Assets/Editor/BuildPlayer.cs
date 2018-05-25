@@ -82,7 +82,12 @@ class BuildPlayer
 #endif
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../WebGLBuild");
 
-        BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.WebGL, BuildOptions.Development);
+        BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
+        buildPlayerOptions.scenes = BuildPlayer.scenes;
+        buildPlayerOptions.locationPathName = buildPath;
+        buildPlayerOptions.target = BuildTarget.WebGL;
+        buildPlayerOptions.options = BuildOptions.Development;
+        BuildPipeline.BuildPlayer(buildPlayerOptions);
     }
 
     static void Android()
@@ -105,7 +110,12 @@ class BuildPlayer
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
         }
 
-        BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.Android, BuildOptions.Development);
+        BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
+        buildPlayerOptions.scenes = BuildPlayer.scenes;
+        buildPlayerOptions.locationPathName = buildPath;
+        buildPlayerOptions.target = BuildTarget.Android;
+        buildPlayerOptions.options = BuildOptions.Development;
+        BuildPipeline.BuildPlayer(buildPlayerOptions);
     }
 
     static void iOS()
@@ -116,9 +126,14 @@ class BuildPlayer
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../Unity-iPhone");
         Directory.CreateDirectory(buildPath);
 #if UNITY_5
-        BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.iOS, BuildOptions.Development);
+        BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
+        buildPlayerOptions.scenes = BuildPlayer.scenes;
+        buildPlayerOptions.locationPathName = buildPath;
+        buildPlayerOptions.target = BuildTarget.iOS;
+        buildPlayerOptions.options = BuildOptions.Development;
+        BuildPipeline.BuildPlayer(buildPlayerOptions);
 #else
-        BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.iPhone, BuildOptions.Development);
+        BuildPipeline.BuildPlayer(BuildPlayer.scenes, buildPath, BuildTarget.iPhone, BuildOptions.Development);
 #endif
     }
 }
