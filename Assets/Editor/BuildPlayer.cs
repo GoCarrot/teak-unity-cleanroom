@@ -75,6 +75,15 @@ class BuildPlayer
             forceResolution: false);
     }
 
+    static void DoBuildPlayer(BuildPlayerOptions buildPlayerOptions) {
+        string error = BuildPipeline.BuildPlayer(buildPlayerOptions);
+        if (string.IsNullOrEmpty(error)) {
+            EditorApplication.Exit(0);
+        } else {
+            EditorApplication.Exit(1);
+        }
+    }
+
     static void WebGL()
     {
 #if !TEAK_NOT_AVAILABLE
@@ -87,7 +96,7 @@ class BuildPlayer
         buildPlayerOptions.locationPathName = buildPath;
         buildPlayerOptions.target = BuildTarget.WebGL;
         buildPlayerOptions.options = BuildOptions.Development;
-        BuildPipeline.BuildPlayer(buildPlayerOptions);
+        DoBuildPlayer(buildPlayerOptions);
     }
 
     static void Android()
@@ -115,7 +124,7 @@ class BuildPlayer
         buildPlayerOptions.locationPathName = buildPath;
         buildPlayerOptions.target = BuildTarget.Android;
         buildPlayerOptions.options = BuildOptions.Development;
-        BuildPipeline.BuildPlayer(buildPlayerOptions);
+        DoBuildPlayer(buildPlayerOptions);
     }
 
     static void iOS()
@@ -131,7 +140,7 @@ class BuildPlayer
         buildPlayerOptions.locationPathName = buildPath;
         buildPlayerOptions.target = BuildTarget.iOS;
         buildPlayerOptions.options = BuildOptions.Development;
-        BuildPipeline.BuildPlayer(buildPlayerOptions);
+        DoBuildPlayer(buildPlayerOptions);
 #else
         BuildPipeline.BuildPlayer(BuildPlayer.scenes, buildPath, BuildTarget.iPhone, BuildOptions.Development);
 #endif
