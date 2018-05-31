@@ -275,7 +275,7 @@ public class MainMenu : MonoBehaviour
         if(pushTokenString == null)
         {
 #if UNITY_5
-            byte[] token = null; //UnityEngine.iOS.NotificationServices.deviceToken;
+            byte[] token = UnityEngine.iOS.NotificationServices.deviceToken;
 #else
             byte[] token = NotificationServices.deviceToken;
 #endif
@@ -313,7 +313,7 @@ public class MainMenu : MonoBehaviour
             if(GUILayout.Button("Request Push Permissions", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
             {
 #if UNITY_5
-                //UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
+                UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
 #else
                 NotificationServices.RegisterForRemoteNotificationTypes(RemoteNotificationType.Alert |  RemoteNotificationType.Badge |  RemoteNotificationType.Sound);
 #endif
