@@ -84,7 +84,7 @@ at_exit do
   sh "afplay /System/Library/Sounds/Submarine.aiff" unless ci?
   if ci?
     add_unity_log_to_artifacts
-    Rake::Task["unity_license:release"].invoke
+    Rake::Task["unity_license:release"].invoke unless Rake.application.current_task.name.start_with?('unity_license')
   end
 end
 
