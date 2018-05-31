@@ -73,36 +73,47 @@ jobs:
           command: bundle exec rake $RAKE_DEPLOY_TASKS
 workflows:
   version: 2
-  android:
+  all:
     jobs:
       - build:
-          context: android-cleanroom
+          context: unity-cleanroom
       - deploy:
-          context: android-cleanroom
+          context: unity-cleanroom
           requires:
             - build
           filters:
             branches:
               only: [master, /hotfix.*/]
-  ios:
-    jobs:
-      - build:
-          context: ios-cleanroom
-      - deploy:
-          context: ios-cleanroom
-          requires:
-            - build
-          filters:
-            branches:
-              only: [master, /hotfix.*/]
-  webgl:
-    jobs:
-      - build:
-          context: webgl-cleanroom
-      - deploy:
-          context: webgl-cleanroom
-          requires:
-            - build
-          filters:
-            branches:
-              only: [master, /hotfix.*/]
+  # android:
+  #   jobs:
+  #     - build:
+  #         context: android-cleanroom
+  #     - deploy:
+  #         context: android-cleanroom
+  #         requires:
+  #           - build
+  #         filters:
+  #           branches:
+  #             only: [master, /hotfix.*/]
+  # ios:
+  #   jobs:
+  #     - build:
+  #         context: ios-cleanroom
+  #     - deploy:
+  #         context: ios-cleanroom
+  #         requires:
+  #           - build
+  #         filters:
+  #           branches:
+  #             only: [master, /hotfix.*/]
+  # webgl:
+  #   jobs:
+  #     - build:
+  #         context: webgl-cleanroom
+  #     - deploy:
+  #         context: webgl-cleanroom
+  #         requires:
+  #           - build
+  #         filters:
+  #           branches:
+  #             only: [master, /hotfix.*/]
