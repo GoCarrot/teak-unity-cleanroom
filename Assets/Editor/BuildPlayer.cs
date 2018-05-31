@@ -33,6 +33,15 @@ class BuildPlayer
 #endif
     }
 
+    static void CheckLicense()
+    {
+        bool hasPro = UnityEditorInternal.InternalEditorUtility.HasPro();
+        if (!hasPro) {
+            Debug.LogError("[teak-unity-cleanroom] Unity is not running in 'Pro' mode!");
+            EditorApplication.Exit(1);
+        }
+    }
+
     static void SetAppleTeamId()
     {
         string appleTeamId = null;

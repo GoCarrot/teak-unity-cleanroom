@@ -84,7 +84,7 @@ at_exit do
   sh "afplay /System/Library/Sounds/Submarine.aiff" unless ci?
   if ci?
     add_unity_log_to_artifacts
-    Rake::Task["unity:returnlicense"].invoke
+    Rake::Task["unity_license:release"].invoke
   end
 end
 
@@ -96,7 +96,7 @@ def xcodebuild(*args)
   sh "xcodebuild #{escaped_args} | xcpretty"
 end
 
-def unity(*args, quit: true, nographics: false)
+def unity(*args, quit: true, nographics: true)
   args.push("-serial", ENV["UNITY_SERIAL"], "-username", ENV["UNITY_EMAIL"], "-password", ENV["UNITY_PASSWORD"]) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
@@ -158,8 +158,14 @@ task :clean do
   sh "git clean -fdx" unless ci?
 end
 
-namespace :unity do
-  task :returnlicense do
+namespace :unity_license do
+  task :acquire do
+    # return unless ci?
+    unity "-executeMethod", "BuildPlayer.CheckLicense", PACKAGE_NAME, nographics: false
+  end
+
+  task :release do
+    return unless ci?
     sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false rescue nil
     puts "Released Unity license..."
   end
