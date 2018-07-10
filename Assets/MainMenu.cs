@@ -164,7 +164,7 @@ public class MainMenu : MonoBehaviour
         teakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
         teakSdkVersion = "Teak SDK Version: " + Teak.Version;
 
-        Teak.Instance.IdentifyUser(teakUserId);
+        Teak.Instance.IdentifyUser(teakUserId, new List<string> { Teak.OptOutIdfa });
 
         Teak.Instance.TrackEvent("some_boolean", null, null);
 
