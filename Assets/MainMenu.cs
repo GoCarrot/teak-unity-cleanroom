@@ -81,7 +81,8 @@ public class MainMenu : MonoBehaviour
                 this.Status = 2;
             }
 
-            if (string.IsNullOrEmpty(reward.RewardId)) {
+            if (string.IsNullOrEmpty(reward.RewardId))
+            {
                 errorText = "RewardId was null or empty";
                 this.Status = 2;
             }
