@@ -411,6 +411,16 @@ public class MainMenu : MonoBehaviour
         return new string(stringChars);
     }
 
+    void TestExceptionReporting()
+    {
+#if UNITY_EDITOR
+#elif UNITY_ANDROID
+        AndroidJavaClass teakUnity = new AndroidJavaClass("io.teak.sdk.wrapper.unity.TeakUnity");
+        teakUnity.CallStatic("testExceptionReporting");
+#elif UNITY_IOS
+#endif
+    }
+
     void BackgroundApp()
     {
 #if UNITY_EDITOR
