@@ -161,8 +161,12 @@ public class MainMenu : MonoBehaviour
     {
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Start");
 
+#if UNITY_WEBGL
+        teakUserId = "unity-webgl";
+#else
         Dictionary<string, object> deviceConfiguration = Teak.Instance.GetDeviceConfiguration();
         teakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
+#endif
         teakSdkVersion = "Teak SDK Version: " + Teak.Version;
 
         Teak.Instance.IdentifyUser(teakUserId);
