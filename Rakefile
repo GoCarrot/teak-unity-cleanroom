@@ -272,7 +272,7 @@ namespace :deploy do
   end
 
   task :webgl do
-    sh "curl -X POST https://graph-video.facebook.com/1136371193060244/assets -F 'access_token=#{FB_UPLOAD_TOKEN}' -F 'type=UNITY_WEBGL' -F 'asset=@./teak-unity-cleanroom.zip' -F 'comment=#{`cat TEAK_VERSION`}'"
+    sh "curl -X POST https://graph-video.facebook.com/613659812345256/assets -F 'access_token=#{FB_UPLOAD_TOKEN}' -F 'type=UNITY_WEBGL' -F 'asset=@./teak-unity-cleanroom.zip' -F 'comment=#{`cat TEAK_VERSION`}'"
   end
 end
 
