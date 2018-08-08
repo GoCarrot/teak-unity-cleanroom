@@ -231,7 +231,7 @@ namespace :build do
   task :webgl do
     unity "-executeMethod", "BuildPlayer.WebGL"
     cp File.join(PROJECT_PATH, 'WebGLResources', 'index.html'), File.join(PROJECT_PATH, 'WebGLBuild')
-    sh 'zip -r teak-unity-cleanroom.zip WebGLBuild'
+    sh '(cd WebGLBuild/; zip -r ../teak-unity-cleanroom.zip .)'
   end
 end
 
