@@ -9,6 +9,7 @@
     <script src="TemplateData/UnityProgress.js"></script>  
     <script src="Build/UnityLoader.js"></script>
     <script>
+      window.teakCleanroom = {};
       var gameInstance = UnityLoader.instantiate("gameContainer", "Build/WebGLBuild.json", {onProgress: UnityProgress});
     </script>
   </head>
@@ -25,7 +26,10 @@
           if(response.status !== "connected") {
             FB.login(function(loginResponse) {
               console.log(loginResponse);
+              window.teakCleanroom.fbId = response.authResponse.userID;
             }, {scope: 'email'});
+          } else {
+            window.teakCleanroom.fbId = response.authResponse.userID;
           }
         });
       };

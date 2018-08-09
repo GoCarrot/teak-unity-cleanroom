@@ -16,6 +16,11 @@ public class MainMenu : MonoBehaviour
 {
     private int buttonHeightInPx = Screen.height / 5;
 
+#if UNITY_WEBGL
+    [DllImport ("__Internal")]
+    private static extern string TeakCleanroomGetFacebookId();
+#endif
+
 #if UNITY_IOS
     string pushTokenString = null;
 #endif
@@ -162,7 +167,7 @@ public class MainMenu : MonoBehaviour
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Start");
 
 #if UNITY_WEBGL
-        teakUserId = "unity-webgl";
+        teakUserId = "unity-webgl-" + TeakCleanroomGetFacebookId();
 #else
         Dictionary<string, object> deviceConfiguration = Teak.Instance.GetDeviceConfiguration();
         teakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
