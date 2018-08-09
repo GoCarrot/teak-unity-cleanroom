@@ -73,6 +73,7 @@ unity.log
 fastlane/README.md
 fastlane/report.xml
 TEAK_VERSION
+.DS_Store
 
 # Generated Configuration Files
 Assets/Plugins/Android/AndroidManifest.xml*
