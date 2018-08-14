@@ -69,7 +69,7 @@ platform :ios do
       #source:"~/Code/teak-ios"
     )
 
-    TEAK_APP_EXTENSIONS.concat(["Unity-iPhone"]).each do |target|
+    (TEAK_APP_EXTENSIONS + ["Unity-iPhone"]).each do |target|
       update_project_provisioning(
         xcodeproj: XCODE_PROJECT,
         target_filter: target,
