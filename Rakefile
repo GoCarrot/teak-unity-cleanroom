@@ -158,6 +158,15 @@ task :clean do
   sh "git clean -fdx" unless ci?
 end
 
+task :warnings_as_errors do
+  File.open('Assets/smcs.rsp', 'w') do |f|
+    f.puts "-warnaserror+"
+  end
+  File.open('Assets/mcs.rsp', 'w') do |f|
+    f.puts "-warnaserror+"
+  end
+end
+
 namespace :unity_license do
   task :acquire do
     # return unless ci?
@@ -217,7 +226,7 @@ namespace :build do
     unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.ResolveDependencies", quit: false, nographics: false
   end
 
-  task android: [:dependencies] do
+  task android: [:dependencies, :warnings_as_errors] do
     FileUtils.rm_f('teak-unity-cleanroom.apk')
 
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
@@ -228,7 +237,7 @@ namespace :build do
 
   task ios: ['ios:all']
 
-  task :webgl do
+  task webgl: [:warnings_as_errors] do
     unity "-executeMethod", "BuildPlayer.WebGL"
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
     File.write(File.join(PROJECT_PATH, 'WebGLBuild', 'index.html'), Mustache.render(template, template_parameters))
@@ -243,7 +252,7 @@ namespace :ios do
     sh 'bundle exec fastlane match development' if ci?
   end
 
-  task :build do
+  task build: [:warnings_as_errors] do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
     unity "-buildTarget", "iOS", "-executeMethod", "BuildPlayer.iOS"
