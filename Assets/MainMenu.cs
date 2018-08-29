@@ -145,7 +145,7 @@ public class MainMenu : MonoBehaviour
         AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
         teak.CallStatic("prime31PurchaseSucceeded", "{}");
         teak.CallStatic("openIABPurchaseSucceeded", "{\"originalJson\":\"{}\"}");
-        teak.CallStatic("pluginPurchaseFailed", 42);
+        teak.CallStatic("pluginPurchaseFailed", 42, "cleanroom");
 #endif
 
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Awake");
