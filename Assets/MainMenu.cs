@@ -391,9 +391,16 @@ public class MainMenu : MonoBehaviour
             }
         }
 
-        if(GUILayout.Button("Cancel All Notifications", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
+        // if(GUILayout.Button("Cancel All Notifications", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
+        // {
+        //     StartCoroutine(TeakNotification.CancelAllScheduledNotifications((TeakNotification.Reply reply) => {
+        //         errorText = reply.Notifications == null ? reply.Status.ToString() : reply.Notifications.ToString();
+        //     }));
+        // }
+
+        if(GUILayout.Button("Long Distance Notify", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
         {
-            StartCoroutine(TeakNotification.CancelAllScheduledNotifications((TeakNotification.Reply reply) => {
+            StartCoroutine(TeakNotification.ScheduleNotification("test_none Local", 5, new string[] {"unity-sm-g920t"}, (TeakNotification.Reply reply) => {
                 errorText = reply.Notifications == null ? reply.Status.ToString() : reply.Notifications.ToString();
             }));
         }
