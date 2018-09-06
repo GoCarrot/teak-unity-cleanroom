@@ -16,6 +16,8 @@
 mergeInto(LibraryManager.library, {
   TeakCleanroomGetFacebookId: function() {
     var returnStr = window.teakCleanroom.fbId;
+    if (!returnStr) { returnStr = "localhost"; }
+
     var bufferSize = lengthBytesUTF8(returnStr) + 1;
     var buffer = _malloc(bufferSize);
     stringToUTF8(returnStr, buffer, bufferSize);
