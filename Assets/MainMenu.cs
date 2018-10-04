@@ -267,15 +267,9 @@ public class MainMenu : MonoBehaviour
         }
 
         // Testing automation
-        if(testEnumerator != null)
+        if(testEnumerator != null &&testEnumerator.Current.OnReward(reward))
         {
-            if(testEnumerator.Current.OnReward(reward))
-            {
-                if(!testEnumerator.MoveNext())
-                {
-                    testEnumerator = null;
-                }
-            }
+            if(!testEnumerator.MoveNext()) testEnumerator = null;
         }
     }
 
