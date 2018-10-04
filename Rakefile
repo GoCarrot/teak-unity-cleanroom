@@ -240,6 +240,7 @@ namespace :build do
   task webgl: [:warnings_as_errors] do
     unity "-executeMethod", "BuildPlayer.WebGL"
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
+    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'WebGLBuild'))
     File.write(File.join(PROJECT_PATH, 'WebGLBuild', 'index.html'), Mustache.render(template, template_parameters))
     sh '(cd WebGLBuild/; zip -r ../teak-unity-cleanroom.zip .)'
   end
