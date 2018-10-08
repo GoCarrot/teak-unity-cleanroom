@@ -31,17 +31,18 @@ public class TestDriver : MonoBehaviour {
     IEnumerator<Test> testEnumerator;
 
     void Awake() {
-        this.teakInterface = GetComponent<TeakInterface>();
-        this.teakInterface.OnPushTokenChanged += OnPushTokenChanged;
-
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for semi-automated tests", (Dictionary<string, object> parameters) => {
             if (this.testEnumerator != null && this.testEnumerator.Current.OnDeepLink(parameters)) {
                 if (!this.testEnumerator.MoveNext()) testEnumerator = null;
+                this.SetupUI();
             }
         });
     }
 
     void Start() {
+        this.teakInterface = GetComponent<TeakInterface>();
+        this.teakInterface.OnPushTokenChanged += OnPushTokenChanged;
+
         this.testList = new List<Test>(this.masterTestList);
         this.testEnumerator = this.testList.GetEnumerator();
         this.testEnumerator.MoveNext();
@@ -70,18 +71,20 @@ public class TestDriver : MonoBehaviour {
 
         if (this.testEnumerator != null && this.testEnumerator.Current.OnLaunchedFromNotification(notification)) {
             if (!this.testEnumerator.MoveNext()) this.testEnumerator = null;
+            this.SetupUI();
         }
     }
 
     void OnReward(TeakReward reward) {
         if (this.testEnumerator != null && this.testEnumerator.Current.OnReward(reward)) {
             if (!this.testEnumerator.MoveNext()) this.testEnumerator = null;
+            this.SetupUI();
         }
     }
 
     private void TestThingsThatShouldBeTestedInBetterWays() {
         // Ensure the Prime31 and OpenIAB purchase methods are exposed on Android
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
         AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
         teak.CallStatic("prime31PurchaseSucceeded", "{}");
         teak.CallStatic("openIABPurchaseSucceeded", "{\"originalJson\":\"{}\"}");
@@ -96,7 +99,7 @@ public class TestDriver : MonoBehaviour {
     private void SetupUI() {
         this.sdkVersionText.GetComponent<Text>().text = "Teak SDK Version: " + Teak.Version;
         this.userIdText.GetComponent<Text>().text = this.teakInterface.TeakUserId;
-        this.bundleIdText.GetComponent<Text>().text = Application.identifier;
+        this.bundleIdText.GetComponent<Text>().text = Application.identifier + " (" + Teak.AppId + ")";
 
         // Clear
         foreach (Transform child in this.buttonContainer.transform) {
@@ -120,6 +123,11 @@ public class TestDriver : MonoBehaviour {
                 int colorIndex = test.Status - 1 < 0 ? 0 : test.Status;
                 Debug.Log(colorIndex);
                 text.color = this.testColor[colorIndex];
+                if (test.ErrorText != null) {
+                    Text errorText = this.CreateText(test.ErrorText);
+                    errorText.fontStyle = FontStyle.Italic;
+                    errorText.color = Color.red;
+                }
             }
         }
 
@@ -130,14 +138,16 @@ public class TestDriver : MonoBehaviour {
                 Button button = this.CreateButton(currentTest.Name);
                 button.onClick.AddListener(() => {
                     StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (TeakNotification.Reply reply) => {
+                        Debug.Log("Scheduling Test: " + currentTest.Name);
                         this.scheduledNotificationId = reply.Notifications[0].ScheduleId;
 
                         if (reply.Notifications[0].ScheduleId == null) {
                             this.RecordErrorForTest(currentTest, "ScheduleId was null");
-                        }
-
-                        if (reply.Status == TeakNotification.Reply.ReplyStatus.Ok && !currentTest.NoAutoBackground) {
-                            Utils.BackgroundApp();
+                        } else {
+                            this.SetupUI();
+                            if (reply.Status == TeakNotification.Reply.ReplyStatus.Ok && !currentTest.NoAutoBackground) {
+                                Utils.BackgroundApp();
+                            }
                         }
                     }));
                 });
@@ -151,12 +161,17 @@ public class TestDriver : MonoBehaviour {
                         this.scheduledNotificationId = null;
                     }));
                 });
+
+                // Trailing space because italic can shove a few pixels off the right edge
+                Text text = this.CreateText("(" + this.scheduledNotificationId + ") ");
+                text.fontStyle = FontStyle.Italic;
             }
         }
     }
 
     private void RecordErrorForTest(Test test, string error) {
         // TODO
+        Debug.LogError("Test (" + test.ToString() + ") error: " + error);
     }
 
     private Text CreateText(string textString) {
@@ -176,7 +191,7 @@ public class TestDriver : MonoBehaviour {
 
     private GameObject InstantiateInContainer(GameObject prefab) {
         GameObject go = Instantiate(prefab) as GameObject;
-        go.transform.parent = this.buttonContainer.transform;
+        go.transform.SetParent(this.buttonContainer.transform, false);
         return go;
     }
 }

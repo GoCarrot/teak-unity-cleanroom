@@ -17,6 +17,15 @@ public class TeakInterface : MonoBehaviour {
     void Awake() {
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Awake");
 
+#if UNITY_EDITOR
+        this.TeakUserId = "unity-editor";
+#elif UNITY_WEBGL
+        this.TeakUserId = "unity-webgl-" + TeakCleanroomGetFacebookId();
+#else
+        Dictionary<string, object> deviceConfiguration = Teak.Instance.GetDeviceConfiguration();
+        this.TeakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
+#endif
+
         // Register Deep Link routes with Teak
         // Make sure your calls to Teak.Instance.RegisterRoute are in Awake()
         Teak.Instance.RegisterRoute("/store/:sku", "Store", "Open the store to an SKU", (Dictionary<string, object> parameters) => {
@@ -26,13 +35,6 @@ public class TeakInterface : MonoBehaviour {
 
     void Start() {
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Start");
-
-#if UNITY_WEBGL
-        this.TeakUserId = "unity-webgl-" + TeakCleanroomGetFacebookId();
-#else
-        Dictionary<string, object> deviceConfiguration = Teak.Instance.GetDeviceConfiguration();
-        this.TeakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
-#endif
 
         Teak.Instance.IdentifyUser(this.TeakUserId);
 
