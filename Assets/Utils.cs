@@ -1,5 +1,7 @@
 using UnityEngine;
 
+using System.Runtime.InteropServices;
+
 class Utils {
 #if UNITY_IOS
     [DllImport ("__Internal")]
