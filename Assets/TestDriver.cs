@@ -35,6 +35,7 @@ public class TestDriver : MonoBehaviour {
     IEnumerator<Test> testEnumerator;
 
     void Awake() {
+#if !TEAK_NOT_AVAILABLE
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for semi-automated tests", (Dictionary<string, object> parameters) => {
             if (this.testEnumerator != null && this.testEnumerator.Current.OnDeepLink(parameters)) {
                 this.AdvanceTests();
@@ -43,6 +44,7 @@ public class TestDriver : MonoBehaviour {
                 }));
             }
         });
+#endif
     }
 
     void Start() {
@@ -110,9 +112,13 @@ public class TestDriver : MonoBehaviour {
         teak.CallStatic("pluginPurchaseFailed", 42, "cleanroom");
 #endif
 
-        Teak.Instance.TrackEvent("some_boolean", null, null);
+#if !TEAK_NOT_AVAILABLE
+        //Teak.Instance.TrackEvent("some_boolean", null, null);
 
-        Teak.Instance.SetBadgeCount(42);
+        Teak.Instance.SetNumericAttribute("test_number", 42);
+
+        //Teak.Instance.SetBadgeCount(42);
+#endif
     }
 
     private void SetupUI() {
@@ -189,6 +195,15 @@ public class TestDriver : MonoBehaviour {
                 this.ResetTests();
             });
         }
+
+        // Blarg
+#if !TEAK_NOT_AVAILABLE
+        Button profilebutton = this.CreateButton("User Profile Test");
+        profilebutton.onClick.AddListener(() => {
+            Teak.Instance.SetNumericAttribute("test_number", 42);
+            Teak.Instance.SetStringAttribute("test_string", "Testing foo");
+        });
+#endif
     }
 
     private void AdvanceTests() {
