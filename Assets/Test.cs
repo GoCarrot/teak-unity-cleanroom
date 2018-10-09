@@ -1,4 +1,8 @@
+#if !TEAK_NOT_AVAILABLE
 using MiniJSON.Teak;
+#endif
+
+using UnityEngine;
 
 using System.Collections;
 using System.Collections.Generic;
@@ -34,9 +38,8 @@ class Test {
             (!parameters.ContainsKey("data") ||
             !this.VerifyDeepLink.Equals(parameters["data"] as string, System.StringComparison.Ordinal))) {
 #if !TEAK_NOT_AVAILABLE
-            this.ErrorText = "Expected '" + this.VerifyDeepLink + "' contents:\n" + Json.Serialize(parameters);
+            this.ReportError("Expected '" + this.VerifyDeepLink + "' contents:\n" + Json.Serialize(parameters));
 #endif
-            this.Status = 2;
         }
 
         Prepare();
@@ -44,16 +47,20 @@ class Test {
         return CheckStatus();
     }
 
+    private void ReportError(string description) {
+        Debug.LogError("[Test Error]: " + description);
+        this.ErrorText = description;
+        this.Status = 2;
+    }
+
 #if !TEAK_NOT_AVAILABLE
     public bool OnReward(TeakReward reward) {
         if (!this.CreativeId.Equals(reward.CreativeId, System.StringComparison.Ordinal)) {
-            this.ErrorText = "Expected '" + this.CreativeId + "' contents: " + reward.CreativeId;
-            this.Status = 2;
+            this.ReportError("Expected '" + this.CreativeId + "' contents: " + reward.CreativeId);
         }
 
         if (string.IsNullOrEmpty(reward.RewardId)) {
-            this.ErrorText = "RewardId was null or empty";
-            this.Status = 2;
+            this.ReportError("RewardId was null or empty");
         }
 
         Prepare();
@@ -63,12 +70,10 @@ class Test {
 
     public bool OnLaunchedFromNotification(TeakNotification notification) {
         if (!this.CreativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal)) {
-            this.ErrorText = "Expected '" + this.CreativeId + "' got:\n" + Json.Serialize(notification.CreativeId);
-            this.Status = 2;
+            this.ReportError("Expected '" + this.CreativeId + "' got:\n" + Json.Serialize(notification.CreativeId));
         }
         else if (!string.IsNullOrEmpty(this.VerifyReward) && !notification.Incentivized) {
-            this.ErrorText = "Expected 'incentivized'";
-            this.Status = 2;
+            this.ReportError("Expected 'incentivized'");
         }
 
         Prepare();

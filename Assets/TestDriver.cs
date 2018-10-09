@@ -20,12 +20,16 @@ public class TestDriver : MonoBehaviour {
     string scheduledNotificationId;
     string pushToken;
 
-    List<Test> masterTestList = new List<Test> {
-        new Test { Name = "Simple Notification", CreativeId = "test_none" },
-        new Test { Name = "Deep Link", CreativeId = "test_deeplink", VerifyDeepLink = "link-only" },
-        new Test { Name = "Reward", CreativeId = "test_reward", VerifyReward = "coins" },
-        new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink", VerifyDeepLink = "with-reward", VerifyReward = "coins" }
-    };
+    List<Test> MasterTestList {
+        get {
+            return new List<Test> {
+                new Test { Name = "Simple Notification", CreativeId = "test_none" },
+                new Test { Name = "Deep Link", CreativeId = "test_deeplink", VerifyDeepLink = "link-only" },
+                new Test { Name = "Reward", CreativeId = "test_reward", VerifyReward = "coins" },
+                new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink", VerifyDeepLink = "with-reward", VerifyReward = "coins" }
+            };
+        }
+    }
 
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
@@ -33,8 +37,10 @@ public class TestDriver : MonoBehaviour {
     void Awake() {
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for semi-automated tests", (Dictionary<string, object> parameters) => {
             if (this.testEnumerator != null && this.testEnumerator.Current.OnDeepLink(parameters)) {
-                if (!this.testEnumerator.MoveNext()) testEnumerator = null;
-                this.SetupUI();
+                this.AdvanceTests();
+                StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+                    this.SetupUI();
+                }));
             }
         });
     }
@@ -43,14 +49,12 @@ public class TestDriver : MonoBehaviour {
         this.teakInterface = GetComponent<TeakInterface>();
         this.teakInterface.OnPushTokenChanged += OnPushTokenChanged;
 
-        this.testList = new List<Test>(this.masterTestList);
-        this.testEnumerator = this.testList.GetEnumerator();
-        this.testEnumerator.MoveNext();
+        this.ResetTests();
 
-        this.SetupUI();
-
+#if !TEAK_NOT_AVAILABLE
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
+#endif
 
         this.TestThingsThatShouldBeTestedInBetterWays();
     }
@@ -63,24 +67,39 @@ public class TestDriver : MonoBehaviour {
 
     void OnPushTokenChanged(string pushToken) {
         this.pushToken = pushToken;
-        this.SetupUI();
+        StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+            this.SetupUI();
+        }));
     }
 
+    void OnApplicationPaused(bool paused) {
+        if (paused) {
+            //PlayerPrefs
+        } else {
+        }
+    }
+
+#if !TEAK_NOT_AVAILABLE
     void OnLaunchedFromNotification(TeakNotification notification) {
         this.scheduledNotificationId = null;
 
         if (this.testEnumerator != null && this.testEnumerator.Current.OnLaunchedFromNotification(notification)) {
-            if (!this.testEnumerator.MoveNext()) this.testEnumerator = null;
-            this.SetupUI();
+            this.AdvanceTests();
+            StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+                this.SetupUI();
+            }));
         }
     }
 
     void OnReward(TeakReward reward) {
         if (this.testEnumerator != null && this.testEnumerator.Current.OnReward(reward)) {
-            if (!this.testEnumerator.MoveNext()) this.testEnumerator = null;
-            this.SetupUI();
+            this.AdvanceTests();
+            StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+                this.SetupUI();
+            }));
         }
     }
+#endif
 
     private void TestThingsThatShouldBeTestedInBetterWays() {
         // Ensure the Prime31 and OpenIAB purchase methods are exposed on Android
@@ -120,8 +139,7 @@ public class TestDriver : MonoBehaviour {
         foreach (Test test in this.testList) {
             if (test.Status > 0) {
                 Text text = this.CreateText(test.Name);
-                int colorIndex = test.Status - 1 < 0 ? 0 : test.Status;
-                Debug.Log(colorIndex);
+                int colorIndex = test.Status - 1 < 0 ? 0 : test.Status - 1;
                 text.color = this.testColor[colorIndex];
                 if (test.ErrorText != null) {
                     Text errorText = this.CreateText(test.ErrorText);
@@ -138,7 +156,6 @@ public class TestDriver : MonoBehaviour {
                 Button button = this.CreateButton(currentTest.Name);
                 button.onClick.AddListener(() => {
                     StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (TeakNotification.Reply reply) => {
-                        Debug.Log("Scheduling Test: " + currentTest.Name);
                         this.scheduledNotificationId = reply.Notifications[0].ScheduleId;
 
                         if (reply.Notifications[0].ScheduleId == null) {
@@ -162,11 +179,32 @@ public class TestDriver : MonoBehaviour {
                     }));
                 });
 
-                // Trailing space because italic can shove a few pixels off the right edge
-                Text text = this.CreateText("(" + this.scheduledNotificationId + ") ");
+                Text text = this.CreateText("(" + this.scheduledNotificationId + ")");
                 text.fontStyle = FontStyle.Italic;
             }
+        } else {
+            // Reset test
+            Button button = this.CreateButton("Reset Tests");
+            button.onClick.AddListener(() => {
+                this.ResetTests();
+            });
         }
+    }
+
+    private void AdvanceTests() {
+        if (this.testEnumerator == null) {
+            this.testEnumerator = this.testList.GetEnumerator();
+            this.testEnumerator.MoveNext();
+        } else if (!this.testEnumerator.MoveNext()) {
+            this.testEnumerator = null;
+        }
+    }
+
+    private void ResetTests() {
+        this.testList = this.MasterTestList;
+        this.testEnumerator = null;
+        this.AdvanceTests();
+        this.SetupUI();
     }
 
     private void RecordErrorForTest(Test test, string error) {
