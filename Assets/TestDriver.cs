@@ -122,6 +122,7 @@ public class TestDriver : MonoBehaviour {
     }
 
     private void SetupUI() {
+#if !TEAK_NOT_AVAILABLE
         this.sdkVersionText.GetComponent<Text>().text = "Teak SDK Version: " + Teak.Version;
         this.userIdText.GetComponent<Text>().text = this.teakInterface.TeakUserId;
         this.bundleIdText.GetComponent<Text>().text = Application.identifier + " (" + Teak.AppId + ")";
@@ -197,13 +198,12 @@ public class TestDriver : MonoBehaviour {
         }
 
         // Blarg
-#if !TEAK_NOT_AVAILABLE
         Button profilebutton = this.CreateButton("User Profile Test");
         profilebutton.onClick.AddListener(() => {
             Teak.Instance.SetNumericAttribute("test_number", 42);
             Teak.Instance.SetStringAttribute("test_string", "Testing foo");
         });
-#endif
+#endif // TEAK_NOT_AVAILABLE
     }
 
     private void AdvanceTests() {

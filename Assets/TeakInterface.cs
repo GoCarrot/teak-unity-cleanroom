@@ -240,5 +240,5 @@ public class TeakInterface : MonoBehaviour {
 #elif UNITY_IOS
 #endif
     }
-#endif
+#endif // TEAK_NOT_AVAILABLE
 }
