@@ -24,6 +24,7 @@ end #module Rake
 desc "Build Unity package"
 task :default
 
+UNITY_COMPILERS = [:gmsc, :smcs, :smcs, :mcs, :csc]
 UNITY_HOME = ENV.fetch('UNITY_HOME', '/Applications/Unity-2017.1.0f3')
 RVM_VARS = %w(GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH)
 PROJECT_PATH = Rake.application.original_dir
@@ -159,11 +160,10 @@ task :clean do
 end
 
 task :warnings_as_errors do
-  File.open('Assets/smcs.rsp', 'w') do |f|
-    f.puts "-warnaserror+"
-  end
-  File.open('Assets/mcs.rsp', 'w') do |f|
-    f.puts "-warnaserror+"
+  UNITY_COMPILERS.each do |compiler|
+    File.open("Assets/#{compiler}.rsp", 'w') do |f|
+      f.puts "-warnaserror+"
+    end
   end
 end
 
@@ -190,17 +190,15 @@ namespace :package do
   end
 
   task :import do
-    File.open('Assets/smcs.rsp', 'w') do |f|
-      f.puts "-define:TEAK_NOT_AVAILABLE"
-    end
-    File.open('Assets/mcs.rsp', 'w') do |f|
-      f.puts "-define:TEAK_NOT_AVAILABLE"
+    UNITY_COMPILERS.each do |compiler|
+      File.open("Assets/#{compiler}.rsp", 'w') do |f|
+        f.puts "-define:TEAK_NOT_AVAILABLE"
+      end
     end
 
     unity "-importPackage", "Teak.unitypackage"
 
-    File.delete(*Dir.glob('Assets/smcs.rsp*'))
-    File.delete(*Dir.glob('Assets/mcs.rsp*'))
+    File.delete(*Dir.glob('Assets/*.rsp*'))
   end
 end
 
