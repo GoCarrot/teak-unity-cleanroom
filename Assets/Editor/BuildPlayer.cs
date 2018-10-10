@@ -128,6 +128,8 @@ class BuildPlayer
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
         }
 
+        PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = BuildPlayer.scenes;
         buildPlayerOptions.locationPathName = buildPath;
@@ -144,6 +146,9 @@ class BuildPlayer
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../Unity-iPhone");
         Directory.CreateDirectory(buildPath);
 #if UNITY_5
+
+        PlayerSettings.SetScriptingBackend(BuildTargetGroup.iOS, ScriptingImplementation.IL2CPP);
+
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = BuildPlayer.scenes;
         buildPlayerOptions.locationPathName = buildPath;
