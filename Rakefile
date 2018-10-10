@@ -180,6 +180,28 @@ namespace :unity_license do
   end
 end
 
+namespace :prime31 do
+  task :import do
+    `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_prime31_plugin.data -out Prime31_IAP.unitypackage -k #{KMS_KEY}`
+
+    UNITY_COMPILERS.each do |compiler|
+      File.open("Assets/#{compiler}.rsp", 'w') do |f|
+        f.puts "-define:TEAK_NOT_AVAILABLE"
+      end
+    end
+
+    unity "-importPackage", "Prime31_IAP.unitypackage"
+
+    File.delete('Prime31_IAP.unitypackage')
+    File.delete(*Dir.glob('Assets/*.rsp*'))
+  end
+
+  task :encrypt, [:path] do |t, args|
+    prime31_path = args[:path] ? args[:path] : '../IAPAndroid_3.9.unitypackage'
+    `openssl enc -md MD5 -aes-256-cbc -in #{prime31_path} -out kms/encrypted_prime31_plugin.data -k #{KMS_KEY}`
+  end
+end
+
 namespace :package do
   task download: [:clean] do
     fastlane "sdk"

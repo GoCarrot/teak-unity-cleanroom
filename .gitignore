@@ -61,6 +61,12 @@ Assets/Plugins/Android/com.google.android.gms.play-services-gcm-*
 Assets/Plugins/Android/com.google.android.gms.play-services-iid-*
 Assets/Plugins/Android/com.google.android.gms.play-services-tasks-*
 
+# Prime31
+Assets/Editor/Prime31*
+Assets/Plugins/Android/IABPlugin.aar*
+Assets/Plugins/Prime31*
+Assets/Plugins/P31RestKit.dll*
+
 # Generated Files
 Unity-iPhone/*
 WebGLBuild*
