@@ -17,8 +17,9 @@ public class TestDriver : MonoBehaviour {
     public GameObject bundleIdText;
 
     TeakInterface teakInterface;
-    string scheduledNotificationId;
     string pushToken;
+    string scheduledNotificationId;
+    Button userProfileTestButton;
 
     List<Test> MasterTestList {
         get {
@@ -196,15 +197,32 @@ public class TestDriver : MonoBehaviour {
                 this.ResetTests();
             });
         }
-
-        // Blarg
-        Button profilebutton = this.CreateButton("User Profile Test");
-        profilebutton.onClick.AddListener(() => {
-            Teak.Instance.SetNumericAttribute("test_number", 42);
-            Teak.Instance.SetStringAttribute("test_string", "Testing foo");
-        });
 #endif // TEAK_NOT_AVAILABLE
     }
+
+#if !TEAK_NOT_AVAILABLE
+    private IEnumerator TestNumericAttribute(string key, double value, Action<double> action) {
+        Teak.Instance.SetNumericAttribute(key, value);
+        yield return new WaitForSeconds(10.0f);
+        yield return this.teakInterface.GetUserJson((json) => {
+            Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
+            Dictionary<string, object> numericAttributes = userProfile["number_attributes"] as Dictionary<string, object>;
+            Debug.Log("Got back: " + numericAttributes[key]);
+            action((double) numericAttributes[key]);
+        });
+    }
+
+    private IEnumerator TestStringAttribute(string key, string value, Action<string> action) {
+        Teak.Instance.SetStringAttribute(key, value);
+        yield return new WaitForSeconds(10.0f);
+        yield return this.teakInterface.GetUserJson((json) => {
+            Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
+            Dictionary<string, object> stringAttributes = userProfile["string_attributes"] as Dictionary<string, object>;
+            Debug.Log("Got back: " + stringAttributes[key]);
+            action(stringAttributes[key] as string);
+        });
+    }
+#endif // TEAK_NOT_AVAILABLE
 
     private void AdvanceTests() {
         if (this.testEnumerator == null) {
