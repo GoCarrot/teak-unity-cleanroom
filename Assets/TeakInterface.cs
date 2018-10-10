@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -10,7 +13,7 @@ using MiniJSON.Teak;
 
 public class TeakInterface : MonoBehaviour {
     public string TeakUserId { get; private set; }
-    public event System.Action<string> OnPushTokenChanged;
+    public event Action<string> OnPushTokenChanged;
 
 #if !TEAK_NOT_AVAILABLE
 #region Unity
@@ -100,6 +103,30 @@ public class TeakInterface : MonoBehaviour {
         }
     }
 #endregion
+
+    public IEnumerator GetUserJson(Action<Dictionary<string, object>> action) {
+        if (Teak.AppId == null) {
+            Teak.AppId = "613659812345256";
+        }
+
+        string url = "https://gocarrot.com/games/" + Teak.AppId + "/users.json";
+
+        WWWForm form = new WWWForm();
+        form.AddField("do_not_track_event", "true");
+        form.AddField("api_key", this.TeakUserId);
+        using (UnityWebRequest w = UnityWebRequest.Post(url, form)) {
+            yield return w.Send();
+            while (!w.downloadHandler.isDone) {
+                yield return new WaitForEndOfFrame();
+            }
+            Debug.Log(w.downloadHandler.text);
+            Dictionary<string, object> json = Json.Deserialize(w.downloadHandler.text) as Dictionary<string, object>;
+            Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
+            Dictionary<string, object> context = Json.Deserialize(userProfile["context"] as string) as Dictionary<string, object>;
+            userProfile["context"] = context;
+            action(json);
+        }
+    }
 
 #if UNITY_IOS
     string pushTokenString = null;
