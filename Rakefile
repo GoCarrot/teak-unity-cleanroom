@@ -1,8 +1,8 @@
-require "rake/clean"
-require "shellwords"
-require "mustache"
-require "httparty"
-CLEAN.include "**/.DS_Store"
+require 'rake/clean'
+require 'shellwords'
+require 'mustache'
+require 'httparty'
+CLEAN.include '**/.DS_Store'
 
 #
 # Extend Rake to have current_task
@@ -32,14 +32,14 @@ BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
 TARGET_API = ENV.fetch('TARGET_API', 26)
 TEAK_CREDENTIALS = {
   'dev' => {
-    package_name: 'io.teak.app.unity.dev',
+    package_name: 'io.teak.app.test.unity.dev',
     teak_app_id: '613659812345256',
     teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
     teak_gcm_sender_id: '944348058057',
     teak_short_url_domain: 'teak-dev.playw.it'
   },
   'prod' => {
-    package_name: 'io.teak.app.unity.prod',
+    package_name: 'io.teak.app.test.unity.prod',
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
     teak_gcm_sender_id: '944348058057',
@@ -252,7 +252,9 @@ namespace :build do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
-    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", TARGET_API
+    Rake::Task['kms:decrypt'].invoke('io.teak.app.test.unity.dev.keystore')
+    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", TARGET_API, File.join(PROJECT_PATH, 'io.teak.app.test.unity.dev.keystore')
+    File.delete('io.teak.app.test.unity.dev.keystore')
   end
 
   task ios: ['ios:all']
@@ -339,5 +341,19 @@ namespace :install do
     sh "ruby -run -e httpd WebGlBuild -p 8000 &"
     sh "open http://localhost:8000"
     sh "fg"
+  end
+end
+
+namespace :kms do
+  task :encrypt, [:path] do |t, args|
+    fail "Missing keystore to encrypt. 'rake kms:encrypt[/path/to/keystore]'" unless args[:path]
+    fail "Could not find file: '#{args[:path]}'" unless File.exists?(args[:path])
+    `openssl enc -md MD5 -aes-256-cbc -in #{args[:path]} -out kms/#{File.basename(args[:path])}.data -k #{KMS_KEY}`
+  end
+
+  task :decrypt, [:encrypted_file] do |t, args|
+    fail "Missing keystore to encrypt. 'rake kms:decrypt[file.to.decrypt]'" unless args[:encrypted_file]
+    fail "Could not find file: 'kms/#{args[:encrypted_file]}.data'" unless File.exists?("kms/#{args[:encrypted_file]}.data")
+    `openssl enc -md MD5 -d -aes-256-cbc -in kms/#{args[:encrypted_file]}.data -out #{args[:encrypted_file]} -k #{KMS_KEY}`
   end
 end

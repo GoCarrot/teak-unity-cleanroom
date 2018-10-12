@@ -72,5 +72,5 @@
   <!-- End ADM Stuff -->
 
   <!-- Work-around to stop Unity 5 from adding these permissions -->
-  <uses-permission android:name="android.permission.READ_PHONE_STATE" android:maxSdkVersion="1" />
+  <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove" />
 </manifest>

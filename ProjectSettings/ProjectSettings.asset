@@ -141,8 +141,8 @@ PlayerSettings:
   targetPixelDensity: 0
   resolutionScalingMode: 0
   applicationIdentifier:
-    Android: io.teak.app.unity.dev
-    iOS: io.teak.app.unity.dev
+    Android: io.teak.app.test.unity.dev
+    iOS: io.teak.app.test.unity.dev
   buildNumber: {}
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 16
@@ -218,8 +218,8 @@ PlayerSettings:
   AndroidTargetDevice: 0
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: 
-  AndroidKeyaliasName: 
+  AndroidKeystoreName: /Users/pat/Code/teak-unity-cleanroom/io.teak.app.test.unity.dev.keystore
+  AndroidKeyaliasName: alias_name
   AndroidTVCompatibility: 1
   AndroidIsGame: 1
   androidEnableBanner: 1

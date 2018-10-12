@@ -128,7 +128,20 @@ class BuildPlayer
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
         }
 
+        if(argIdx > -1 && args.Length > argIdx + 1)
+        {
+            Debug.Log("[teak-unity-cleanroom] Signing with key " + args[argIdx + 2]);
+            PlayerSettings.Android.keystoreName = args[argIdx + 2];
+            PlayerSettings.Android.keystorePass = "pointless";
+            PlayerSettings.Android.keyaliasName = "alias_name";
+            PlayerSettings.Android.keyaliasPass = "pointless";
+        }
+
+        EditorPrefs.SetString("AndroidSdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
+        EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
+
         PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+        PlayerSettings.Android.androidIsGame = true;
 
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = BuildPlayer.scenes;
