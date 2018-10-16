@@ -21,6 +21,14 @@ public class TestDriver : MonoBehaviour {
     string scheduledNotificationId;
     Button userProfileTestButton;
 
+    private static readonly string TestListVersionKey = "TestListVersion";
+    int TestListVersion {
+        get {
+            return 1;
+        }
+    }
+
+    private static readonly string TestListCurrentTestKey = "TestListCurrentTest";
     List<Test> MasterTestList {
         get {
             return new List<Test> {
@@ -62,6 +70,19 @@ public class TestDriver : MonoBehaviour {
 
         this.ResetTests();
 
+        if (PlayerPrefs.GetInt(TestListVersionKey, 0) == this.TestListVersion &&
+            PlayerPrefs.GetString(TestListCurrentTestKey, null) != null) {
+
+            while (this.testEnumerator != null &&
+                   !string.Equals(this.testEnumerator.Current.Name, PlayerPrefs.GetString(TestListCurrentTestKey))) {
+                // TODO: At some point should maybe serialize the tests out to JSON, with Status and debug info
+                //       but for now just set it as successful.
+                this.testEnumerator.Current.Status = 1;
+                this.AdvanceTests();
+            }
+            this.SetupUI();
+        }
+
 #if !TEAK_NOT_AVAILABLE
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
@@ -83,10 +104,17 @@ public class TestDriver : MonoBehaviour {
         }));
     }
 
-    void OnApplicationPaused(bool paused) {
-        if (paused) {
-            //PlayerPrefs
-        } else {
+    void OnApplicationPause(bool isPaused) {
+        if (isPaused) {
+            PlayerPrefs.SetInt(TestListVersionKey, this.TestListVersion);
+
+            if (this.testEnumerator != null) {
+                Test currentTest = this.testEnumerator.Current;
+                PlayerPrefs.SetString(TestListCurrentTestKey, currentTest.Name);
+            } else {
+                PlayerPrefs.SetString(TestListCurrentTestKey, null);
+            }
+            PlayerPrefs.Save();
         }
     }
 
