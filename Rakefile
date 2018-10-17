@@ -32,14 +32,14 @@ BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
 TARGET_API = ENV.fetch('TARGET_API', 26)
 TEAK_CREDENTIALS = {
   'dev' => {
-    package_name: 'io.teak.app.test.unity.dev',
+    package_name: 'io.teak.app.unity.dev',
     teak_app_id: '613659812345256',
     teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
     teak_gcm_sender_id: '944348058057',
     teak_short_url_domain: 'teak-dev.playw.it'
   },
   'prod' => {
-    package_name: 'io.teak.app.test.unity.prod',
+    package_name: 'io.teak.app.unity.prod',
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
     teak_gcm_sender_id: '944348058057',

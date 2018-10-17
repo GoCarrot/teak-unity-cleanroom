@@ -141,8 +141,8 @@ PlayerSettings:
   targetPixelDensity: 0
   resolutionScalingMode: 0
   applicationIdentifier:
-    Android: io.teak.app.test.unity.dev
-    iOS: io.teak.app.test.unity.dev
+    Android: io.teak.app.unity.dev
+    iOS: io.teak.app.unity.dev
   buildNumber: {}
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 16
