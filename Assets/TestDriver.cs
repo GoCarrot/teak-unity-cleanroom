@@ -80,7 +80,7 @@ public class TestDriver : MonoBehaviour {
                 // TODO: At some point should maybe serialize the tests out to JSON, with Status and debug info
                 //       but for now just set it as successful.
                 this.testEnumerator.Current.Status = 1;
-                this.AdvanceTests();
+                this.AdvanceTests(true);
             }
             this.SetupUI();
         }
@@ -104,20 +104,6 @@ public class TestDriver : MonoBehaviour {
         StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
             this.SetupUI();
         }));
-    }
-
-    void OnApplicationPause(bool isPaused) {
-        if (isPaused) {
-            PlayerPrefs.SetInt(TestListVersionKey, this.TestListVersion);
-
-            if (this.testEnumerator != null) {
-                Test currentTest = this.testEnumerator.Current;
-                PlayerPrefs.SetString(TestListCurrentTestKey, currentTest.Name);
-            } else {
-                PlayerPrefs.SetString(TestListCurrentTestKey, null);
-            }
-            PlayerPrefs.Save();
-        }
     }
 
 #if !TEAK_NOT_AVAILABLE
@@ -290,11 +276,27 @@ public class TestDriver : MonoBehaviour {
 #endif // TEAK_NOT_AVAILABLE
 
     private void AdvanceTests() {
+        this.AdvanceTests(false);
+    }
+
+    private void AdvanceTests(bool doNotSerialize) {
         if (this.testEnumerator == null) {
             this.testEnumerator = this.testList.GetEnumerator();
             this.testEnumerator.MoveNext();
         } else if (!this.testEnumerator.MoveNext()) {
             this.testEnumerator = null;
+        }
+
+        if (!doNotSerialize) {
+            PlayerPrefs.SetInt(TestListVersionKey, this.TestListVersion);
+
+            if (this.testEnumerator != null) {
+                Test currentTest = this.testEnumerator.Current;
+                PlayerPrefs.SetString(TestListCurrentTestKey, currentTest.Name);
+            } else {
+                PlayerPrefs.SetString(TestListCurrentTestKey, null);
+            }
+            PlayerPrefs.Save();
         }
     }
 
