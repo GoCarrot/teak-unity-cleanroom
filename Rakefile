@@ -253,14 +253,14 @@ namespace :build do
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
     Rake::Task['kms:decrypt'].invoke('io.teak.app.test.unity.dev.keystore')
-    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", TARGET_API, File.join(PROJECT_PATH, 'io.teak.app.test.unity.dev.keystore')
+    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", "--api", TARGET_API, "--keystore", File.join(PROJECT_PATH, 'io.teak.app.test.unity.dev.keystore'), "--debug"
     File.delete('io.teak.app.test.unity.dev.keystore')
   end
 
   task ios: ['ios:all']
 
   task webgl: [:warnings_as_errors] do
-    unity "-executeMethod", "BuildPlayer.WebGL"
+    unity "-executeMethod", "BuildPlayer.WebGL", "--debug"
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
     FileUtils.mkdir_p(File.join(PROJECT_PATH, 'WebGLBuild'))
     File.write(File.join(PROJECT_PATH, 'WebGLBuild', 'index.html'), Mustache.render(template, template_parameters))
@@ -278,7 +278,7 @@ namespace :ios do
   task build: [:warnings_as_errors] do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
-    unity "-buildTarget", "iOS", "-executeMethod", "BuildPlayer.iOS"
+    unity "-buildTarget", "iOS", "-executeMethod", "BuildPlayer.iOS", "--debug"
   end
 
   task :postprocess do

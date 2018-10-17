@@ -1,11 +1,10 @@
-#if UNITY_3_5 || UNITY_4_0 || UNITY_4_1 || UNITY_4_2 || UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
-#else
-#  define UNITY_5
-#endif
-
+using System;
 using System.IO;
+using System.Collections.Generic;
+
 using UnityEditor;
 using UnityEngine;
+
 using GooglePlayServices;
 
 class BuildPlayer
@@ -25,12 +24,8 @@ class BuildPlayer
 
         Debug.Log("[teak-unity-cleanroom] Setting App Identifier to " + appId);
 
-#if UNITY_5
         PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, appId);
         PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, appId);
-#else
-        PlayerSettings.bundleIdentifier = appId;
-#endif
     }
 
     static void CheckLicense()
@@ -100,11 +95,16 @@ class BuildPlayer
 #endif
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../WebGLBuild");
 
+        Dictionary<string, object> parsedArgs = GetArgsAfter("BuildPlayer.WebGL");
+
+        // Debug build?
+        bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
+
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = BuildPlayer.scenes;
         buildPlayerOptions.locationPathName = buildPath;
         buildPlayerOptions.target = BuildTarget.WebGL;
-        buildPlayerOptions.options = BuildOptions.Development;
+        if (isDevelopmentBuild) buildPlayerOptions.options = BuildOptions.Development;
         DoBuildPlayer(buildPlayerOptions);
     }
 
@@ -115,39 +115,47 @@ class BuildPlayer
 #endif
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../teak-unity-cleanroom.apk");
 
+        Dictionary<string, object> parsedArgs = GetArgsAfter("BuildPlayer.Android");
+
+        // Target API Level
         int targetApiVersion = 0;
-        string[] args = System.Environment.GetCommandLineArgs();
-        int argIdx = System.Array.IndexOf(args, "BuildPlayer.Android");
-        if(argIdx > -1 && args.Length > argIdx && System.Int32.TryParse(args[argIdx + 1], out targetApiVersion))
-        {
-            Debug.Log("[teak-unity-cleanroom] Setting Target API Level to " + args[argIdx + 1]);
+        if (parsedArgs.ContainsKey("api") && System.Int32.TryParse(parsedArgs["api"] as string, out targetApiVersion)) {
+            Debug.Log("[teak-unity-cleanroom] Setting Target API Level to " + targetApiVersion);
             PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)targetApiVersion;
-        }
-        else
-        {
+        } else {
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
         }
 
-        if(argIdx > -1 && args.Length > argIdx + 1)
-        {
-            Debug.Log("[teak-unity-cleanroom] Signing with key " + args[argIdx + 2]);
-            PlayerSettings.Android.keystoreName = args[argIdx + 2];
+        // Signing Key
+        if (parsedArgs.ContainsKey("keystore")) {
+            string keystore = parsedArgs["keystore"] as string;
+            Debug.Log("[teak-unity-cleanroom] Signing with key " + keystore);
+            PlayerSettings.Android.keystoreName = keystore;
             PlayerSettings.Android.keystorePass = "pointless";
             PlayerSettings.Android.keyaliasName = "alias_name";
             PlayerSettings.Android.keyaliasPass = "pointless";
         }
 
+        // Debug build?
+        bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
+
+        // IL2CPP?
+        if (parsedArgs.ContainsKey("il2cpp")) {
+            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+        } else {
+            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.Mono2x);
+        }
+
         EditorPrefs.SetString("AndroidSdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
         EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
 
-        PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
         PlayerSettings.Android.androidIsGame = true;
 
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = BuildPlayer.scenes;
         buildPlayerOptions.locationPathName = buildPath;
         buildPlayerOptions.target = BuildTarget.Android;
-        buildPlayerOptions.options = BuildOptions.Development;
+        if (isDevelopmentBuild) buildPlayerOptions.options = BuildOptions.Development;
         DoBuildPlayer(buildPlayerOptions);
     }
 
@@ -158,18 +166,46 @@ class BuildPlayer
 #endif
         string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../Unity-iPhone");
         Directory.CreateDirectory(buildPath);
-#if UNITY_5
+
+        Dictionary<string, object> parsedArgs = GetArgsAfter("BuildPlayer.iOS");
 
         PlayerSettings.SetScriptingBackend(BuildTargetGroup.iOS, ScriptingImplementation.IL2CPP);
+
+        // Debug build?
+        bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
 
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = BuildPlayer.scenes;
         buildPlayerOptions.locationPathName = buildPath;
         buildPlayerOptions.target = BuildTarget.iOS;
-        buildPlayerOptions.options = BuildOptions.Development;
+        if (isDevelopmentBuild) buildPlayerOptions.options = BuildOptions.Development;
         DoBuildPlayer(buildPlayerOptions);
-#else
-        BuildPipeline.BuildPlayer(BuildPlayer.scenes, buildPath, BuildTarget.iPhone, BuildOptions.Development);
-#endif
+    }
+
+    static Dictionary<string, object> GetArgsAfter(string arg) {
+        string[] args = System.Environment.GetCommandLineArgs();
+        int argIdx = System.Array.IndexOf(args, arg);
+        Dictionary<string, object> parsedArgs = null;
+        if (argIdx > -1 && args.Length > argIdx) {
+            int len = args.Length - argIdx - 1;
+            string[] buildArgs = new string[len];
+            Array.Copy(args, argIdx + 1, buildArgs, 0, len);
+            parsedArgs = ParseArgs(buildArgs);
+        }
+        return parsedArgs;
+    }
+
+    static Dictionary<string, object> ParseArgs(string[] args) {
+        Dictionary<string, object> buildOptions = new Dictionary<string, object>();
+        string lastKey = null;
+        foreach (string arg in args) {
+            if (arg.StartsWith("--")) {
+                lastKey = arg.Substring(2).ToLower();
+                buildOptions.Add(lastKey, null);
+            } else if (buildOptions.ContainsKey(lastKey)) {
+                buildOptions[lastKey] = arg;
+            }
+        }
+        return buildOptions;
     }
 }
