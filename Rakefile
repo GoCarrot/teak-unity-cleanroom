@@ -252,7 +252,7 @@ namespace :build do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
-    Rake::Task['kms:decrypt'].invoke('io.teak.app.test.unity.dev.keystore')
+    Rake::Task['kms:decrypt'].invoke('io.teak.app.test.unity.dev.upload.keystore')
     unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", "--api", TARGET_API, "--keystore", File.join(PROJECT_PATH, 'io.teak.app.test.unity.dev.keystore'), "--debug"
     File.delete('io.teak.app.test.unity.dev.keystore')
   end
