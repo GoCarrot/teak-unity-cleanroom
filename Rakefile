@@ -36,17 +36,20 @@ TEAK_CREDENTIALS = {
     teak_app_id: '613659812345256',
     teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
     teak_gcm_sender_id: '944348058057',
-    teak_short_url_domain: 'teak-dev.playw.it'
+    teak_short_url_domain: 'teak-dev.playw.it',
+    signing_key: 'io.teak.app.unity.dev.upload.keystore'
   },
   'prod' => {
     package_name: 'io.teak.app.unity.prod',
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
     teak_gcm_sender_id: '944348058057',
-    teak_short_url_domain: 'teak-prod.playw.it'
+    teak_short_url_domain: 'teak-prod.playw.it',
+    signing_key: 'io.teak.app.unity.prod.keystore'
   }
 }
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
+SIGNING_KEY = TEAK_CREDENTIALS[BUILD_TYPE][:signing_key]
 TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_VERSION')}" : ""
 
 KMS_KEY = `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode`
@@ -252,9 +255,9 @@ namespace :build do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
-    Rake::Task['kms:decrypt'].invoke('io.teak.app.test.unity.dev.upload.keystore')
-    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", "--api", TARGET_API, "--keystore", File.join(PROJECT_PATH, 'io.teak.app.test.unity.dev.keystore'), "--debug"
-    File.delete('io.teak.app.test.unity.dev.keystore')
+    Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
+    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", "--api", TARGET_API, "--keystore", File.join(PROJECT_PATH, SIGNING_KEY)#, "--debug"
+    File.delete(SIGNING_KEY)
   end
 
   task ios: ['ios:all']
@@ -272,7 +275,7 @@ namespace :ios do
   task all: [:fastlane_match, :build, :postprocess, :fastlane]
 
   task :fastlane_match do
-    sh 'bundle exec fastlane match development' if ci?
+    fastlane 'match', 'development' if ci?
   end
 
   task build: [:warnings_as_errors] do
@@ -291,7 +294,7 @@ namespace :ios do
   end
 
   task :fastlane do
-    sh 'bundle exec fastlane dev'
+    fastlane 'dev'
   end
 end
 
