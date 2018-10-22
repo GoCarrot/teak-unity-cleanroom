@@ -67,6 +67,15 @@ Assets/Plugins/Android/IABPlugin.aar*
 Assets/Plugins/Prime31*
 Assets/Plugins/P31RestKit.dll*
 
+# UnityIAP
+Assets/Plugins/UnityPurchasing/Bin*
+Assets/Plugins/UnityPurchasing/Icons*
+Assets/Plugins/UnityPurchasing/iOS*
+Assets/Plugins/UnityPurchasing/Resources*
+Assets/Plugins/UnityPurchasing/scenes*
+Assets/Plugins/UnityPurchasing/script*
+Assets/Plugins/UnityPurchasing/winrt*
+
 # Generated Files
 Unity-iPhone/*
 WebGLBuild*
