@@ -136,6 +136,17 @@ class BuildPlayer
             PlayerSettings.Android.keyaliasPass = "pointless";
         }
 
+        // #defines
+        if (parsedArgs.ContainsKey("define")) {
+            string[] defines = parsedArgs["define"] as string[];
+            if (defines == null) {
+                defines = new string[] { parsedArgs["define"] as string };
+            }
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, string.Join(";", defines));
+        } else {
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "");
+        }
+
         // Debug build?
         bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
 
@@ -203,7 +214,18 @@ class BuildPlayer
                 lastKey = arg.Substring(2).ToLower();
                 buildOptions.Add(lastKey, null);
             } else if (buildOptions.ContainsKey(lastKey)) {
-                buildOptions[lastKey] = arg;
+                if (buildOptions[lastKey] != null) {
+                    if (buildOptions[lastKey] is string) {
+                        buildOptions[lastKey] = new string[] { buildOptions[lastKey] as string };
+                    }
+
+                    string[] current = buildOptions[lastKey] as string[];
+                    string[] next = new string[current.Length + 1];
+                    current.CopyTo(next, 0);
+                    new string[]{ arg }.CopyTo(next, current.Length);
+                } else {
+                    buildOptions[lastKey] = arg;
+                }
             }
         }
         return buildOptions;

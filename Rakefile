@@ -255,8 +255,13 @@ namespace :build do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
+    additional_args = [
+      '--define', 'USE_PRIME31',
+      '--debug'
+    ]
+
     Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
-    unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.Android", "--api", TARGET_API, "--keystore", File.join(PROJECT_PATH, SIGNING_KEY)#, "--debug"
+    unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
     File.delete(SIGNING_KEY)
   end
 
