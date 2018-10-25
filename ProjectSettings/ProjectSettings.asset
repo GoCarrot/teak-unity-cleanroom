@@ -141,8 +141,8 @@ PlayerSettings:
   targetPixelDensity: 0
   resolutionScalingMode: 0
   applicationIdentifier:
-    Android: io.teak.app.unity.dev
-    iOS: io.teak.app.unity.dev
+    Android: io.teak.app.unity.prod
+    iOS: io.teak.app.unity.prod
   buildNumber: {}
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 16
@@ -218,7 +218,7 @@ PlayerSettings:
   AndroidTargetDevice: 0
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: /Users/pat/Code/teak-unity-cleanroom/io.teak.app.test.unity.dev.keystore
+  AndroidKeystoreName: /Users/pat/Code/teak-unity-cleanroom/io.teak.app.unity.prod.keystore
   AndroidKeyaliasName: alias_name
   AndroidTVCompatibility: 1
   AndroidIsGame: 1
@@ -498,10 +498,12 @@ PlayerSettings:
   webGLUseEmbeddedResources: 0
   webGLUseWasm: 0
   webGLCompressionFormat: 1
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    7: 
   platformArchitecture: {}
   scriptingBackend:
     Android: 0
+    iOS: 1
   incrementalIl2cppBuild: {}
   additionalIl2CppArgs: 
   scriptingRuntimeVersion: 0
@@ -586,12 +588,13 @@ PlayerSettings:
     daydream:
       daydreamIconForeground: {fileID: 0}
       daydreamIconBackground: {fileID: 0}
-  cloudServicesEnabled: {}
+  cloudServicesEnabled:
+    UNet: 1
   facebookSdkVersion: 7.9.4
   apiCompatibilityLevel: 2
-  cloudProjectId: 
-  projectName: 
-  organizationId: 
+  cloudProjectId: beb9b42f-7ae8-4a52-a3f1-3ae8bda79f0b
+  projectName: teak-unity-cleanroom
+  organizationId: patwilson
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0
   disableOldInputManagerSupport: 0

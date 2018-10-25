@@ -51,6 +51,14 @@
         </intent-filter>
     </receiver>
 
+    <!-- Amazon IAP -->
+    <receiver android:name = "com.amazon.device.iap.ResponseReceiver" >
+      <intent-filter>
+        <action android:name = "com.amazon.inapp.purchasing.NOTIFY"
+                android:permission = "com.amazon.inapp.purchasing.Permission.NOTIFY" />
+      </intent-filter>
+    </receiver>
+
     <!-- Prevent Unity from asking for WRITE_EXTERNAL_STORAGE -->
     <meta-data android:name="unityplayer.SkipPermissionsDialog" android:value="true" />
   </application>

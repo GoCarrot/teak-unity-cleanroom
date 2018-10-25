@@ -75,6 +75,7 @@ Assets/Plugins/UnityPurchasing/Resources*
 Assets/Plugins/UnityPurchasing/scenes*
 Assets/Plugins/UnityPurchasing/script*
 Assets/Plugins/UnityPurchasing/winrt*
+Assets/Plugins/UnityChannel*
 
 # Generated Files
 Unity-iPhone/*

@@ -25,6 +25,16 @@ lane :sdk do
   File.write(File.join("..", "TEAK_VERSION"), version)
 end
 
+platform :android do
+  lane :deploy do
+    puts google_play_track_version_codes(
+      package_name: 'io.teak.app.unity.dev',
+      track: 'internal',
+      json_key: File.join(FASTFILE_PATH, '..', 'supply.key.json')
+    )
+  end
+end
+
 platform :ios do
   before_all do
     setup_circle_ci

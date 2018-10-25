@@ -1,4 +1,4 @@
-require 'rake/clean'
+require 'rake/clean' # frozen_string_literal: true
 require 'shellwords'
 require 'mustache'
 require 'httparty'
@@ -50,7 +50,7 @@ TEAK_CREDENTIALS = {
 }
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
 SIGNING_KEY = TEAK_CREDENTIALS[BUILD_TYPE][:signing_key]
-TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_VERSION')}" : ""
+TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_VERSION')}" : ''
 
 KMS_KEY = `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode`
 CIRCLE_TOKEN = ENV.fetch('CIRCLE_TOKEN') { `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_circle_ci_key.data -k #{KMS_KEY}` }
@@ -205,6 +205,22 @@ namespace :prime31 do
   end
 end
 
+namespace :unity_iap do
+  task :import do
+    UNITY_COMPILERS.each do |compiler|
+      File.open("Assets/#{compiler}.rsp", 'w') do |f|
+        f.puts '-define:TEAK_NOT_AVAILABLE'
+      end
+    end
+
+    unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
+    file.delete(Dir.glob('Assets/Plugins/UnityPurchasing/script/Demo*'))
+    file.delete(Dir.glob('Assets/Plugins/UnityPurchasing/script/IAPDemo*'))
+
+    unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
+  end
+end
+
 namespace :package do
   task download: [:clean] do
     fastlane "sdk"
@@ -249,20 +265,28 @@ namespace :build do
     unity "-buildTarget", "Android", "-executeMethod", "BuildPlayer.ResolveDependencies", quit: false, nographics: false
   end
 
-  task android: [:dependencies, :warnings_as_errors] do
+  task :android, [:amazon?] => %i[dependencies warnings_as_errors] do |_, args|
     FileUtils.rm_f('teak-unity-cleanroom.apk')
 
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
     additional_args = [
-      '--define', 'USE_PRIME31',
+      # '--define', 'USE_PRIME31',
       '--debug'
     ]
+
+    build_amazon = args[:amazon?] ? args[:amazon?].to_s == 'true' : false
+
+    additional_args.concat(['--define', 'AMAZON']) if build_amazon
 
     Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
     unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
     File.delete(SIGNING_KEY)
+  end
+
+  task :amazon do
+    Rake::Task['build:android'].invoke('true')
   end
 
   task ios: ['ios:all']
@@ -277,7 +301,7 @@ namespace :build do
 end
 
 namespace :ios do
-  task all: [:fastlane_match, :build, :postprocess, :fastlane]
+  task all: %i[fastlane_match build postprocess fastlane]
 
   task :fastlane_match do
     fastlane 'match', 'development' if ci?
@@ -315,6 +339,14 @@ namespace :deploy do
   task :webgl do
     sh "curl -X POST https://graph-video.facebook.com/#{TEAK_CREDENTIALS[BUILD_TYPE][:teak_app_id]}/assets -F 'access_token=#{FB_UPLOAD_TOKEN}' -F 'type=UNITY_WEBGL' -F 'asset=@./teak-unity-cleanroom.zip' -F 'comment=#{`cat TEAK_VERSION`}'"
   end
+
+  task :google_play do
+    Rake::Task['kms:decrypt'].invoke('supply.key.json')
+    #fastlane 'supply', '--apk', 'teak-unity-cleanroom.apk', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
+    #fastlane 'google_play_track_version_codes', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
+    fastlane 'android', 'deploy'
+    File.delete('supply.key.json')
+  end
 end
 
 namespace :install do
@@ -329,8 +361,10 @@ namespace :install do
     sh "ideviceinstaller --install #{ipa_path}"
   end
 
-  task :android, [:version] do |t, args|
+  task :android, [:store, :version] do |t, args|
     apk_path = args[:version] ? build_and_fetch(args[:version], :apk) : "teak-unity-cleanroom.apk"
+    installer_package = args[:store] ? args[:store] : 'com.android.vending'
+    android_destination = '/sdcard/teak-unity-cleanroom.apk'
 
     devicelist = %x[AndroidResources/devicelist].split(',').collect{ |x| x.chomp }
     devicelist.each do |device|
@@ -340,9 +374,20 @@ namespace :install do
         adb.call "uninstall #{PACKAGE_NAME}"
       rescue
       end
-      adb.call "install #{apk_path}"
+
+      adb.call "push #{apk_path} #{android_destination}"
+      adb.call "shell pm install -i #{installer_package} -r #{android_destination}"
+      adb.call "shell rm #{android_destination}"
       adb.call "shell am start -n #{PACKAGE_NAME}/io.teak.sdk.wrapper.unity.TeakUnityPlayerActivity"
     end
+  end
+
+  task :google_play do
+    Rake::Task['install:android'].invoke('com.android.vending')
+  end
+
+  task :amazon do
+    Rake::Task['install:android'].invoke('com.amazon.venezia')
   end
 
   task :webgl do
