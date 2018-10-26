@@ -5,7 +5,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+#if !TEAK_NOT_AVAILABLE
 using MiniJSON.Teak;
+#endif // !TEAK_NOT_AVAILABLE
 
 public class TeakStoreListener : IStoreListener {
     public static readonly string Version = "0.0.1";
@@ -19,8 +21,10 @@ public class TeakStoreListener : IStoreListener {
         this.AttachedStoreListener = hostedListener;
         this.ForwardEventsToTeak = false;
 
+#if !TEAK_NOT_AVAILABLE
         // Check that Teak version is 1.0.0, otherwise the ProGuard mapping will be incorrect
         if (!"1.0.0".Equals(Teak.Version)) throw new RuntimeException("This version of the TeakStoreListener will only work with Teak SDK 1.0.0.");
+#endif // !TEAK_NOT_AVAILABLE
     }
 
 #region IStoreListener
@@ -59,7 +63,7 @@ public class TeakStoreListener : IStoreListener {
     }
 
     public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs e) {
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID && !TEAK_NOT_AVAILABLE
         try {
             if (this.ForwardEventsToTeak) {
                 Dictionary<string, object> receipt = Json.Deserialize(e.purchasedProduct.receipt) as Dictionary<string,object>;
@@ -86,7 +90,7 @@ public class TeakStoreListener : IStoreListener {
             }
         } finally {
         }
-#endif // UNITY_ANDROID
+#endif // UNITY_ANDROID && !TEAK_NOT_AVAILABLE
         return this.AttachedStoreListener.ProcessPurchase(e);
     }
 #endregion IStoreListener
