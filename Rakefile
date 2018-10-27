@@ -216,9 +216,9 @@ namespace :unity_iap do
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
     file.delete(Dir.glob('Assets/Plugins/UnityPurchasing/script/Demo*'))
     file.delete(Dir.glob('Assets/Plugins/UnityPurchasing/script/IAPDemo*'))
-    file.delete(Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
 
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
+    file.delete(Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
   end
 end
 
