@@ -132,45 +132,6 @@ def fastlane(*args, env: {})
   sh "#{env.map { |k, v| "#{k}='#{v}'" }.join(' ')} bundle exec fastlane #{escaped_args}", verbose: false
 end
 
-def build_and_fetch(version, extension)
-  filename = "teak-unity-cleanroom-#{version}.#{extension}"
-  if FORCE_CIRCLE_BUILD_ON_FETCH.to_s == 'true' || `aws s3 ls s3://teak-build-artifacts/unity-cleanroom/ | grep #{filename}`.empty?
-
-    # Kick off a CircleCI build for that version
-    puts "Version #{version} not found in S3, triggering a CircleCI build..."
-    response = HTTParty.post("https://circleci.com/api/v1.1/project/github/GoCarrot/teak-unity-cleanroom/tree/master?circle-token=#{CIRCLE_TOKEN}",
-                             body: {
-                               build_parameters: {
-                                 FL_TEAK_SDK_VERSION: version
-                               }
-                             }.to_json,
-                             headers: {
-                               'Content-Type' => 'application/json',
-                               'Accept' => 'application/json'
-                             })
-    build_num = response['build_num']
-    previous_build_time_ms = response['previous_successful_build']['build_time_millis']
-    previous_build_time_sec = previous_build_time_ms * 0.001
-
-    # Sleep for 3/4 of the previous build time
-    puts "Previous successful build took #{previous_build_time_sec} seconds."
-    puts "Waiting #{previous_build_time_sec * 0.90} seconds..."
-    sleep(previous_build_time_sec * 0.90)
-
-    loop do
-      # Get status
-      response = HTTParty.get("https://circleci.com/api/v1.1/project/github/GoCarrot/teak-unity-cleanroom/#{build_num}?circle-token=#{CIRCLE_TOKEN}",
-                              format: :json)
-      break unless response['status'] == 'running'
-
-      puts "Build status: #{response['status']}, checking again in #{previous_build_time_sec * 0.1} seconds"
-      sleep(previous_build_time_sec * 0.1)
-    end
-  end
-  sh "aws s3 sync s3://teak-build-artifacts/unity-cleanroom/ . --exclude '*' --include '#{filename}'"
-  filename
-end
-
 #
 # Tasks
 #
@@ -231,11 +192,12 @@ namespace :unity_iap do
     end
 
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
-    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/Demo*'))
+    FileUtils.remove_dir('Assets/Plugins/UnityPurchasing/script/Demo')
+    File.delete('Assets/Plugins/UnityPurchasing/script/Demo.meta')
     File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/IAPDemo*'))
 
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
-    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
+    # File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
   end
 end
 
@@ -373,8 +335,8 @@ namespace :deploy do
 end
 
 namespace :install do
-  task :ios, [:version] do |_, args|
-    ipa_path = args[:version] ? build_and_fetch(args[:version], :ipa) : 'teak-unity-cleanroom.ipa'
+  task :ios do
+    ipa_path = 'teak-unity-cleanroom.ipa'
 
     begin
       sh "ideviceinstaller --uninstall #{PACKAGE_NAME}"
@@ -384,8 +346,8 @@ namespace :install do
     sh "ideviceinstaller --install #{ipa_path}"
   end
 
-  task :android, [:store, :version] do |_, args|
-    apk_path = args[:version] ? build_and_fetch(args[:version], :apk) : 'teak-unity-cleanroom.apk'
+  task :android, [:store] do |_, args|
+    apk_path = 'teak-unity-cleanroom.apk'
     installer_package = args[:store] || 'com.android.vending'
     android_destination = '/sdcard/teak-unity-cleanroom.apk'
 
