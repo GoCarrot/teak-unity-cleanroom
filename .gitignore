@@ -31,10 +31,6 @@ ExportedObj/
 # Unity3D Generated File On Crash Reports
 sysinfo.txt
 
-# Builds
-*.apk
-*.unitypackage
-
 # Teak SDK Files
 Assets/Plugins/Android/res.meta
 Assets/Plugins/Android/res/values.meta

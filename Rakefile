@@ -77,7 +77,7 @@ def use_prime31?
 end
 
 def use_unityiap?
-  ENV.fetch('USE_UNITYIAP', false).to_s == 'true'
+  ENV.fetch('USE_UNITY_IAP', false).to_s == 'true'
 end
 
 def add_unity_log_to_artifacts
