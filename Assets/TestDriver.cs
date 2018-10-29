@@ -33,7 +33,9 @@ public class TestDriver : MonoBehaviour
     IStoreController storeController;
 #endif
 
+#if USE_UNITY_IAP || USE_PRIME31
     string testPurchaseSku = "io.teak.app.sku.dollar";
+#endif
 
     private static readonly string TestListVersionKey = "TestListVersion";
     int TestListVersion {
