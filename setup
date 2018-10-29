@@ -4,7 +4,6 @@ IFS=$'\n\t'
 
 brew tap caskroom/cask
 brew tap wooga/unityversions
-brew tap gocarrot/homebrew-ndkversions
 
 if [ "$(which aws)" == "" ]; then brew install awscli; fi
 
@@ -21,6 +20,7 @@ if [[ $RAKE_BUILD_TASKS = *"android"* ]]; then
 
   # Android NDK
   if [ $USE_IL2CPP_ON_ANDROID == "true" ] && [ "$(which ndk-build)" == "" ]; then
+    brew tap gocarrot/homebrew-ndkversions
     brew cask install android-ndk@10e
   fi
 
