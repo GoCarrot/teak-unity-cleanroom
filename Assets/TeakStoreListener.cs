@@ -1,3 +1,4 @@
+#if USE_UNITY_IAP
 using UnityEngine;
 using UnityEngine.Purchasing;
 
@@ -95,3 +96,4 @@ public class TeakStoreListener : IStoreListener {
     }
 #endregion IStoreListener
 }
+#endif // USE_UNITY_IAP
