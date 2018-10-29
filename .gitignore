@@ -65,6 +65,7 @@ Assets/Plugins/P31RestKit.dll*
 
 # UnityIAP
 Assets/Plugins/UnityPurchasing/Bin*
+Assets/Plugins/UnityPurchasing/Editor*
 Assets/Plugins/UnityPurchasing/Icons*
 Assets/Plugins/UnityPurchasing/iOS*
 Assets/Plugins/UnityPurchasing/Resources*
