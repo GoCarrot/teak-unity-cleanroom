@@ -72,6 +72,14 @@ def ci?
   ENV.fetch('CI', false).to_s == 'true'
 end
 
+def use_prime31?
+  ENV.fetch('USE_PRIME31', false).to_s == 'true'
+end
+
+def use_unityiap?
+  ENV.fetch('USE_UNITYIAP', false).to_s == 'true'
+end
+
 def add_unity_log_to_artifacts
   cp('unity.log', "#{Rake.application.current_task.name.sub(':', '-')}.unity.log") unless $!.nil?
 end
@@ -246,6 +254,9 @@ namespace :package do
     unity '-importPackage', 'Teak.unitypackage'
 
     File.delete(*Dir.glob('Assets/*.rsp*'))
+
+    Rake::Task['prime31:import'].invoke if use_prime31?
+    Rake::Task['unity_iap:import'].invoke if use_unityiap?
   end
 end
 
@@ -277,14 +288,12 @@ namespace :build do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
-    additional_args = [
-      # '--define', 'USE_PRIME31',
-      '--debug'
-    ]
-
+    additional_args = ['--debug']
     build_amazon = args[:amazon?] ? args[:amazon?].to_s == 'true' : false
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
+    additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
+    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unityiap?
 
     Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
     unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
@@ -316,7 +325,11 @@ namespace :ios do
   task build: [:warnings_as_errors] do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
-    unity '-buildTarget', 'iOS', '-executeMethod', 'BuildPlayer.iOS', '--debug'
+
+    additional_args = ['--debug']
+    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unityiap?
+
+    unity '-buildTarget', 'iOS', '-executeMethod', 'BuildPlayer.iOS', *additional_args
   end
 
   task :postprocess do
