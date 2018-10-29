@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file contains the fastlane.tools configuration
 # You can find the documentation at https://docs.fastlane.tools
 #
@@ -9,20 +11,20 @@
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
 FASTFILE_PATH = File.expand_path(File.dirname(File.dirname(__FILE__)))
-XCODE_PROJECT = File.join(FASTFILE_PATH, "..", "Unity-iPhone", "Unity-iPhone.xcodeproj")
-CONFIG_TYPE = "development"
-TEAK_APP_EXTENSIONS = ["TeakNotificationService", "TeakNotificationContent"]
-BUILD_CONFIGURATIONS = ["Debug", "Release", "ReleaseForRunning", "ReleaseForProfiling"]
+XCODE_PROJECT = File.join(FASTFILE_PATH, '..', 'Unity-iPhone', 'Unity-iPhone.xcodeproj')
+CONFIG_TYPE = 'development'
+TEAK_APP_EXTENSIONS = %w[TeakNotificationService TeakNotificationContent].freeze
+BUILD_CONFIGURATIONS = %w[Debug Release ReleaseForRunning ReleaseForProfiling].freeze
 
 default_platform(:ios)
 
-desc "Copy or download the Teak SDK"
+desc 'Copy or download the Teak SDK'
 lane :sdk do
   version = teak_sdk(
     sdk: :unity,
     destination: '.'
   )
-  File.write(File.join("..", "TEAK_VERSION"), version)
+  File.write(File.join('..', 'TEAK_VERSION'), version)
 end
 
 platform :android do
@@ -40,13 +42,13 @@ platform :ios do
     setup_circle_ci
   end
 
-  desc "Build targeting Dev profile"
+  desc 'Build targeting Dev profile'
   lane :dev do
-    BUILD_CONFIGURATION = "Debug"
+    BUILD_CONFIGURATION = 'Debug'
 
     # Create/fetch and store provisioning profiles
     ios_provisioning_profile = {}
-    ["io.teak.app.unity.dev"].each do |app_id|
+    ['io.teak.app.unity.dev'].each do |app_id|
       match(
         app_identifier: app_id,
         type: CONFIG_TYPE,
@@ -56,7 +58,7 @@ platform :ios do
         app_identifier: app_id,
         type: CONFIG_TYPE
       )
-      ios_provisioning_profile["Unity-iPhone"] = ENV[provisioning_profile_env]
+      ios_provisioning_profile['Unity-iPhone'] = ENV[provisioning_profile_env]
 
       TEAK_APP_EXTENSIONS.each do |app_extension_name|
         match(
@@ -75,11 +77,11 @@ platform :ios do
 
     # Add Teak app extensions
     teak_extensions(
-      xcodeproj:XCODE_PROJECT,
-      #source:"~/Code/teak-ios"
+      xcodeproj: XCODE_PROJECT,
+      # source:"~/Code/teak-ios"
     )
 
-    (TEAK_APP_EXTENSIONS + ["Unity-iPhone"]).each do |target|
+    (TEAK_APP_EXTENSIONS + ['Unity-iPhone']).each do |target|
       update_project_provisioning(
         xcodeproj: XCODE_PROJECT,
         target_filter: target,
@@ -93,11 +95,11 @@ platform :ios do
 
     build_ios_app(
       project: XCODE_PROJECT,
-      scheme: "Unity-iPhone",
+      scheme: 'Unity-iPhone',
       configuration: BUILD_CONFIGURATION,
       clean: true,
-      output_directory: File.join(FASTFILE_PATH, ".."),
-      output_name: "teak-unity-cleanroom.ipa",
+      output_directory: File.join(FASTFILE_PATH, '..'),
+      output_name: 'teak-unity-cleanroom.ipa',
       export_method: CONFIG_TYPE
     )
 
