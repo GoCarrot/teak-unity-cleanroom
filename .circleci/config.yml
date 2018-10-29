@@ -43,7 +43,7 @@ jobs:
       - run:
           name: Build Teak Cleanroom
           command: bundle exec rake $RAKE_BUILD_TASKS
-          no_output_timeout: 30m
+          no_output_timeout: 50m
       - run:
           command: |
             mkdir -p /tmp/unity_logs
