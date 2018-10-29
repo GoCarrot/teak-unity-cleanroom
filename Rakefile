@@ -77,7 +77,11 @@ def use_prime31?
 end
 
 def use_unityiap?
-  ENV.fetch('USE_UNITY_IAP', false).to_s == 'true'
+  ENV.fetch('USE_UNITY_IAP', true).to_s == 'true'
+end
+
+def android_il2cpp?
+  ENV.fetch('USE_IL2CPP_ON_ANDROID', false).to_s == 'true'
 end
 
 def add_unity_log_to_artifacts
@@ -227,11 +231,11 @@ namespace :unity_iap do
     end
 
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
-    File.delete(Dir.glob('Assets/Plugins/UnityPurchasing/script/Demo*'))
-    File.delete(Dir.glob('Assets/Plugins/UnityPurchasing/script/IAPDemo*'))
+    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/Demo*'))
+    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/IAPDemo*'))
 
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
-    File.delete(Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
+    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
   end
 end
 

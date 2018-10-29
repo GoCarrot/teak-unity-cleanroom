@@ -64,6 +64,9 @@ jobs:
       - image: circleci/ruby:latest
     steps:
       - checkout
+      - run:
+          name: Tasks To Deploy...
+          command: echo $RAKE_DEPLOY_TASKS
       - restore_cache:
           key: v0-{{ checksum "Gemfile.lock" }}
       - run:

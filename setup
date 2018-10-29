@@ -20,7 +20,7 @@ if [[ $RAKE_BUILD_TASKS = *"android"* ]]; then
   fi
 
   # Android NDK
-  if [ "$(which ndk-build)" == "" ]; then
+  if [ $USE_IL2CPP_ON_ANDROID == "true" ] && [ "$(which ndk-build)" == "" ]; then
     brew cask install android-ndk@10e
   fi
 
