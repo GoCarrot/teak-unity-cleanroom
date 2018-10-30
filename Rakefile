@@ -194,10 +194,13 @@ namespace :unity_iap do
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
     FileUtils.remove_dir('Assets/Plugins/UnityPurchasing/script/Demo')
     File.delete('Assets/Plugins/UnityPurchasing/script/Demo.meta')
-    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/IAPDemo*'))
+    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/IAP*'))
+    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/CodelessIAPStoreListener*'))
+    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/Editor/IAPButtonEditor*'))
 
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
     # File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
+
   end
 end
 
