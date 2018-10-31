@@ -262,7 +262,6 @@ namespace :build do
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
-    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unityiap?
     additional_args.concat(['--il2cpp']) if android_il2cpp?
 
     Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
@@ -297,7 +296,6 @@ namespace :ios do
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
 
     additional_args = ['--debug']
-    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unityiap?
 
     unity '-buildTarget', 'iOS', '-executeMethod', 'BuildPlayer.iOS', *additional_args
   end

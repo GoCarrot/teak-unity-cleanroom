@@ -10,14 +10,17 @@ using System.Collections.Generic;
 using MiniJSON.Teak;
 #endif // !TEAK_NOT_AVAILABLE
 
-public class TeakStoreListener : IStoreListener {
+public class TeakStoreListener_v1_20 : IStoreListener {
     public static readonly string Version = "0.0.1";
 
     public IStoreListener AttachedStoreListener { get; private set; }
 
-    public TeakStoreListener(IStoreListener hostedListener) {
+    protected bool ForwardEventsToTeak { get; set; }
+
+    public TeakStoreListener_v1_20(IStoreListener hostedListener) {
         if (hostedListener == null) throw new ArgumentNullException("hostedListener");
         this.AttachedStoreListener = hostedListener;
+        this.ForwardEventsToTeak = false;
 
 #if !TEAK_NOT_AVAILABLE
         // Check that Teak version is 1.0.0, otherwise the ProGuard mapping will be incorrect
@@ -27,6 +30,19 @@ public class TeakStoreListener : IStoreListener {
 
 #region IStoreListener
     public void OnInitialized(IStoreController controller, IExtensionProvider extensions) {
+#if !UNITY_EDITOR && UNITY_ANDROID
+        IGooglePlayStoreExtensions googlePlayStoreExtensions = extensions.GetExtension<IGooglePlayStoreExtensions>();
+        try {
+            this.ForwardEventsToTeak = (googlePlayStoreExtensions != null &&
+                                        googlePlayStoreExtensions.GetProductJSONDictionary() != null &&
+                                        googlePlayStoreExtensions.GetProductJSONDictionary().Count > 0);
+        } finally {
+        }
+
+        if (this.ForwardEventsToTeak) {
+            Debug.Log("[TeakStoreListener] Running on Google Play Store.");
+        }
+#endif // #UNITY_ANDROID
         this.AttachedStoreListener.OnInitialized(controller, extensions);
     }
 
@@ -35,15 +51,24 @@ public class TeakStoreListener : IStoreListener {
     }
 
     public void OnPurchaseFailed(Product item, PurchaseFailureReason r) {
+#if !UNITY_EDITOR && UNITY_ANDROID
+        try {
+            if (this.ForwardEventsToTeak) {
+                AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
+                teak.CallStatic("pluginPurchaseFailed", (int) r, "unityiap");
+            }
+        } finally {
+        }
+#endif // #UNITY_ANDROID
         this.AttachedStoreListener.OnPurchaseFailed(item, r);
     }
 
     public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs e) {
 #if !UNITY_EDITOR && UNITY_ANDROID && !TEAK_NOT_AVAILABLE
-        Debug.Log("RUNNING < v1.20.0");
         try {
-            Dictionary<string, object> receipt = Json.Deserialize(e.purchasedProduct.receipt) as Dictionary<string,object>;
-            if ("GooglePlay".Equals(receipt["Store"])) {
+            if (this.ForwardEventsToTeak) {
+                Debug.Log(e.purchasedProduct.receipt);
+                Dictionary<string, object> receipt = Json.Deserialize(e.purchasedProduct.receipt) as Dictionary<string,object>;
                 Dictionary<string, object> receiptPayload = Json.Deserialize(receipt["Payload"] as string) as Dictionary<string,object>;
                 Dictionary<string, object> receiptPayloadJson = Json.Deserialize(receiptPayload["json"] as string) as Dictionary<string,object>;
                 string receiptPayloadJsonString = Json.Serialize(receiptPayloadJson);
