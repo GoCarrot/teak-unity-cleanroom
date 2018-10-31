@@ -40,7 +40,6 @@ public class TeakStoreListener : IStoreListener {
 
     public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs e) {
 #if !UNITY_EDITOR && UNITY_ANDROID && !TEAK_NOT_AVAILABLE
-        Debug.Log("RUNNING < v1.20.0");
         try {
             Dictionary<string, object> receipt = Json.Deserialize(e.purchasedProduct.receipt) as Dictionary<string,object>;
             if ("GooglePlay".Equals(receipt["Store"])) {
