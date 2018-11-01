@@ -200,7 +200,6 @@ namespace :unity_iap do
 
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
     # File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
-
   end
 end
 
@@ -246,12 +245,14 @@ namespace :config do
   end
 end
 
-namespace :build do
+namespace :android do
   task :dependencies do
     unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.ResolveDependencies', quit: false, nographics: false
   end
+end
 
-  task :android, [:amazon?] => %i[dependencies warnings_as_errors] do |_, args|
+namespace :build do
+  task :android, [:amazon?] => %i[android:dependencies warnings_as_errors] do |_, args|
     FileUtils.rm_f('teak-unity-cleanroom.apk')
 
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
