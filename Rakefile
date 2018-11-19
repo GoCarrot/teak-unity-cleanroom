@@ -349,7 +349,7 @@ namespace :install do
   task :android, [:store] do |_, args|
     apk_path = 'teak-unity-cleanroom.apk'
     installer_package = args[:store] || 'com.android.vending'
-    android_destination = '/sdcard/teak-unity-cleanroom.apk'
+    android_destination = '/data/local/tmp/teak-unity-cleanroom.apk'
 
     devicelist = `AndroidResources/devicelist`.split(',').collect(&:chomp)
     devicelist.each do |device|
