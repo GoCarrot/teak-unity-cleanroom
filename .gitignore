@@ -52,7 +52,19 @@ Assets/Plugins/Android/com.android.support.support-fragment-*
 Assets/Plugins/Android/com.android.support.support-media-compat-*
 Assets/Plugins/Android/com.android.support.support-v4-*
 Assets/Plugins/Android/com.android.support.customtabs-*
+Assets/Plugins/Android/com.google.firebase.firebase-common-*
+Assets/Plugins/Android/com.google.firebase.firebase-iid-*
+Assets/Plugins/Android/com.google.firebase.firebase-iid-interop-*
+Assets/Plugins/Android/com.google.firebase.firebase-measurement-connector-*
 Assets/Plugins/Android/com.google.firebase.firebase-messaging-*
+Assets/Plugins/Android/com.google.android.gms.play-services-ads-*
+Assets/Plugins/Android/com.google.android.gms.play-services-ads-base-*
+Assets/Plugins/Android/com.google.android.gms.play-services-ads-identifier-*
+Assets/Plugins/Android/com.google.android.gms.play-services-base-*
+Assets/Plugins/Android/com.google.android.gms.play-services-basement-*
+Assets/Plugins/Android/com.google.android.gms.play-services-gass-*
+Assets/Plugins/Android/com.google.android.gms.play-services-stats-*
+Assets/Plugins/Android/com.google.android.gms.play-services-tasks-*
 
 # Prime31
 Assets/Editor/Prime31*
