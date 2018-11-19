@@ -341,10 +341,7 @@ namespace :install do
   task :ios do
     ipa_path = 'teak-unity-cleanroom.ipa'
 
-    begin
-      sh "ideviceinstaller --uninstall #{PACKAGE_NAME}"
-    rescue
-    end
+    sh "ideviceinstaller --uninstall #{PACKAGE_NAME}" rescue nil
     # https://github.com/libimobiledevice/libimobiledevice/issues/510#issuecomment-347175312
     sh "ideviceinstaller --install #{ipa_path}"
   end
@@ -358,11 +355,7 @@ namespace :install do
     devicelist.each do |device|
       adb = ->(*lambda_args) { sh "adb -s #{device} #{lambda_args.join(' ')}" }
 
-      begin
-        adb.call "uninstall #{PACKAGE_NAME}"
-      rescue
-      end
-
+      adb.call "uninstall #{PACKAGE_NAME}" rescue nil
       adb.call "push #{apk_path} #{android_destination}"
       adb.call "shell pm install -i #{installer_package} -r #{android_destination}"
       adb.call "shell rm #{android_destination}"
