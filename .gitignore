@@ -51,11 +51,8 @@ Assets/Plugins/Android/com.android.support.support-core-utils-*
 Assets/Plugins/Android/com.android.support.support-fragment-*
 Assets/Plugins/Android/com.android.support.support-media-compat-*
 Assets/Plugins/Android/com.android.support.support-v4-*
-Assets/Plugins/Android/com.google.android.gms.play-services-base-*
-Assets/Plugins/Android/com.google.android.gms.play-services-basement-*
-Assets/Plugins/Android/com.google.android.gms.play-services-gcm-*
-Assets/Plugins/Android/com.google.android.gms.play-services-iid-*
-Assets/Plugins/Android/com.google.android.gms.play-services-tasks-*
+Assets/Plugins/Android/com.android.support.customtabs-*
+Assets/Plugins/Android/com.google.firebase.firebase-messaging-*
 
 # Prime31
 Assets/Editor/Prime31*
