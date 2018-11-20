@@ -82,6 +82,13 @@ class BuildPlayer
     static void DoBuildPlayer(BuildPlayerOptions buildPlayerOptions) {
         string error = BuildPipeline.BuildPlayer(buildPlayerOptions);
         if (string.IsNullOrEmpty(error)) {
+            // Preserve the merged AndroidManifest.xml
+            if (buildPlayerOptions.target == BuildTarget.Android) {
+                string mergedManifestPath = System.IO.Path.GetFullPath(Application.dataPath + "/../Temp/StagingArea/AndroidManifest.xml");
+                string outputManifestPath = System.IO.Path.GetFullPath(Application.dataPath + "/../AndroidManifest.merged.xml");
+                System.IO.File.Copy(mergedManifestPath, outputManifestPath, true);
+            }
+
             EditorApplication.Exit(0);
         } else {
             EditorApplication.Exit(1);

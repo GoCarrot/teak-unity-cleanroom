@@ -97,6 +97,7 @@ fastlane/report.xml
 TEAK_VERSION
 .DS_Store
 Assets/*.rsp*
+AndroidManifest.merged.xml
 
 # Generated Configuration Files
 Assets/Plugins/Android/AndroidManifest.xml*
