@@ -41,7 +41,8 @@ TEAK_CREDENTIALS = {
     package_name: 'io.teak.app.unity.dev',
     teak_app_id: '613659812345256',
     teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
-    teak_gcm_sender_id: '944348058057',
+    teak_gcm_sender_id: '12126273415',
+    teak_firebase_app_id: '1:12126273415:android:102329156b15bf0c',
     teak_short_url_domain: 'teak-dev.playw.it',
     signing_key: 'io.teak.app.unity.dev.upload.keystore'
   },
@@ -49,7 +50,8 @@ TEAK_CREDENTIALS = {
     package_name: 'io.teak.app.unity.prod',
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
-    teak_gcm_sender_id: '944348058057',
+    teak_gcm_sender_id: '12126273415',
+    teak_firebase_app_id: '1:12126273415:android:102329156b15bf0c',
     teak_short_url_domain: 'teak-prod.playw.it',
     signing_key: 'io.teak.app.unity.prod.keystore'
   }
@@ -359,7 +361,7 @@ namespace :install do
       adb.call "push #{apk_path} #{android_destination}"
       adb.call "shell pm install -i #{installer_package} -r #{android_destination}"
       adb.call "shell rm #{android_destination}"
-      adb.call "shell am start -n #{PACKAGE_NAME}/io.teak.sdk.wrapper.unity.TeakUnityPlayerActivity"
+      adb.call "shell am start -n #{PACKAGE_NAME}/com.unity3d.player.UnityPlayerActivity"
     end
   end
 

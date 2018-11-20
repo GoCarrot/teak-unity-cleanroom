@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:amazon="http://schemas.amazon.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="com.unity3d.player" android:installLocation="preferExternal" android:versionCode="1" android:versionName="1.0">
   <supports-screens android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" android:xlargeScreens="true" android:anyDensity="true" />
   <application android:theme="@android:style/Theme.NoTitleBar.Fullscreen" android:icon="@drawable/icon_large_unity" android:label="{{app_name}} API {{target_api}}" android:debuggable="true">
-    <activity android:name="io.teak.sdk.wrapper.unity.TeakUnityPlayerActivity" android:label="{{app_name}} API {{target_api}}">
+    <activity android:name="com.unity3d.player.UnityPlayerActivity" android:label="{{app_name}} API {{target_api}}">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
@@ -10,6 +10,10 @@
       </intent-filter>
       <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
       <meta-data android:name="unityplayer.ForwardNativeEventsToDalvik" android:value="false" />
+
+      <!-- These are all the manifest additions required for Teak 2.0 -->
+      <meta-data android:name="io.teak.sdk.initialize" android:value="true"/>
+
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
@@ -24,32 +28,7 @@
         <data android:scheme="teak{{teak_app_id}}" android:host="*" />
       </intent-filter>
     </activity>
-
-    <receiver android:name="io.teak.sdk.Teak" android:exported="true" android:permission="com.google.android.c2dm.permission.SEND">
-      <intent-filter>
-        <action android:name="{{package_name}}.intent.TEAK_NOTIFICATION_OPENED" />
-        <action android:name="{{package_name}}.intent.TEAK_NOTIFICATION_CLEARED" />
-        <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-        <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-        <category android:name="{{package_name}}" />
-      </intent-filter>
-    </receiver>
-
-    <!-- Amazon ADM -->
-    <amazon:enable-feature
-            android:name="com.amazon.device.messaging"
-            android:required="false"/>
-    <service android:name="io.teak.sdk.push.ADMPushProvider"
-        android:exported="false" />
-    <receiver
-        android:name="io.teak.sdk.push.ADMPushProvider$MessageAlertReceiver"
-        android:permission="com.amazon.device.messaging.permission.SEND" >
-        <intent-filter>
-            <action android:name="com.amazon.device.messaging.intent.REGISTRATION" />
-            <action android:name="com.amazon.device.messaging.intent.RECEIVE" />
-            <category android:name="{{package_name}}" />
-        </intent-filter>
-    </receiver>
+    <!-- End Teak 2.0 -->
 
     <!-- Amazon IAP -->
     <receiver android:name = "com.amazon.device.iap.ResponseReceiver" >
@@ -62,22 +41,6 @@
     <!-- Prevent Unity from asking for WRITE_EXTERNAL_STORAGE -->
     <meta-data android:name="unityplayer.SkipPermissionsDialog" android:value="true" />
   </application>
-
-  <!-- Push notification permissions -->
-  <permission android:name="{{package_name}}.permission.C2D_MESSAGE" android:protectionLevel="signature" />
-  <uses-permission android:name="{{package_name}}.permission.C2D_MESSAGE" />
-  <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-  <uses-permission android:name="android.permission.INTERNET" />
-  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-  <!-- ADM Stuff -->
-  <permission
-      android:name="{{package_name}}.permission.RECEIVE_ADM_MESSAGE"
-      android:protectionLevel="signature" />
-  <uses-permission android:name="{{package_name}}.permission.RECEIVE_ADM_MESSAGE" />
-  <uses-permission android:name="com.amazon.device.messaging.permission.RECEIVE" />
-  <uses-permission android:name="android.permission.WAKE_LOCK" />
-  <!-- End ADM Stuff -->
 
   <!-- Work-around to stop Unity 5 from adding these permissions -->
   <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove" />
