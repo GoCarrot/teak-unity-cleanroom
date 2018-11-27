@@ -138,7 +138,15 @@ end
 # Tasks
 #
 task :clean do
-  sh 'git clean -fdx' unless ci?
+  sh 'git clean -fdx', verbose: false unless ci?
+
+  xcode_artifacts = File.expand_path('~/Library/Developer/Xcode/')
+  FileUtils.rm_rf Dir[File.join(xcode_artifacts, 'DerivedData', 'Unity-iPhone-*')]
+  FileUtils.rm_rf Dir[File.join(xcode_artifacts, 'Archives', '**', 'teak-unity-cleanroom*')]
+
+  Dir[File.join(xcode_artifacts, '**', '*')].select { |d| File.directory? d }
+                                            .select { |d| (Dir.entries(d) - %w[. ..]).empty? }
+                                            .each   { |d| Dir.rmdir d }
 end
 
 task :warnings_as_errors do
