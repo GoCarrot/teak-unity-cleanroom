@@ -176,7 +176,7 @@ namespace :prime31 do
     unity '-importPackage', 'Prime31_IAP.unitypackage'
 
     File.delete('Prime31_IAP.unitypackage')
-    File.delete(*Dir.glob('Assets/*.rsp*'))
+    File.delete(*Dir['Assets/*.rsp*'])
   end
 
   task :encrypt, [:path] do |_, args|
@@ -196,12 +196,12 @@ namespace :unity_iap do
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
     FileUtils.remove_dir('Assets/Plugins/UnityPurchasing/script/Demo')
     File.delete('Assets/Plugins/UnityPurchasing/script/Demo.meta')
-    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/IAP*'))
-    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/script/CodelessIAPStoreListener*'))
-    File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/Editor/IAPButtonEditor*'))
+    File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/IAP*'])
+    File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/CodelessIAPStoreListener*'])
+    File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor/IAPButtonEditor*'])
 
     unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
-    # File.delete(*Dir.glob('Assets/Plugins/UnityPurchasing/Editor*'))
+    # File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor*'])
   end
 end
 
@@ -223,7 +223,7 @@ namespace :package do
 
     unity '-importPackage', 'Teak.unitypackage'
 
-    File.delete(*Dir.glob('Assets/*.rsp*'))
+    File.delete(*Dir['Assets/*.rsp*'])
 
     Rake::Task['prime31:import'].invoke if use_prime31?
     Rake::Task['unity_iap:import'].invoke if use_unityiap?
