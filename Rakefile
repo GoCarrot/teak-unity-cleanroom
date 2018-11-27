@@ -58,7 +58,6 @@ TEAK_CREDENTIALS = {
 }.freeze
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
 SIGNING_KEY = TEAK_CREDENTIALS[BUILD_TYPE][:signing_key]
-TEAK_SDK_VERSION = ENV.fetch('TEAK_SDK_VERSION', nil) ? "-#{ENV.fetch('TEAK_SDK_VERSION')}" : ''
 
 KMS_KEY = `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode`.freeze
 CIRCLE_TOKEN = ENV.fetch('CIRCLE_TOKEN') { `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_circle_ci_key.data -k #{KMS_KEY}` }
