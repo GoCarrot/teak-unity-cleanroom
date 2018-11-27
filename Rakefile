@@ -273,7 +273,7 @@ namespace :build do
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
-    additional_args.concat(['--il2cpp']) if android_il2cpp?
+    additional_args.concat(['--il2cpp']) if android_il2cpp? || use_prime31?
 
     Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
     unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
