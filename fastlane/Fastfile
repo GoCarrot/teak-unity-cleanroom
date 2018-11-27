@@ -75,11 +75,11 @@ platform :ios do
       end
     end
 
-    # Add Teak app extensions
-    teak_extensions(
-      xcodeproj: XCODE_PROJECT,
-      # source:"~/Code/teak-ios"
-    )
+    # Add Teak app extensions -- This is done by Unity now
+    # teak_extensions(
+    #   xcodeproj: XCODE_PROJECT,
+    #   # source:"~/Code/teak-ios"
+    # )
 
     (TEAK_APP_EXTENSIONS + ['Unity-iPhone']).each do |target|
       update_project_provisioning(

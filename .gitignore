@@ -35,8 +35,8 @@ sysinfo.txt
 Assets/Plugins/Android/res.meta
 Assets/Plugins/Android/res/values.meta
 Assets/Plugins/Android/res/values/teak.xml*
-Assets/Plugins/Android/teak.aar*
-Assets/Plugins/WebGL/Teak.jslib*
+Assets/Plugins/Teak/Android/teak.aar*
+Assets/Plugins/Teak/WebGL/Teak.jslib*
 Assets/Teak.meta
 Assets/Teak/
 
