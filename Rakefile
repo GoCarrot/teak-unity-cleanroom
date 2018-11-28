@@ -295,7 +295,7 @@ namespace :build do
 end
 
 namespace :ios do
-  task all: %i[fastlane_match build postprocess fastlane]
+  task all: %i[fastlane_match build fastlane]
 
   task :fastlane_match do
     fastlane 'match', 'development' if ci?
@@ -308,15 +308,6 @@ namespace :ios do
     additional_args = ['--debug']
 
     unity '-buildTarget', 'iOS', '-executeMethod', 'BuildPlayer.iOS', *additional_args
-  end
-
-  task :postprocess do
-    template = File.read(File.join(PROJECT_PATH, 'Templates', 'Unity-iPhone.entitlements.template'))
-    File.write(File.join(PROJECT_PATH, 'iOSResources', 'Unity-iPhone', 'Unity-iPhone.entitlements'), Mustache.render(template, template_parameters))
-
-    cp File.join(PROJECT_PATH, 'iOSResources', 'Unity-iPhone', 'Unity-iPhone.entitlements'),
-       File.join(PROJECT_PATH, 'Unity-iPhone', 'Unity-iPhone', 'Unity-iPhone.entitlements')
-    sh 'ruby iOSResources/AddEntitlements.rb Unity-iPhone'
   end
 
   task :fastlane do
