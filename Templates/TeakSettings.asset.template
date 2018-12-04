@@ -13,6 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mAppId: {{teak_app_id}}
   mAPIKey: {{teak_api_key}}
+  mShortlinkDomain: {{teak_short_url_domain}}
   mGCMSenderId: {{teak_gcm_sender_id}}
   mFirebaseAppId: {{teak_firebase_app_id}}
   mJustShutUpIKnowWhatImDoing: 0
