@@ -7,11 +7,11 @@ using UnityEngine;
 
 using GooglePlayServices;
 
-class BuildPlayer
+public class BuildPlayer
 {
     static string[] scenes = { "Assets/MainScene.unity" };
 
-    static void SetBundleId()
+    public static void SetBundleId()
     {
         string appId = null;
 
