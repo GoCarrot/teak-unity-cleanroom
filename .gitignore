@@ -57,6 +57,7 @@ Assets/Plugins/Android/com.google.firebase.firebase-iid-*
 Assets/Plugins/Android/com.google.firebase.firebase-iid-interop-*
 Assets/Plugins/Android/com.google.firebase.firebase-measurement-connector-*
 Assets/Plugins/Android/com.google.firebase.firebase-messaging-*
+Assets/Plugins/Android/com.firebase.firebase-jobdispatcher-0.8.5*
 Assets/Plugins/Android/com.google.android.gms.play-services-ads-*
 Assets/Plugins/Android/com.google.android.gms.play-services-ads-base-*
 Assets/Plugins/Android/com.google.android.gms.play-services-ads-identifier-*

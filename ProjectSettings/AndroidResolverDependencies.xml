@@ -2,6 +2,7 @@
   <packages>
     <package>com.android.support:support-compat:26.1+</package>
     <package>com.android.support:support-core-utils:26.1+</package>
+    <package>com.firebase:firebase-jobdispatcher:0.8.5</package>
     <package>com.google.android.gms:play-services-ads:16+</package>
     <package>com.google.android.gms:play-services-base:16+</package>
     <package>com.google.android.gms:play-services-basement:16+</package>
@@ -19,6 +20,7 @@
     <file>Assets/Plugins/Android/com.android.support.support-fragment-26.1.0.aar</file>
     <file>Assets/Plugins/Android/com.android.support.support-media-compat-26.1.0.aar</file>
     <file>Assets/Plugins/Android/com.android.support.support-v4-26.1.0.aar</file>
+    <file>Assets/Plugins/Android/com.firebase.firebase-jobdispatcher-0.8.5.aar</file>
     <file>Assets/Plugins/Android/com.google.android.gms.play-services-ads-16.0.0.aar</file>
     <file>Assets/Plugins/Android/com.google.android.gms.play-services-ads-base-16.0.0.aar</file>
     <file>Assets/Plugins/Android/com.google.android.gms.play-services-ads-identifier-16.0.0.aar</file>
