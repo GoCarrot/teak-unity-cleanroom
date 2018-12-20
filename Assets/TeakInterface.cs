@@ -44,6 +44,12 @@ public class TeakInterface : MonoBehaviour {
         // Assign Teak Callbacks
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
+
+        // Print out notification state
+        Debug.Log("[Teak Unity Cleanroom] Notification State: " + Teak.Instance.PushNotificationState);
+        if (Teak.Instance.PushNotificationState == Teak.NotificationState.Disabled) {
+            Debug.Log("Notifications are disabled!");
+        }
     }
 
     void OnApplicationPause(bool isPaused) {
