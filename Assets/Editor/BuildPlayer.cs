@@ -5,6 +5,10 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+#if UNITY_2018_1_OR_NEWER
+using UnityEditor.Build.Reporting;
+#endif
+
 using GooglePlayServices;
 
 public class BuildPlayer
@@ -83,6 +87,20 @@ public class BuildPlayer
     }
 
     static void DoBuildPlayer(BuildPlayerOptions buildPlayerOptions) {
+#if UNITY_2018_1_OR_NEWER
+        BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+        if(report.summary.result == BuildResult.Succeeded) {
+            // Preserve the merged AndroidManifest.xml
+            if (buildPlayerOptions.target == BuildTarget.Android) {
+                string mergedManifestPath = System.IO.Path.GetFullPath(Application.dataPath + "/../Temp/StagingArea/AndroidManifest.xml");
+                string outputManifestPath = System.IO.Path.GetFullPath(Application.dataPath + "/../AndroidManifest.merged.xml");
+                System.IO.File.Copy(mergedManifestPath, outputManifestPath, true);
+            }
+            EditorApplication.Exit(0);
+        } else if(report.summary.result == BuildResult.Failed) {
+            EditorApplication.Exit(1);
+        }
+#else
         string error = BuildPipeline.BuildPlayer(buildPlayerOptions);
         if (string.IsNullOrEmpty(error)) {
             // Preserve the merged AndroidManifest.xml
@@ -96,6 +114,7 @@ public class BuildPlayer
         } else {
             EditorApplication.Exit(1);
         }
+#endif
     }
 
     static void WebGL()
