@@ -5,8 +5,6 @@ jobs:
       xcode: "9.4.1"
     shell: /bin/bash --login -eo pipefail
     environment:
-      UNITY_VERSION: 5.6.4f1
-      HOMEBREW_VERSION: 1.9.2
       ANDROID_HOME: /usr/local/share/android-sdk
       ANDROID_NDK_HOME: /usr/local/share/android-ndk
       LC_ALL: en_US.UTF-8
@@ -20,13 +18,8 @@ jobs:
       - run:
           name: Tasks To Build...
           command: echo $RAKE_BUILD_TASKS
-      - run:
-          name: Hack around {{ .Environment.variableName }} Not Being Implemented Properly
-          command: |
-            echo $UNITY_VERSION-$HOMEBREW_VERSION > UNITY_HOMEBREW_VERSIONS
-            cat UNITY_HOMEBREW_VERSIONS
       - restore_cache:
-          key: v1-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}-{{ .Environment.RAKE_BUILD_TASKS }}-{{ checksum "UNITY_HOMEBREW_VERSIONS" }}
+          key: v1-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}-{{ .Environment.RAKE_BUILD_TASKS }}-{{ .Environment.HOMEBREW_VERSION }}-{{ .Environment.UNITY_VERSION }}
       - run:
           name: Check Homebrew Version
           command: |
@@ -42,7 +35,7 @@ jobs:
             - /usr/local/Homebrew/
             - ~/Library/Caches/Homebrew
             - vendor/bundle
-          key: v1-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}-{{ .Environment.RAKE_BUILD_TASKS }}-{{ checksum "UNITY_HOMEBREW_VERSIONS" }}
+          key: v1-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}-{{ .Environment.RAKE_BUILD_TASKS }}-{{ .Environment.HOMEBREW_VERSION }}-{{ .Environment.UNITY_VERSION }}
       - add_ssh_keys:
           fingerprints:
             - "ab:48:b1:f2:a7:e9:0f:ba:81:3b:0c:16:48:6b:91:3d"
@@ -61,6 +54,8 @@ jobs:
           command: |
             export UNITY_HOME=/Applications/Unity-$UNITY_VERSION/
             bundle exec rake $RAKE_BUILD_TASKS
+            mkdir $UNITY_VERSION
+            mv teak-unity-cleanroom.* $UNITY_VERSION/
           no_output_timeout: 50m
       - run:
           command: |
@@ -74,78 +69,18 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - teak-unity-cleanroom.ipa
-            - teak-unity-cleanroom.apk
-            - teak-unity-cleanroom.zip
+            - $UNITY_VERSION/teak-unity-cleanroom.ipa
+            - $UNITY_VERSION/teak-unity-cleanroom.apk
+            - $UNITY_VERSION/teak-unity-cleanroom.zip
             - TEAK_VERSION
-  deploy:
-    docker:
-      - image: circleci/ruby:latest
-    steps:
-      - checkout
-      - run:
-          name: Tasks To Deploy...
-          command: echo $RAKE_DEPLOY_TASKS
-      - restore_cache:
-          key: v0-{{ checksum "Gemfile.lock" }}
-      - run:
-          name: Ruby Gems
-          command: bundle check || bundle install --path vendor/bundle
-      - run:
-          name: Install AWS CLI
-          command: sudo apt-get -y -qq install awscli
-      - save_cache:
-          paths:
-            - vendor/bundle
-          key: v0-{{ checksum "Gemfile.lock" }}
-      - attach_workspace:
-          at: .
-      - run:
-          name: Upload Cleanroom Apps to S3
-          command: bundle exec rake $RAKE_DEPLOY_TASKS
 workflows:
   version: 2
   all:
     jobs:
       - build:
-          context: unity-cleanroom
-      - deploy:
-          context: unity-cleanroom
-          requires:
-            - build
-          filters:
-            branches:
-              only: [master, /hotfix.*/]
-  # android:
-  #   jobs:
-  #     - build:
-  #         context: android-cleanroom
-  #     - deploy:
-  #         context: android-cleanroom
-  #         requires:
-  #           - build
-  #         filters:
-  #           branches:
-  #             only: [master, /hotfix.*/]
-  # ios:
-  #   jobs:
-  #     - build:
-  #         context: ios-cleanroom
-  #     - deploy:
-  #         context: ios-cleanroom
-  #         requires:
-  #           - build
-  #         filters:
-  #           branches:
-  #             only: [master, /hotfix.*/]
-  # webgl:
-  #   jobs:
-  #     - build:
-  #         context: webgl-cleanroom
-  #     - deploy:
-  #         context: webgl-cleanroom
-  #         requires:
-  #           - build
-  #         filters:
-  #           branches:
-  #             only: [master, /hotfix.*/]
+          context: unity-5
+      - build:
+          context: unity-2017
+      - build:
+          context: unity-2018
+
