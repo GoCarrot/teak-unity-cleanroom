@@ -71,7 +71,7 @@ jobs:
           paths:
             - $UNITY_VERSION/teak-unity-cleanroom.ipa
             - $UNITY_VERSION/teak-unity-cleanroom.apk
-            - $UNITY_VERSION/teak-unity-cleanroom.zip
+            # - $UNITY_VERSION/teak-unity-cleanroom.zip
             - TEAK_VERSION
 workflows:
   version: 2
