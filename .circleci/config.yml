@@ -31,7 +31,6 @@ jobs:
           name: Check Homebrew Version
           command: |
             [ `brew --version | sed -n 1p | sed 's/[^0-9.]*\([0-9.]*\).*/\1/'` = $HOMEBREW_VERSION ] || brew update
-      - run: javac -version
       - run:
           name: Homebrew Depenendcies
           command: HOMEBREW_NO_AUTO_UPDATE=1 ./setup

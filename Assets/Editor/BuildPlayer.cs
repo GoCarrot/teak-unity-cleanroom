@@ -64,6 +64,9 @@ public class BuildPlayer
             EditorApplication.Exit(1);
         }
 
+        EditorPrefs.SetString("AndroidSdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
+        EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
+
         Debug.Log("[teak-unity-cleanroom] Resolving dependencies with Play Services Resolver");
 
         PlayServicesResolver.Resolve(
