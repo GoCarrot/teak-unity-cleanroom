@@ -2,13 +2,14 @@
 set -eo pipefail
 IFS=$'\n\t'
 
-brew tap caskroom/cask
 brew tap wooga/unityversions
+
+unityversion="${UNITY_VERSION:-5.6.4f1}"
 
 if [ "$(which aws)" == "" ]; then brew install awscli; fi
 
 if [ ! -f /Applications/Unity/Unity.app/Contents/Pkginfo ]; then
-  brew cask install unity@2017.1.0f3
+  brew cask install unity@$unityversion
 fi
 
 # Android only requirements
@@ -30,20 +31,20 @@ if [[ $RAKE_BUILD_TASKS = *"android"* ]]; then
 
   # Unity Android support
   if [ ! -f /Applications/Unity/PlaybackEngines/AndroidPlayer/ivy.xml ]; then
-    brew cask install unity-android-support-for-editor@2017.1.0f3
+    brew cask install unity-android-support-for-editor@$unityversion
   fi
 fi
 
 # Unity iOS Support
 if [[ $RAKE_BUILD_TASKS = *"ios"* ]]; then
   if [ ! -f /Applications/Unity/PlaybackEngines/WebGLSupport/ivy.xml ]; then
-    brew cask install unity-ios-support-for-editor@2017.1.0f3
+    brew cask install unity-ios-support-for-editor@$unityversion
   fi
 fi
 
 # Unity WebGL Support
 if [[ $RAKE_BUILD_TASKS = *"webgl"* ]]; then
   if [ ! -f /Applications/Unity/PlaybackEngines/iOSSupport/ivy.xml ]; then
-    brew cask install unity-webgl-support-for-editor@2017.1.0f3
+    brew cask install unity-webgl-support-for-editor@$unityversion
   fi
 fi
