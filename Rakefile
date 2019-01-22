@@ -288,19 +288,21 @@ namespace :build do
   task ios: ['ios:all']
 
   task webgl: [:warnings_as_errors] do
-    tmpdir = Dir.mktmpdir
-    FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", :force => true
-    FileUtils.mv 'Assets/Plugins/UnityChannel', "#{tmpdir}/UnityChannel", :force => true
+    begin
+      tmpdir = Dir.mktmpdir
+      FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", :force => true
+      FileUtils.mv 'Assets/Plugins/UnityChannel', "#{tmpdir}/UnityChannel", :force => true
 
-    unity '-executeMethod', 'BuildPlayer.WebGL', '--debug'
-    template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
-    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'WebGLBuild'))
-    File.write(File.join(PROJECT_PATH, 'WebGLBuild', 'index.html'), Mustache.render(template, template_parameters))
-    sh '(cd WebGLBuild/; zip -r ../teak-unity-cleanroom.zip .)'
-  ensure
-    FileUtils.mv "#{tmpdir}/UnityPurchasing", 'Assets/Plugins/UnityPurchasing', :force => true
-    FileUtils.mv "#{tmpdir}/UnityChannel", 'Assets/Plugins/UnityChannel', :force => true
-    FileUtils.remove_entry tmpdir
+      unity '-executeMethod', 'BuildPlayer.WebGL', '--debug'
+      template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
+      FileUtils.mkdir_p(File.join(PROJECT_PATH, 'WebGLBuild'))
+      File.write(File.join(PROJECT_PATH, 'WebGLBuild', 'index.html'), Mustache.render(template, template_parameters))
+      sh '(cd WebGLBuild/; zip -r ../teak-unity-cleanroom.zip .)'
+    ensure
+      FileUtils.mv "#{tmpdir}/UnityPurchasing", 'Assets/Plugins/UnityPurchasing', :force => true
+      FileUtils.mv "#{tmpdir}/UnityChannel", 'Assets/Plugins/UnityChannel', :force => true
+      FileUtils.remove_entry tmpdir
+    end
   end
 end
 
