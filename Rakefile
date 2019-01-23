@@ -216,6 +216,18 @@ namespace :unity_iap do
       File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/PurchasingCheck*'])
       File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/CodelessIAPStoreListener*'])
 
+      # Assets/Plugins/UnityPurchasing/Editor/UnityIAPInstaller.cs(496,53):
+      #   warning CS0618: `UnityEditor.PlayerSettings.cloudProjectId' is obsolete:
+      #  `cloudProjectId is deprecated, use CloudProjectSettings.projectId instead'
+      if UNITY_HOME.include? '2018'
+        files_to_fix = ['Assets/Plugins/UnityPurchasing/Editor/UnityIAPInstaller.cs']
+
+        files_to_fix.each do |file_name|
+          fixed_text = File.read(file_name).gsub(/PlayerSettings\.cloudProjectId/, 'CloudProjectSettings.projectId')
+          File.open(file_name, 'w') { |file| file.puts fixed_text }
+        end
+      end
+
       unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
       # File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor*'])
     end
