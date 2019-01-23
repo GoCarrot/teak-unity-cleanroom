@@ -1,4 +1,7 @@
-require 'rake/clean' # frozen_string_literal: true
+# frozen_string_literal: true
+
+require 'awesome_print'
+require 'rake/clean'
 require 'shellwords'
 require 'mustache'
 require 'httparty'
@@ -146,6 +149,15 @@ def without_teak_available
   File.delete(*Dir['Assets/*.rsp*'])
 end
 
+def print_build_msg(platform, args=nil)
+  build_msg = <<~BUILD_MSG
+    #{'-' * 80}
+    Building #{platform} #{PACKAGE_NAME} '#{BUILD_TYPE}' #{'(' + args.map { |k, v| "#{k}: #{v}" }.join(', ') + ')' if args}
+    #{'-' * 80}
+  BUILD_MSG
+  puts build_msg.cyan
+end
+
 #
 # Tasks
 #
@@ -285,10 +297,13 @@ namespace :build do
 
     additional_args = ['--debug']
     build_amazon = args[:amazon?] ? args[:amazon?].to_s == 'true' : false
+    build_il2cpp = android_il2cpp? || use_prime31?
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
-    additional_args.concat(['--il2cpp']) if android_il2cpp? || use_prime31?
+    additional_args.concat(['--il2cpp']) if build_il2cpp
+
+    print_build_msg 'Android', { Store: build_amazon ? 'Amazon' : 'Google Play', IL2Cpp: build_il2cpp }
 
     Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
     unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
@@ -302,6 +317,8 @@ namespace :build do
   task ios: ['ios:all']
 
   task webgl: [:warnings_as_errors] do
+    print_build_msg 'WebGL'
+
     # begin
     #   tmpdir = Dir.mktmpdir
     #   FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", :force => true
@@ -328,6 +345,8 @@ namespace :ios do
   end
 
   task build: [:warnings_as_errors] do
+    print_build_msg 'iOS'
+
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
 

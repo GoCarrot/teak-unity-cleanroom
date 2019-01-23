@@ -1,4 +1,5 @@
 source 'https://rubygems.org' # frozen_string_literal: true
+gem 'awesome_print'
 gem 'fastlane'
 gem 'httparty'
 gem 'mustache'
