@@ -90,7 +90,7 @@ def android_il2cpp?
 end
 
 def add_unity_log_to_artifacts
-  cp('unity.log', "#{Rake.application.current_task.name.sub(':', '-')}.unity.log") unless $!.nil?
+  cp('unity.log', "#{Rake.application.current_task.name.sub(':', '-')}.unity.log") unless $ERROR_INFO.nil?
 end
 
 #
@@ -149,7 +149,7 @@ def without_teak_available
   File.delete(*Dir['Assets/*.rsp*'])
 end
 
-def print_build_msg(platform, args=nil)
+def print_build_msg(platform, args = nil)
   build_msg = <<~BUILD_MSG
     #{'-' * 80}
     Building #{platform} #{PACKAGE_NAME} '#{BUILD_TYPE}' #{'(' + args.map { |k, v| "#{k}: #{v}" }.join(', ') + ')' if args}
@@ -194,7 +194,11 @@ namespace :unity_license do
     return unless ci?
 
     without_teak_available do
-      sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false rescue nil
+      begin
+        sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false
+      rescue StandardError
+        nil
+      end
       puts 'Released Unity license...'
     end
   end
@@ -303,7 +307,7 @@ namespace :build do
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
     additional_args.concat(['--il2cpp']) if build_il2cpp
 
-    print_build_msg 'Android', { Store: build_amazon ? 'Amazon' : 'Google Play', IL2Cpp: build_il2cpp }
+    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', IL2Cpp: build_il2cpp
 
     Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
     unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
@@ -390,7 +394,11 @@ namespace :install do
   task :ios do
     ipa_path = 'teak-unity-cleanroom.ipa'
 
-    sh "ideviceinstaller --uninstall #{PACKAGE_NAME}" rescue nil
+    begin
+      sh "ideviceinstaller --uninstall #{PACKAGE_NAME}"
+    rescue StandardError
+      nil
+    end
     # https://github.com/libimobiledevice/libimobiledevice/issues/510#issuecomment-347175312
     sh "ideviceinstaller --install #{ipa_path}"
   end
@@ -404,7 +412,11 @@ namespace :install do
     devicelist.each do |device|
       adb = ->(*lambda_args) { sh "adb -s #{device} #{lambda_args.join(' ')}" }
 
-      adb.call "uninstall #{PACKAGE_NAME}" rescue nil
+      begin
+        adb.call "uninstall #{PACKAGE_NAME}"
+      rescue StandardError
+        nil
+      end
       adb.call "push #{apk_path} #{android_destination}"
       adb.call "shell pm install -i #{installer_package} -r #{android_destination}"
       adb.call "shell rm #{android_destination}"
