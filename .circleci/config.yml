@@ -55,7 +55,9 @@ jobs:
             export UNITY_HOME=/Applications/Unity-$UNITY_VERSION/
             bundle exec rake $RAKE_BUILD_TASKS
             mkdir $UNITY_VERSION
-            mv teak-unity-cleanroom.* $UNITY_VERSION/
+            mv teak-unity-cleanroom.ipa $UNITY_VERSION/teak-unity-cleanroom.ipa || true
+            mv teak-unity-cleanroom.apk $UNITY_VERSION/teak-unity-cleanroom.apk || true
+            mv teak-unity-cleanroom.zip $UNITY_VERSION/teak-unity-cleanroom.zip || true
           no_output_timeout: 50m
       - run:
           command: |
@@ -71,7 +73,7 @@ jobs:
           paths:
             - $UNITY_VERSION/teak-unity-cleanroom.ipa
             - $UNITY_VERSION/teak-unity-cleanroom.apk
-            # - $UNITY_VERSION/teak-unity-cleanroom.zip
+            - $UNITY_VERSION/teak-unity-cleanroom.zip
             - TEAK_VERSION
 workflows:
   version: 2
