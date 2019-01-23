@@ -69,17 +69,17 @@ workflows:
   version: 2
   all:
     jobs:
-      - build:
-          name: Unity-5
-          context: unity-5
-      - build:
-          name: Unity-2017
-          context: unity-2017
-          requires:
-            - Unity-5
+      # - build:
+      #     name: Unity-5
+      #     context: unity-5
+      # - build:
+      #     name: Unity-2017
+      #     context: unity-2017
+      #     requires:
+      #       - Unity-5
       - build:
           name: Unity-2018
           context: unity-2018
-          requires:
-            - Unity-2017
+          # requires:
+          #   - Unity-2017
 
