@@ -159,7 +159,7 @@ end
 
 namespace :unity_license do
   task :acquire do
-    # return unless ci?
+    return unless ci?
     unity '-executeMethod', 'BuildPlayer.CheckLicense', PACKAGE_NAME, nographics: false
   end
 

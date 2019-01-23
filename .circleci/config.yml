@@ -40,25 +40,15 @@ jobs:
           fingerprints:
             - "ab:48:b1:f2:a7:e9:0f:ba:81:3b:0c:16:48:6b:91:3d"
       - run:
-          name: Download, Import and Configure Teak SDK for Unity
-          command: |
-            export UNITY_HOME=/Applications/Unity-$UNITY_VERSION/
-            bundle exec rake package:download package:import config:all
-      - run:
-          name: Acquire Unity License
-          command: |
-            export UNITY_HOME=/Applications/Unity-$UNITY_VERSION/
-            bundle exec rake unity_license:acquire
-      - run:
           name: Build Teak Cleanroom
           command: |
             export UNITY_HOME=/Applications/Unity-$UNITY_VERSION/
-            bundle exec rake $RAKE_BUILD_TASKS
+            bundle exec rake unity_license:acquire package:download package:import config:all $RAKE_BUILD_TASKS
             mkdir $UNITY_VERSION
             mv teak-unity-cleanroom.ipa $UNITY_VERSION/teak-unity-cleanroom.ipa || true
             mv teak-unity-cleanroom.apk $UNITY_VERSION/teak-unity-cleanroom.apk || true
             mv teak-unity-cleanroom.zip $UNITY_VERSION/teak-unity-cleanroom.zip || true
-          no_output_timeout: 50m
+          no_output_timeout: 60m
       - run:
           command: |
             mkdir -p /tmp/unity_logs
