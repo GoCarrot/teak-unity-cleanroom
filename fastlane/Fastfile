@@ -105,4 +105,19 @@ platform :ios do
 
     enable_automatic_code_signing(path: XCODE_PROJECT)
   end
+
+  desc 'Fast build with no code signing'
+  lane :ci do
+    xcodebuild(
+      project: XCODE_PROJECT,
+      scheme: 'Unity-iPhone',
+      configuration: 'Release',
+      build: true,
+      destination: "generic/platform=iOS",
+      build_settings: {
+        "CODE_SIGNING_REQUIRED" => "NO",
+        "CODE_SIGN_IDENTITY" => ""
+      }
+    )
+  end
 end

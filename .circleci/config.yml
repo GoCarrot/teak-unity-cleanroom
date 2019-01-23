@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     macos:
-      xcode: "10.1.0"
+      xcode: "9.4.1"
     shell: /bin/bash --login -eo pipefail
     environment:
       ANDROID_HOME: /usr/local/share/android-sdk
@@ -11,11 +11,10 @@ jobs:
       LANG: en_US.UTF-8
     steps:
       - checkout
-      # Xcode 10.1 has Ruby 2.5
-      # - run:
-      #     shell: /bin/bash -eo pipefail
-      #     name: Set Ruby Version 2.3
-      #     command: echo "ruby-2.3" > .ruby-version
+      - run:
+          shell: /bin/bash -eo pipefail
+          name: Set Ruby Version 2.3
+          command: echo "ruby-2.3" > .ruby-version
       - run:
           name: Tasks To Build...
           command: echo $RAKE_BUILD_TASKS
@@ -45,10 +44,6 @@ jobs:
           command: |
             export UNITY_HOME=/Applications/Unity-$UNITY_VERSION/
             bundle exec rake unity_license:acquire package:download package:import config:all $RAKE_BUILD_TASKS
-            mkdir $UNITY_VERSION
-            mv teak-unity-cleanroom.ipa $UNITY_VERSION/teak-unity-cleanroom.ipa || true
-            mv teak-unity-cleanroom.apk $UNITY_VERSION/teak-unity-cleanroom.apk || true
-            mv teak-unity-cleanroom.zip $UNITY_VERSION/teak-unity-cleanroom.zip || true
           no_output_timeout: 60m
       - run:
           command: |
@@ -59,28 +54,21 @@ jobs:
           when: on_fail
       - store_artifacts:
           path: /tmp/unity_logs
-      - persist_to_workspace:
-          root: .
-          paths:
-            - $UNITY_VERSION/teak-unity-cleanroom.ipa
-            - $UNITY_VERSION/teak-unity-cleanroom.apk
-            - $UNITY_VERSION/teak-unity-cleanroom.zip
-            - TEAK_VERSION
 workflows:
   version: 2
   all:
     jobs:
-      # - build:
-      #     name: Unity-5
-      #     context: unity-5
-      # - build:
-      #     name: Unity-2017
-      #     context: unity-2017
-      #     requires:
-      #       - Unity-5
+      - build:
+          name: Unity-5
+          context: unity-5
+      - build:
+          name: Unity-2017
+          context: unity-2017
+          requires:
+            - Unity-5
       - build:
           name: Unity-2018
           context: unity-2018
-          # requires:
-          #   - Unity-2017
+          requires:
+            - Unity-2017
 

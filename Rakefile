@@ -321,7 +321,7 @@ namespace :build do
 end
 
 namespace :ios do
-  task all: %i[fastlane_match build fastlane]
+  task all: %i[build fastlane]
 
   task :fastlane_match do
     fastlane 'match', 'development' if ci?
@@ -336,8 +336,12 @@ namespace :ios do
     unity '-buildTarget', 'iOS', '-executeMethod', 'BuildPlayer.iOS', *additional_args
   end
 
-  task :fastlane do
+  task fastlane: [:fastlane_match] do
     fastlane 'dev'
+  end
+
+  task :ci do
+    fastlane 'ci'
   end
 end
 
