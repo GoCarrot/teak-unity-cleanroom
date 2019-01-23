@@ -172,14 +172,19 @@ end
 namespace :unity_license do
   task :acquire do
     return unless ci?
-    unity '-executeMethod', 'BuildPlayer.CheckLicense', PACKAGE_NAME, nographics: false
+
+    without_teak_available do
+      unity '-executeMethod', 'BuildPlayer.CheckLicense', PACKAGE_NAME, nographics: false
+    end
   end
 
   task :release do
     return unless ci?
 
-    sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false rescue nil
-    puts 'Released Unity license...'
+    without_teak_available do
+      sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -batchmode -quit -returnlicense", verbose: false rescue nil
+      puts 'Released Unity license...'
+    end
   end
 end
 
