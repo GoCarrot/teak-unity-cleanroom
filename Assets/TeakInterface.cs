@@ -121,7 +121,7 @@ public class TeakInterface : MonoBehaviour {
         form.AddField("do_not_track_event", "true");
         form.AddField("api_key", this.TeakUserId);
         using (UnityWebRequest w = UnityWebRequest.Post(url, form)) {
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2017_2_OR_NEWER
             yield return w.SendWebRequest();
 #else
             yield return w.Send();
