@@ -134,6 +134,18 @@ def fastlane(*args, env: {})
   sh "#{env.map { |k, v| "#{k}='#{v}'" }.join(' ')} bundle exec fastlane #{escaped_args}", verbose: false
 end
 
+def without_teak_available
+  UNITY_COMPILERS.each do |compiler|
+    File.open("Assets/#{compiler}.rsp", 'w') do |f|
+      f.puts '-define:TEAK_NOT_AVAILABLE'
+    end
+  end
+
+  yield
+
+  File.delete(*Dir['Assets/*.rsp*'])
+end
+
 #
 # Tasks
 #
@@ -175,16 +187,11 @@ namespace :prime31 do
   task :import do
     `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_prime31_plugin.data -out Prime31_IAP.unitypackage -k #{KMS_KEY}`
 
-    UNITY_COMPILERS.each do |compiler|
-      File.open("Assets/#{compiler}.rsp", 'w') do |f|
-        f.puts '-define:TEAK_NOT_AVAILABLE'
-      end
+    without_teak_available do
+      unity '-importPackage', 'Prime31_IAP.unitypackage'
     end
 
-    unity '-importPackage', 'Prime31_IAP.unitypackage'
-
     File.delete('Prime31_IAP.unitypackage')
-    File.delete(*Dir['Assets/*.rsp*'])
   end
 
   task :encrypt, [:path] do |_, args|
@@ -195,22 +202,18 @@ end
 
 namespace :unity_iap do
   task :import do
-    UNITY_COMPILERS.each do |compiler|
-      File.open("Assets/#{compiler}.rsp", 'w') do |f|
-        f.puts '-define:TEAK_NOT_AVAILABLE'
-      end
+    without_teak_available do
+      unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
+      FileUtils.remove_dir('Assets/Plugins/UnityPurchasing/script/Demo')
+      File.delete('Assets/Plugins/UnityPurchasing/script/Demo.meta')
+      File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/IAP*'])
+      File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor/IAPButtonEditor*'])
+      File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/PurchasingCheck*'])
+      File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/CodelessIAPStoreListener*'])
+
+      unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
+      # File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor*'])
     end
-
-    unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
-    FileUtils.remove_dir('Assets/Plugins/UnityPurchasing/script/Demo')
-    File.delete('Assets/Plugins/UnityPurchasing/script/Demo.meta')
-    File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/IAP*'])
-    File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor/IAPButtonEditor*'])
-    File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/PurchasingCheck*'])
-    File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/CodelessIAPStoreListener*'])
-
-    unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
-    # File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor*'])
   end
 end
 
@@ -224,15 +227,9 @@ namespace :package do
   end
 
   task :import do
-    UNITY_COMPILERS.each do |compiler|
-      File.open("Assets/#{compiler}.rsp", 'w') do |f|
-        f.puts '-define:TEAK_NOT_AVAILABLE'
-      end
+    without_teak_available do
+      unity '-importPackage', 'Teak.unitypackage'
     end
-
-    unity '-importPackage', 'Teak.unitypackage'
-
-    File.delete(*Dir['Assets/*.rsp*'])
 
     Rake::Task['prime31:import'].invoke if use_prime31?
     Rake::Task['unity_iap:import'].invoke if use_unityiap?
