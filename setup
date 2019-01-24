@@ -24,8 +24,12 @@ if [[ $RAKE_BUILD_TASKS = *"android"* ]]; then
   fi
 
   # Android SDK components
-  echo y | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-26"
-  echo y | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;26.0.2"
+  if [ ! -e $ANDROID_HOME/build-tools/26.0.2 ]; then
+    echo y | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;26.0.2"
+  fi
+  if [ ! -e $ANDROID_HOME/platforms/android-26 ]; then
+    echo y | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-26"
+  fi
 
   # Unity Android support
   if [ ! -f /Applications/Unity-$unityversion/PlaybackEngines/AndroidPlayer/ivy.xml ]; then

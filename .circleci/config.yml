@@ -32,7 +32,8 @@ jobs:
           command: bundle check || bundle install --path vendor/bundle
       - save_cache:
           paths:
-            - /usr/local/Homebrew/
+            - /usr/local/share/android-sdk
+            - /usr/local/Homebrew
             - ~/Library/Caches/Homebrew
             - vendor/bundle
           key: v1-{{ checksum "setup" }}-{{ checksum "Gemfile.lock" }}-{{ .Environment.RAKE_BUILD_TASKS }}-{{ .Environment.HOMEBREW_VERSION }}-{{ .Environment.UNITY_VERSION }}
