@@ -4,6 +4,8 @@ IFS=$'\n\t'
 
 brew tap wooga/unityversions
 
+if [ "$(which aws)" == "" ]; then brew install awscli; fi
+
 unityversion="${UNITY_VERSION:-5.6.4f1}"
 
 if [ ! -f /Applications/Unity-$unityversion/Unity.app/Contents/Pkginfo ]; then
