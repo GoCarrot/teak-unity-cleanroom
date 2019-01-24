@@ -152,7 +152,8 @@ end
 def print_build_msg(platform, args = nil)
   build_msg = <<~BUILD_MSG
     #{'-' * 80}
-    Building #{platform} #{PACKAGE_NAME} '#{BUILD_TYPE}' #{'(' + args.map { |k, v| "#{k}: #{v}" }.join(', ') + ')' if args}
+    Building #{PACKAGE_NAME} - #{platform} - #{BUILD_TYPE.capitalize}
+    Teak SDK: #{`cat TEAK_VERSION`}#{"\n" + args.map { |k, v| "#{k}: #{v}" }.join(', ') if args}
     #{'-' * 80}
   BUILD_MSG
   puts build_msg.cyan
