@@ -40,15 +40,15 @@ if [[ $RAKE_BUILD_TASKS = *"android"* ]]; then
 fi
 
 # Unity iOS Support
-if [[ $RAKE_BUILD_TASKS = *"webgl"* ]]; then
-  if [ ! -f /Applications/Unity-$unityversion/PlaybackEngines/WebGLSupport/ivy.xml ]; then
+if [[ $RAKE_BUILD_TASKS = *"ios"* ]]; then
+  if [ ! -f /Applications/Unity-$unityversion/PlaybackEngines/iOSSupport/ivy.xml ]; then
     brew cask install unity-ios-support-for-editor@$unityversion
   fi
 fi
 
 # Unity WebGL Support
-if [[ $RAKE_BUILD_TASKS = *"ios"* ]]; then
-  if [ ! -f /Applications/Unity-$unityversion/PlaybackEngines/iOSSupport/ivy.xml ]; then
+if [[ $RAKE_BUILD_TASKS = *"webgl"* ]]; then
+  if [ ! -f /Applications/Unity-$unityversion/PlaybackEngines/WebGLSupport/ivy.xml ]; then
     brew cask install unity-webgl-support-for-editor@$unityversion
   fi
 fi
