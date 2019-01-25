@@ -33,7 +33,7 @@ public class TestDriver : MonoBehaviour
     IStoreController storeController;
 #endif
 
-#if UNITY_PURCHASING || USE_PRIME31
+#if (UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)) || USE_PRIME31
     string testPurchaseSku = "io.teak.app.sku.dollar";
 #endif
 

@@ -337,10 +337,9 @@ namespace :build do
       FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", :force => true
       FileUtils.mv 'Assets/Plugins/UnityChannel', "#{tmpdir}/UnityChannel", :force => true
 
-      # Unity 2018.1.0f2 does not seem to define `UNITY_WEBGL` when building WebGL via BuildPipeline.BuildPlayer
-      additional_args = ['--debug', '--define', 'UNITY_WEBGL']
+      additional_args = ['--debug']
+      unity '-buildTarget', 'WebGL', '-executeMethod', 'BuildPlayer.WebGL', *additional_args
 
-      unity '-executeMethod', 'BuildPlayer.WebGL', *additional_args
       template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
       FileUtils.mkdir_p(File.join(PROJECT_PATH, 'WebGLBuild'))
       File.write(File.join(PROJECT_PATH, 'WebGLBuild', 'index.html'), Mustache.render(template, template_parameters))
