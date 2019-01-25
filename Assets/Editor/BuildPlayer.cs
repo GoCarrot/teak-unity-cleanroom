@@ -126,6 +126,16 @@ public class BuildPlayer
 
         Dictionary<string, object> parsedArgs = GetArgsAfter("BuildPlayer.WebGL");
 
+        // #defines
+        if (parsedArgs.ContainsKey("define")) {
+            string[] defines = parsedArgs["define"] as string[];
+            if (defines == null) {
+                defines = new string[] { parsedArgs["define"] as string };
+            }
+        } else {
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.WebGL, "");
+        }
+
         // Debug build?
         bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
 
