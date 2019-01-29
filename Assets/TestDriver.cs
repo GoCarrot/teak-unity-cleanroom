@@ -94,8 +94,11 @@ public class TestDriver : MonoBehaviour
             { this.testPurchaseSku, AppleAppStore.Name }
         });
 
+#if TEAK_2_0_OR_NEWER
         Debug.Log("Initializing UnityPurchasing...");
         UnityPurchasing.Initialize(new TeakStoreListener(this), builder);
+#endif // #TEAK_2_0_OR_NEWER
+
 #endif // USE_PRIME31
 #endif // TEAK_NOT_AVAILABLE
     }
