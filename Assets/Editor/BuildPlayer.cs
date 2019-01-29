@@ -132,6 +132,7 @@ public class BuildPlayer
             if (defines == null) {
                 defines = new string[] { parsedArgs["define"] as string };
             }
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.WebGL, string.Join(";", defines));
         } else {
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.WebGL, "");
         }
