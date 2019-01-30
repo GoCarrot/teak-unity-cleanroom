@@ -176,6 +176,11 @@ public class BuildPlayer
             PlayerSettings.Android.keyaliasPass = "pointless";
         }
 
+        Debug.Log("[teak-unity-cleanroom] Setting AndroidSdkRoot to " + System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
+        EditorPrefs.SetString("AndroidSdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
+        Debug.Log("[teak-unity-cleanroom] Setting AndroidNdkRoot to " + System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
+        EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
+
         // #defines
         if (parsedArgs.ContainsKey("define")) {
             string[] defines = parsedArgs["define"] as string[];
@@ -196,9 +201,6 @@ public class BuildPlayer
         } else {
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.Mono2x);
         }
-
-        EditorPrefs.SetString("AndroidSdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
-        EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
 
         PlayerSettings.Android.androidIsGame = true;
 
@@ -252,7 +254,9 @@ public class BuildPlayer
         foreach (string arg in args) {
             if (arg.StartsWith("--")) {
                 lastKey = arg.Substring(2).ToLower();
-                buildOptions.Add(lastKey, null);
+                if (!buildOptions.ContainsKey(lastKey)) {
+                    buildOptions.Add(lastKey, null);
+                }
             } else if (buildOptions.ContainsKey(lastKey)) {
                 if (buildOptions[lastKey] != null) {
                     if (buildOptions[lastKey] is string) {
