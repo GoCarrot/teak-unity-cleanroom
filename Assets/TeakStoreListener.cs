@@ -21,7 +21,7 @@ public class TeakStoreListener : IStoreListener {
 
 #if !TEAK_NOT_AVAILABLE
         // Check that Teak version is 1.0.0, otherwise the ProGuard mapping will be incorrect
-        if (!"1.0.0".Equals(Teak.Version)) throw new NotSupportedException("This version of the TeakStoreListener will only work with Teak SDK 1.0.0.");
+        // if (!"1.0.0".Equals(Teak.Version)) throw new NotSupportedException("This version of the TeakStoreListener will only work with Teak SDK 1.0.0.");
 #endif // !TEAK_NOT_AVAILABLE
     }
 

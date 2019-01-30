@@ -5,6 +5,10 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+#if UNITY_2018_1_OR_NEWER
+using UnityEditor.Build.Reporting;
+#endif
+
 using GooglePlayServices;
 
 class BuildPlayer
@@ -80,6 +84,20 @@ class BuildPlayer
     }
 
     static void DoBuildPlayer(BuildPlayerOptions buildPlayerOptions) {
+#if UNITY_2018_1_OR_NEWER
+        BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+        if(report.summary.result == BuildResult.Succeeded) {
+            // Preserve the merged AndroidManifest.xml
+            if (buildPlayerOptions.target == BuildTarget.Android) {
+                string mergedManifestPath = System.IO.Path.GetFullPath(Application.dataPath + "/../Temp/StagingArea/AndroidManifest.xml");
+                string outputManifestPath = System.IO.Path.GetFullPath(Application.dataPath + "/../AndroidManifest.merged.xml");
+                System.IO.File.Copy(mergedManifestPath, outputManifestPath, true);
+            }
+            EditorApplication.Exit(0);
+        } else if(report.summary.result == BuildResult.Failed) {
+            EditorApplication.Exit(1);
+        }
+#else
         string error = BuildPipeline.BuildPlayer(buildPlayerOptions);
         if (string.IsNullOrEmpty(error)) {
             // Preserve the merged AndroidManifest.xml
@@ -93,6 +111,7 @@ class BuildPlayer
         } else {
             EditorApplication.Exit(1);
         }
+#endif
     }
 
     static void WebGL()
@@ -143,6 +162,11 @@ class BuildPlayer
             PlayerSettings.Android.keyaliasPass = "pointless";
         }
 
+        Debug.Log("[teak-unity-cleanroom] Setting AndroidSdkRoot to " + System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
+        EditorPrefs.SetString("AndroidSdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
+        Debug.Log("[teak-unity-cleanroom] Setting AndroidNdkRoot to " + System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
+        EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
+
         // #defines
         if (parsedArgs.ContainsKey("define")) {
             string[] defines = parsedArgs["define"] as string[];
@@ -163,9 +187,6 @@ class BuildPlayer
         } else {
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.Mono2x);
         }
-
-        EditorPrefs.SetString("AndroidSdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
-        EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
 
         PlayerSettings.Android.androidIsGame = true;
 
@@ -219,7 +240,9 @@ class BuildPlayer
         foreach (string arg in args) {
             if (arg.StartsWith("--")) {
                 lastKey = arg.Substring(2).ToLower();
-                buildOptions.Add(lastKey, null);
+                if (!buildOptions.ContainsKey(lastKey)) {
+                    buildOptions.Add(lastKey, null);
+                }
             } else if (buildOptions.ContainsKey(lastKey)) {
                 if (buildOptions[lastKey] != null) {
                     if (buildOptions[lastKey] is string) {
