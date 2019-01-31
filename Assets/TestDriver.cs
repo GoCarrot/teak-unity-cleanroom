@@ -212,11 +212,10 @@ public class TestDriver : MonoBehaviour
 #endif // UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
 
     private void TestThingsThatShouldBeTestedInBetterWays() {
-        // Ensure the Prime31 and OpenIAB purchase methods are exposed on Android
+        // Ensure the plugin purchase methods are exposed on Android
 #if UNITY_ANDROID && !UNITY_EDITOR
         AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
-        teak.CallStatic("prime31PurchaseSucceeded", "{}");
-        teak.CallStatic("openIABPurchaseSucceeded", "{\"originalJson\":\"{}\"}");
+        teak.CallStatic("pluginPurchaseSucceeded", "{}", "test");
         teak.CallStatic("pluginPurchaseFailed", 42, "cleanroom");
 #endif
 
