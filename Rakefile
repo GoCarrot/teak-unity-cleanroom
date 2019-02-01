@@ -89,10 +89,6 @@ def android_il2cpp?
   ENV.fetch('USE_IL2CPP_ON_ANDROID', false).to_s == 'true'
 end
 
-def add_unity_log_to_artifacts
-  cp('unity.log', "#{Rake.application.current_task.name.sub(':', '-')}.unity.log") unless $ERROR_INFO.nil?
-end
-
 #
 # Template parameters
 #
@@ -110,7 +106,6 @@ end
 at_exit do
   sh 'afplay /System/Library/Sounds/Submarine.aiff' unless ci?
   if ci?
-    add_unity_log_to_artifacts
     Rake::Task['unity_license:release'].invoke unless Rake.application.current_task.name.start_with?('unity_license')
   end
 end
@@ -127,9 +122,7 @@ def unity(*args, quit: true, nographics: true)
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
-  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
-ensure
-  add_unity_log_to_artifacts if ci?
+  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/#{Rake.application.current_task.name.sub(':', '-')}.unity.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
 end
 
 def fastlane(*args, env: {})
