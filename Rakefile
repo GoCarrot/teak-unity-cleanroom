@@ -334,8 +334,8 @@ namespace :build do
 
     begin
       tmpdir = Dir.mktmpdir
-      FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", :force => true
-      FileUtils.mv 'Assets/Plugins/UnityChannel', "#{tmpdir}/UnityChannel", :force => true
+      FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", force: true
+      FileUtils.mv 'Assets/Plugins/UnityChannel', "#{tmpdir}/UnityChannel", force: true
 
       additional_args = ['--debug']
       unity '-buildTarget', 'WebGL', '-executeMethod', 'BuildPlayer.WebGL', *additional_args
@@ -345,8 +345,8 @@ namespace :build do
       File.write(File.join(PROJECT_PATH, 'WebGLBuild', 'index.html'), Mustache.render(template, template_parameters))
       sh '(cd WebGLBuild/; zip -r ../teak-unity-cleanroom.zip .)'
     ensure
-      FileUtils.mv "#{tmpdir}/UnityPurchasing", 'Assets/Plugins/UnityPurchasing', :force => true
-      FileUtils.mv "#{tmpdir}/UnityChannel", 'Assets/Plugins/UnityChannel', :force => true
+      FileUtils.mv "#{tmpdir}/UnityPurchasing", 'Assets/Plugins/UnityPurchasing', force: true
+      FileUtils.mv "#{tmpdir}/UnityChannel", 'Assets/Plugins/UnityChannel', force: true
       FileUtils.remove_entry tmpdir
     end
   end
