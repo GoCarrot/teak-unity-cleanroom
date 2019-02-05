@@ -49,7 +49,7 @@ jobs:
       - run:
           command: |
             mkdir -p /tmp/unity_logs
-            cp *.unity.log /tmp/unity_logs
+            cp unity.*.log /tmp/unity_logs
             export UNITY_HOME=/Applications/Unity-$UNITY_VERSION/
             bundle exec rake unity_license:release
           when: on_fail
