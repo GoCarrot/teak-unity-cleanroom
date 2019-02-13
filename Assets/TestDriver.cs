@@ -218,14 +218,6 @@ public class TestDriver : MonoBehaviour
         teak.CallStatic("pluginPurchaseSucceeded", "{}", "test");
         teak.CallStatic("pluginPurchaseFailed", 42, "cleanroom");
 #endif
-
-#if !TEAK_NOT_AVAILABLE
-        //Teak.Instance.TrackEvent("some_boolean", null, null);
-
-        Teak.Instance.SetNumericAttribute("test_number", 42);
-
-        //Teak.Instance.SetBadgeCount(42);
-#endif // TEAK_NOT_AVAILABLE
     }
 
     private void SetupUI() {
@@ -326,6 +318,14 @@ public class TestDriver : MonoBehaviour
             });
         }
 #endif // USE_PRIME31
+
+        // TrackEvent
+        {
+            Button button = this.CreateButton("TrackEvent No_Object_Instance");
+            button.onClick.AddListener(() => {
+                Teak.Instance.TrackEvent("No_Object_Instance", null, null);
+            });
+        }
 #endif // TEAK_NOT_AVAILABLE
     }
 
