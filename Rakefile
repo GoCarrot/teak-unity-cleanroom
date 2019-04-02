@@ -113,11 +113,6 @@ end
 #
 # Helper methods
 #
-def xcodebuild(*args)
-  escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
-  sh "xcodebuild #{escaped_args} | xcpretty"
-end
-
 def unity(*args, quit: true, nographics: true)
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
 
