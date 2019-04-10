@@ -128,6 +128,16 @@ public class TestDriver : MonoBehaviour
 #endif // TEAK_NOT_AVAILABLE
 
         this.TestThingsThatShouldBeTestedInBetterWays();
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        // For 2.1.1, test to make certain that io_teak_enable_caching is definitely
+        // removed and disabled (even if the XML persists)
+        AndroidJavaClass httpResponseCache = new AndroidJavaClass("android.net.http.HttpResponseCache");
+        AndroidJavaObject installedCache = httpResponseCache.CallStatic<AndroidJavaObject>("getInstalled");
+        if (installedCache != null) {
+            Debug.LogError("Android Cache is installed!");
+        }
+#endif
     }
 
     void OnValidate() {

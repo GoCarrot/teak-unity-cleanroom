@@ -30,6 +30,11 @@
     </activity>
     <!-- End Teak 2.0 -->
 
+    <!-- Test the 2.1.1 removal of io_teak_enable_caching -->
+    <meta-data android:name="io_teak_enable_caching" android:value="true" />
+    <!-- End io_teak_enable_caching -->
+
+
     <!-- Amazon IAP -->
     <receiver android:name = "com.amazon.device.iap.ResponseReceiver" >
       <intent-filter>
