@@ -66,6 +66,7 @@ Assets/Plugins/Android/com.google.android.gms.play-services-basement-*
 Assets/Plugins/Android/com.google.android.gms.play-services-gass-*
 Assets/Plugins/Android/com.google.android.gms.play-services-stats-*
 Assets/Plugins/Android/com.google.android.gms.play-services-tasks-*
+Assets/Plugins/Android/com.android.installreferrer.installreferrer-*
 
 # Prime31
 Assets/Editor/Prime31*
