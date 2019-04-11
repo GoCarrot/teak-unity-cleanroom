@@ -184,6 +184,7 @@ DEPENDENCIES
   mustache
   rake
   rubocop
+  terminal-notifier
   xcodeproj
   xcpretty
 

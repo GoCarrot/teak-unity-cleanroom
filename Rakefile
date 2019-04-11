@@ -5,6 +5,7 @@ require 'rake/clean'
 require 'shellwords'
 require 'mustache'
 require 'httparty'
+require 'terminal-notifier'
 require 'tmpdir'
 CLEAN.include '**/.DS_Store'
 
@@ -101,12 +102,19 @@ def template_parameters
 end
 
 #
-# Play a sound after finished
+# Notify when finished
 #
 at_exit do
-  sh 'afplay /System/Library/Sounds/Submarine.aiff' unless ci?
   if ci?
     Rake::Task['unity_license:release'].invoke unless Rake.application.current_task.name.start_with?('unity_license')
+  else
+    success = $ERROR_INFO.nil?
+    TerminalNotifier.notify(
+      Rake.application.top_level_tasks.join(', '),
+      title: 'Teak Unity Cleanroom',
+      subtitle: success ? 'Succeeded' : 'Failed',
+      sound: success ? 'Submarine' : 'Funk'
+    )
   end
 end
 
