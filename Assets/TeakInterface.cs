@@ -270,7 +270,7 @@ public class TeakInterface : MonoBehaviour {
     private static extern string TeakCleanroomGetFacebookId();
 #endif
 
-    void TestExceptionReporting()
+    public void TestExceptionReporting()
     {
 #if UNITY_EDITOR
 #elif UNITY_ANDROID

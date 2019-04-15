@@ -337,6 +337,14 @@ public class TestDriver : MonoBehaviour
                 Teak.Instance.IncrementEvent("coin_sink", "slot", "asshole_cats", 50000);
             });
         }
+
+        // TestExceptionReporting
+        {
+            Button button = this.CreateButton("TestExceptionReporting");
+            button.onClick.AddListener(() => {
+                this.teakInterface.TestExceptionReporting();
+            });
+        }
 #endif // TEAK_NOT_AVAILABLE
     }
 
