@@ -331,9 +331,10 @@ public class TestDriver : MonoBehaviour
 
         // TrackEvent
         {
-            Button button = this.CreateButton("TrackEvent No_Object_Instance");
+            Button button = this.CreateButton("IncrementEvent Spin");
             button.onClick.AddListener(() => {
-                Teak.Instance.TrackEvent("No_Object_Instance", null, null);
+                Teak.Instance.IncrementEvent("spin", "slot", "asshole_cats", 1);
+                Teak.Instance.IncrementEvent("coin_sink", "slot", "asshole_cats", 50000);
             });
         }
 #endif // TEAK_NOT_AVAILABLE
