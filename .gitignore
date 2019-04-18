@@ -85,6 +85,9 @@ Assets/Plugins/UnityPurchasing/script*
 Assets/Plugins/UnityPurchasing/winrt*
 Assets/Plugins/UnityChannel*
 
+# FacebookSDK
+Assets/FacebookSDK*
+
 # Generated Files
 Unity-iPhone/*
 WebGLBuild*

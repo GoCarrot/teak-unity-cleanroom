@@ -255,6 +255,37 @@ namespace :unity_iap do
   end
 end
 
+namespace :facebook do
+  task :import do
+    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', nil)
+    zip_name = if facebook_sdk_version
+                 "facebook-unity-sdk-#{facebook_sdk_version}"
+               else
+                 'FacebookSDK-current'
+               end
+    url = "https://origincache.facebook.com/developers/resources/?id=#{zip_name}.zip"
+    begin
+      tmpdir = Dir.mktmpdir
+      sdk_name = nil
+      cd tmpdir, verbose: false do
+        sh "curl #{url} -L -o FacebookUnitySDK.zip", verbose: false
+        sh 'unzip FacebookUnitySDK.zip && rm FacebookUnitySDK.zip', verbose: false
+        sdk_name = `ls | head -n 1`.strip
+      end
+
+      without_teak_available do
+        unity '-importPackage', "#{tmpdir}/#{sdk_name}/FacebookSDK/#{sdk_name}.unitypackage"
+      end
+    ensure
+      FileUtils.remove_dir('Assets/FacebookSDK/Examples')
+      File.delete('Assets/FacebookSDK/Examples.meta')
+      sh 'git checkout -- Assets/PlayServicesResolver/Editor/*', verbose: false
+
+      FileUtils.remove_entry tmpdir
+    end
+  end
+end
+
 namespace :package do
   task download: [:clean] do
     fastlane 'sdk'
@@ -288,6 +319,10 @@ namespace :config do
   task :settings do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'TeakSettings.asset.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Resources', 'TeakSettings.asset'), Mustache.render(template, template_parameters))
+
+    template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
+    mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
+    File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
   end
 end
 
