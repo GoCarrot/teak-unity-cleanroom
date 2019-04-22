@@ -279,6 +279,10 @@ namespace :facebook do
     ensure
       FileUtils.remove_dir('Assets/FacebookSDK/Examples')
       File.delete('Assets/FacebookSDK/Examples.meta')
+      if facebook_sdk_version == '7.9.4'
+        File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-v4-*'])
+        File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
+      end
       sh 'git checkout -- Assets/PlayServicesResolver/Editor/*', verbose: false
 
       FileUtils.remove_entry tmpdir
