@@ -125,7 +125,13 @@ def unity(*args, quit: true, nographics: true)
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
-  sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{PROJECT_PATH}/unity.#{Rake.application.current_task.name.sub(':', '-')}.log#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
+  log_file = "#{PROJECT_PATH}/unity.#{Rake.application.current_task.name.sub(':', '-')}.log"
+  begin
+    sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{log_file}#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
+  rescue RuntimeError => _e
+    hax_parse_log(log_file)
+    abort "Unity errors in #{log_file}"
+  end
 end
 
 def fastlane(*args, env: {})
@@ -255,6 +261,41 @@ namespace :unity_iap do
   end
 end
 
+namespace :facebook do
+  task :import do
+    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', nil)
+    zip_name = if facebook_sdk_version
+                 "facebook-unity-sdk-#{facebook_sdk_version}"
+               else
+                 'FacebookSDK-current'
+               end
+    url = "https://origincache.facebook.com/developers/resources/?id=#{zip_name}.zip"
+    begin
+      tmpdir = Dir.mktmpdir
+      sdk_name = nil
+      cd tmpdir, verbose: false do
+        sh "curl #{url} -L -o FacebookUnitySDK.zip", verbose: false
+        sh 'unzip FacebookUnitySDK.zip && rm FacebookUnitySDK.zip', verbose: false
+        sdk_name = `ls | head -n 1`.strip
+      end
+
+      without_teak_available do
+        unity '-importPackage', "#{tmpdir}/#{sdk_name}/FacebookSDK/#{sdk_name}.unitypackage"
+      end
+    ensure
+      FileUtils.remove_dir('Assets/FacebookSDK/Examples')
+      File.delete('Assets/FacebookSDK/Examples.meta')
+      if facebook_sdk_version == '7.9.4'
+        File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-v4-*'])
+        File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
+      end
+      sh 'git checkout -- Assets/PlayServicesResolver/Editor/*', verbose: false
+
+      FileUtils.remove_entry tmpdir
+    end
+  end
+end
+
 namespace :package do
   task download: [:clean] do
     fastlane 'sdk'
@@ -271,6 +312,7 @@ namespace :package do
 
     Rake::Task['prime31:import'].invoke if use_prime31?
     Rake::Task['unity_iap:import'].invoke if use_unityiap?
+    Rake::Task['facebook:import'].invoke
   end
 end
 
@@ -288,6 +330,10 @@ namespace :config do
   task :settings do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'TeakSettings.asset.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Resources', 'TeakSettings.asset'), Mustache.render(template, template_parameters))
+
+    mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
+    template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
+    File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
   end
 end
 
@@ -462,4 +508,50 @@ namespace :kms do
 
     `openssl enc -md MD5 -d -aes-256-cbc -in kms/#{args[:encrypted_file]}.data -out #{args[:encrypted_file]} -k #{KMS_KEY}`
   end
+end
+
+task :hax_test do
+  hax_parse_log 'unity.config-id.log'
+end
+
+def hax_parse_log(logfile)
+  ret = false
+  state = :ready
+  command_failed = Struct.new(:desc, :command, :stderr).new
+  File.foreach(logfile).with_index do |line, _line_num|
+    if state == :ready
+      if (matches = line.match(/^CommandInvokationFailure:(.*)$/))
+        command_failed.desc = matches.captures[0].strip
+        state = :command_invokation_failure_start
+      elsif /^(-*)CompilerOutput:-stderr(-*)$/.match?(line)
+        state = :compile_error
+      end
+    elsif state == :command_invokation_failure_start
+      command_failed.command = line.strip
+      state = :command_invokation_failure_looking_for_stderr
+    elsif state == :command_invokation_failure_looking_for_stderr
+      state = :command_invokation_failure_stderr if /^stderr\[$/.match?(line)
+    elsif state == :command_invokation_failure_stderr
+      if /^\]$/.match?(line)
+        state = :ready
+        puts "⚠️  #{command_failed.desc}\n#{command_failed.stderr.join("\n")}\n\t#{command_failed.command.pale}"
+        ret = true
+      else
+        command_failed.stderr ||= []
+        command_failed.stderr << line.strip
+      end
+    elsif state == :compile_error
+      if (matches = line.match(/^(.*)error CS([0-9]+): (.*)$/))
+        file_line_col, _errno, description = matches.captures
+        flc_matches = file_line_col.match(/^(.*)\(([0-9]+),([0-9]+)\): $/)
+        file, line, col = flc_matches.captures if flc_matches
+        puts "⚠️  #{description}#{" \n\t#{file} (#{line}, #{col})".pale unless file_line_col.empty?}"
+        ret = true
+      end
+    end
+
+    # Reset compile error state
+    state = :ready if /^(-*)EndCompilerOutput(-*)$/.match?(line)
+  end
+  ret
 end

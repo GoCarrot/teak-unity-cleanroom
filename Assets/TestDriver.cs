@@ -9,6 +9,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+#if !TEAK_NOT_AVAILABLE
+using Facebook.Unity;
+#endif
+
 [RequireComponent(typeof(TeakInterface))]
 public class TestDriver : MonoBehaviour
 #if UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
@@ -60,7 +64,18 @@ public class TestDriver : MonoBehaviour
     IEnumerator<Test> testEnumerator;
 
     void Awake() {
+        // Facebook
 #if !TEAK_NOT_AVAILABLE
+        if (!FB.IsInitialized) {
+            FB.Init(() => {
+                if (FB.IsInitialized) {
+                    FB.ActivateApp();
+                }
+            });
+        } else {
+            FB.ActivateApp();
+        }
+
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for semi-automated tests", (Dictionary<string, object> parameters) => {
             if (this.testEnumerator != null && this.testEnumerator.Current.OnDeepLink(parameters)) {
                 this.AdvanceTests();
@@ -330,6 +345,7 @@ public class TestDriver : MonoBehaviour
 #endif // USE_PRIME31
 
         // TrackEvent
+#if TEAK_2_1_OR_NEWER
         {
             Button button = this.CreateButton("IncrementEvent Spin");
             button.onClick.AddListener(() => {
@@ -337,12 +353,30 @@ public class TestDriver : MonoBehaviour
                 Teak.Instance.IncrementEvent("coin_sink", "slot", "asshole_cats", 50000);
             });
         }
+#endif
 
         // TestExceptionReporting
         {
             Button button = this.CreateButton("TestExceptionReporting");
             button.onClick.AddListener(() => {
                 this.teakInterface.TestExceptionReporting();
+            });
+        }
+
+        // Facebook Login/Logout
+        if (FB.IsLoggedIn) {
+            Button button = this.CreateButton("Facebook Logout");
+            button.onClick.AddListener(() => {
+                FB.LogOut();
+                SetupUI();
+            });
+        } else {
+            Button button = this.CreateButton("Facebook Login");
+            button.onClick.AddListener(() => {
+                var perms = new List<string>(){"public_profile", "email"};
+                FB.LogInWithReadPermissions(perms, (ILoginResult result) => {
+                    SetupUI();
+                });
             });
         }
 #endif // TEAK_NOT_AVAILABLE
