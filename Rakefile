@@ -523,16 +523,16 @@ def hax_parse_log(logfile)
       if (matches = line.match(/^CommandInvokationFailure:(.*)$/))
         command_failed.desc = matches.captures[0].strip
         state = :command_invokation_failure_start
-      elsif /^(-*)CompilerOutput:-stderr(-*)$/.match?(line)
+      elsif /^(-*)CompilerOutput:-stderr(-*)$/.match(line)
         state = :compile_error
       end
     elsif state == :command_invokation_failure_start
       command_failed.command = line.strip
       state = :command_invokation_failure_looking_for_stderr
     elsif state == :command_invokation_failure_looking_for_stderr
-      state = :command_invokation_failure_stderr if /^stderr\[$/.match?(line)
+      state = :command_invokation_failure_stderr if /^stderr\[$/ =~ line
     elsif state == :command_invokation_failure_stderr
-      if /^\]$/.match?(line)
+      if /^\]$/ =~ line
         state = :ready
         puts "⚠️  #{command_failed.desc}\n#{command_failed.stderr.join("\n")}\n\t#{command_failed.command.pale}"
         ret = true
@@ -551,7 +551,7 @@ def hax_parse_log(logfile)
     end
 
     # Reset compile error state
-    state = :ready if /^(-*)EndCompilerOutput(-*)$/.match?(line)
+    state = :ready if /^(-*)EndCompilerOutput(-*)$/ =~ line
   end
   ret
 end
