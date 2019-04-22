@@ -244,7 +244,7 @@ PlayerSettings:
   AndroidTargetDevice: 0
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: /Users/pat/Code/teak-unity-cleanroom/io.teak.app.unity.prod.keystore
+  AndroidKeystoreName: /Users/pat/Code/teak-unity-cleanroom/io.teak.app.unity.dev.upload.keystore
   AndroidKeyaliasName: alias_name
   AndroidTVCompatibility: 1
   AndroidIsGame: 1
@@ -557,8 +557,8 @@ PlayerSettings:
   webGLUseWasm: 0
   webGLCompressionFormat: 1
   scriptingDefineSymbols:
-    4: TEAK_2_0_OR_NEWER
-    7: TEAK_2_0_OR_NEWER
+    4: TEAK_2_0_OR_NEWER;TEAK_2_1_OR_NEWER
+    7: TEAK_2_0_OR_NEWER;TEAK_2_1_OR_NEWER
   platformArchitecture: {}
   scriptingBackend:
     Android: 0
