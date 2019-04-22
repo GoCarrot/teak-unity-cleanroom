@@ -302,6 +302,7 @@ namespace :package do
 
     Rake::Task['prime31:import'].invoke if use_prime31?
     Rake::Task['unity_iap:import'].invoke if use_unityiap?
+    Rake::Task['facebook:import'].invoke
   end
 end
 
@@ -320,8 +321,8 @@ namespace :config do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'TeakSettings.asset.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Resources', 'TeakSettings.asset'), Mustache.render(template, template_parameters))
 
-    template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
     mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
+    template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
   end
 end
