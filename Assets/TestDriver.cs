@@ -345,6 +345,7 @@ public class TestDriver : MonoBehaviour
 #endif // USE_PRIME31
 
         // TrackEvent
+#if TEAK_2_1_OR_NEWER
         {
             Button button = this.CreateButton("IncrementEvent Spin");
             button.onClick.AddListener(() => {
@@ -352,6 +353,7 @@ public class TestDriver : MonoBehaviour
                 Teak.Instance.IncrementEvent("coin_sink", "slot", "asshole_cats", 50000);
             });
         }
+#endif
 
         // TestExceptionReporting
         {
