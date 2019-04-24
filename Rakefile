@@ -130,7 +130,7 @@ def unity(*args, quit: true, nographics: true)
     sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{log_file}#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
   rescue RuntimeError => _e
     hax_parse_log(log_file)
-    abort "Unity errors in #{log_file}"
+    abort "Unity errors in #{log_file}\n\t#{"subl://open?url=file://#{log_file}".pale}"
   end
 end
 
@@ -287,7 +287,7 @@ namespace :facebook do
       File.delete('Assets/FacebookSDK/Examples.meta')
       if facebook_sdk_version == '7.9.4'
         File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-v4-*'])
-        File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
+        # File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
       end
       sh 'git checkout -- Assets/PlayServicesResolver/Editor/*', verbose: false
 
@@ -545,7 +545,7 @@ def hax_parse_log(logfile)
         file_line_col, _errno, description = matches.captures
         flc_matches = file_line_col.match(/^(.*)\(([0-9]+),([0-9]+)\): $/)
         file, line, col = flc_matches.captures if flc_matches
-        puts "⚠️  #{description}#{" \n\t#{file} (#{line}, #{col})".pale unless file_line_col.empty?}"
+        puts "⚠️  #{description}#{" \n\t#{file} (#{line}, #{col})\n\tsubl://open?url=file://#{File.join(PROJECT_PATH, file)}&line=#{line}&column=#{col}".pale unless file_line_col.empty?}"
         ret = true
       end
     end
