@@ -263,7 +263,7 @@ end
 
 namespace :facebook do
   task :import do
-    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', nil)
+    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', ci? ? '7.9.4' : nil)
     zip_name = if facebook_sdk_version
                  "facebook-unity-sdk-#{facebook_sdk_version}"
                else
@@ -287,7 +287,7 @@ namespace :facebook do
       File.delete('Assets/FacebookSDK/Examples.meta')
       if facebook_sdk_version == '7.9.4'
         File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-v4-*'])
-        # File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
+        File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
       end
       sh 'git checkout -- Assets/PlayServicesResolver/Editor/*', verbose: false
 
