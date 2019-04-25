@@ -379,6 +379,14 @@ public class TestDriver : MonoBehaviour
                 });
             });
         }
+
+        // Re-IdentifyUser
+        {
+            Button button = this.CreateButton("Re-IdentifyUser");
+            button.onClick.AddListener(() => {
+                Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
+            });
+        }
 #endif // TEAK_NOT_AVAILABLE
     }
 
