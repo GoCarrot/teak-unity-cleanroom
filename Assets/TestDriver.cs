@@ -307,6 +307,7 @@ public class TestDriver : MonoBehaviour
                             this.RecordErrorForTest(currentTest, "ScheduleId was null");
                         }
                         this.scheduledNotificationId = null;
+                        this.SetupUI();
                     }));
                 });
 
