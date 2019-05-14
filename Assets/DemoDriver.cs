@@ -36,6 +36,7 @@ public class DemoDriver : MonoBehaviour
 
     TeakInterface teakInterface;
     string pushToken;
+    bool bonusIsReady = true;
 
     int slotSelection = 0;
     List<string> slotNames = new List<string> { "OMG Ponies", "Unicorn Gold", "Spicy Slots", "Golden Pig" };
@@ -74,6 +75,13 @@ public class DemoDriver : MonoBehaviour
         } else {
             FB.ActivateApp();
         }
+
+        Teak.Instance.RegisterRoute("/slot/:slot_id", "Change Slot", "Deep link direct to a slot", (Dictionary<string, object> parameters) => {
+            Debug.Log("CHANGING SLOT TO: " + parameters["slot_id"]);
+            StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+                this.ChangeSlot(Convert.ToInt32(parameters["slot_id"]), true);
+            }));
+        });
 
 #if USE_PRIME31
         // Prime31 Events
@@ -129,11 +137,7 @@ public class DemoDriver : MonoBehaviour
         dropdownComponent.value = this.slotSelection;
 
         dropdownComponent.onValueChanged.AddListener(delegate {
-            this.slotSelection = dropdownComponent.value;
-            this.SetupUI();
-
-            PlayerPrefs.SetInt("LastSlot", this.slotSelection);
-            PlayerPrefs.Save();
+            this.ChangeSlot(dropdownComponent.value, false);
         });
 
         this.SetupUI();
@@ -185,6 +189,26 @@ public class DemoDriver : MonoBehaviour
 #endif // USE_PRIME31
 #endif // TEAK_NOT_AVAILABLE
 
+    private void ChangeSlot(int slotId, bool animate) {
+        this.slotSelection = slotId;
+        this.SetupUI();
+
+        Dropdown dropdownComponent = dropdown.GetComponent<Dropdown>();
+        dropdownComponent.value = this.slotSelection;
+
+        PlayerPrefs.SetInt("LastSlot", this.slotSelection);
+        PlayerPrefs.Save();
+
+        if (animate) {
+            this.winCanvas.GetComponent<Canvas>().enabled = true;
+            this.winCaption.GetComponent<TextMeshProUGUI>().text = "PLAY";
+            this.winText.GetComponent<TextMeshProUGUI>().text = this.slotNames[this.slotSelection];
+            StartCoroutine(Coroutine.DoAfterSeconds(2, () => {
+                this.winCanvas.GetComponent<Canvas>().enabled = false;
+            }));
+        }
+    }
+
     private void DoSpin() {
         this.coinBalance -= this.wager;
 
@@ -212,6 +236,9 @@ public class DemoDriver : MonoBehaviour
         this.coinBalance += this.slotMulti[multiLookup] * this.wager;
         PlayerPrefs.SetInt("CoinBalance", this.coinBalance);
         PlayerPrefs.Save();
+
+        Teak.Instance.SetNumericAttribute("coins", this.coinBalance);
+        Teak.Instance.SetNumericAttribute("last_slot", this.slotSelection);
     }
 
 #if UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
@@ -298,7 +325,33 @@ public class DemoDriver : MonoBehaviour
             });
         }
 
-    // 10% chance of 5x, 20% chance of 2x, 10% chance of 1x, 30% chance of 0.5x, rest 0x
+        // Bonus
+        if (this.bonusIsReady) {
+            Button button = this.CreateButton("< Collect Bonus >");
+            button.onClick.AddListener(() => {
+                this.bonusIsReady = false;
+
+                StartCoroutine(Coroutine.DoAfterSeconds(10, () => {
+                    this.bonusIsReady = true;
+                    this.SetupUI();
+                }));
+
+                StartCoroutine(TeakNotification.ScheduleNotification("demo_bonus_ready", "Your bonus is ready", 10, (TeakNotification.Reply reply) => {
+                }));
+
+                int bonusAmount = 10000;
+                this.coinBalance += bonusAmount;
+
+                this.winCanvas.GetComponent<Canvas>().enabled = true;
+                this.winCaption.GetComponent<TextMeshProUGUI>().text = "$$$";
+                this.winText.GetComponent<TextMeshProUGUI>().text = String.Format("{0:n0}", bonusAmount);
+                StartCoroutine(Coroutine.DoAfterSeconds(1, () => {
+                    this.winCanvas.GetComponent<Canvas>().enabled = false;
+                }));
+
+                this.SetupUI();
+            });
+        }
 
         // Facebook Login/Logout
         // if (FB.IsLoggedIn) {
