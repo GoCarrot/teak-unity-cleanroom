@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 #if UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
 using UnityEngine.Purchasing;
@@ -62,6 +63,10 @@ public class TestDriver : MonoBehaviour
 
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
+
+    public void LoadDemoScene() {
+        SceneManager.LoadScene("DemoScene");
+    }
 
     void Awake() {
         // Facebook
