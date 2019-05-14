@@ -30,6 +30,10 @@ public class DemoDriver : MonoBehaviour
     public GameObject userIdText;
     public GameObject dropdown;
 
+    public GameObject winCanvas;
+    public GameObject winCaption;
+    public GameObject winText;
+
     TeakInterface teakInterface;
     string pushToken;
 
@@ -133,6 +137,9 @@ public class DemoDriver : MonoBehaviour
         });
 
         this.SetupUI();
+
+        // Hide win canvas
+        this.winCanvas.GetComponent<Canvas>().enabled = false;
     }
 
     void OnPushTokenChanged(string pushToken) {
@@ -147,6 +154,17 @@ public class DemoDriver : MonoBehaviour
     }
 
     void OnReward(TeakReward reward) {
+        if (reward.Status == TeakReward.RewardStatus.GrantReward) {
+            this.winCanvas.GetComponent<Canvas>().enabled = true;
+            var e = reward.Reward.GetEnumerator();
+            e.MoveNext();
+            var firstElement = e.Current;
+            this.winCaption.GetComponent<TextMeshProUGUI>().text = firstElement.Key;
+            this.winText.GetComponent<TextMeshProUGUI>().text = String.Format("{0:n0}", Convert.ToInt32(firstElement.Value));
+            StartCoroutine(Coroutine.DoAfterSeconds(2, () => {
+                this.winCanvas.GetComponent<Canvas>().enabled = false;
+            }));
+        }
     }
 
 #if USE_PRIME31
@@ -182,6 +200,15 @@ public class DemoDriver : MonoBehaviour
             multiLookup = (i == multiLookup ? multiLookup : 0);
         }
 
+        int winAmount = this.slotMulti[multiLookup] * this.wager;
+        if (winAmount > 0) {
+            this.winCanvas.GetComponent<Canvas>().enabled = true;
+            this.winCaption.GetComponent<TextMeshProUGUI>().text = "WIN";
+            this.winText.GetComponent<TextMeshProUGUI>().text = String.Format("{0:n0}", winAmount);
+            StartCoroutine(Coroutine.DoAfterSeconds(2, () => {
+                this.winCanvas.GetComponent<Canvas>().enabled = false;
+            }));
+        }
         this.coinBalance += this.slotMulti[multiLookup] * this.wager;
         PlayerPrefs.SetInt("CoinBalance", this.coinBalance);
         PlayerPrefs.Save();
