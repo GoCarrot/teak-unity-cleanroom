@@ -13,7 +13,7 @@ using GooglePlayServices;
 
 public class BuildPlayer
 {
-    static string[] scenes = { "Assets/MainScene.unity", "Assets/DemoScene.unity" };
+    static string[] scenes = { "Assets/DemoScene.unity", "Assets/MainScene.unity" };
 
     public static void SetBundleId()
     {
