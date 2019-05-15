@@ -237,8 +237,10 @@ public class DemoDriver : MonoBehaviour
         PlayerPrefs.SetInt("CoinBalance", this.coinBalance);
         PlayerPrefs.Save();
 
+#if !TEAK_NOT_AVAILABLE
         Teak.Instance.SetNumericAttribute("coins", this.coinBalance);
         Teak.Instance.SetNumericAttribute("last_slot", this.slotSelection);
+#endif // TEAK_NOT_AVAILABLE
     }
 
 #if UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
