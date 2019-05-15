@@ -2067,7 +2067,7 @@ MonoBehaviour:
     bottomLeft: {r: 1, g: 0.18396229, b: 0.7634168, a: 1}
     bottomRight: {r: 1, g: 0.18396229, b: 0.7634168, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
+  m_spriteAsset: {fileID: 11400000, guid: c41005c129ba4d66911b75229fd70b45, type: 2}
   m_tintAllSprites: 0
   m_overrideHtmlColors: 0
   m_faceColor:

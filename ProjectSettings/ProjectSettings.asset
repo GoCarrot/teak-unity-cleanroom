@@ -596,7 +596,7 @@ PlayerSettings:
   webGLLinkerTarget: 1
   webGLThreadsSupport: 0
   scriptingDefineSymbols:
-    4: TEAK_2_0_OR_NEWER;TEAK_2_1_OR_NEWER
+    4: TEAK_2_1_OR_NEWER;TEAK_2_0_OR_NEWER
     7: TEAK_2_0_OR_NEWER;TEAK_2_1_OR_NEWER
   platformArchitecture: {}
   scriptingBackend:

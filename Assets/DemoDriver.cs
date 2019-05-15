@@ -36,20 +36,17 @@ public class DemoDriver : MonoBehaviour
 
     TeakInterface teakInterface;
     string pushToken;
-    bool bonusIsReady = true;
+    int lastBonusTime = GetEpochTime();
+    bool bonusIsReady = false;
 
     int slotSelection = 0;
     List<string> slotNames = new List<string> { "OMG Ponies", "Unicorn Gold", "Spicy Slots", "Golden Pig" };
-    List<List<int>> slotReels = new List<List<int>> {
-        new List<int> { 1, 2, 3, 4, 2, 4, 3, 1 },
-        new List<int> { 2, 2, 1, 4, 3, 3, 2, 4 },
-        new List<int> { 3, 4, 1, 1, 2, 1, 2, 3 },
-    };
-    List<int> slotMulti = new List<int> { 0, 20, 10, 50, 100 };
+    List<List<int>> slotReels;
+    List<int> slotMulti;
 
     int coinBalance;
     int wager = 1000;
-    string slotSpin = "<align=\"center\"><sprite=0><sprite=0><sprite=5>";
+    string slotSpin = "<mark=#ffffff88><align=\"center\"><sprite=4><sprite=4><sprite=4> </mark>";
 
 #if UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
     IStoreController storeController;
@@ -79,7 +76,7 @@ public class DemoDriver : MonoBehaviour
         Teak.Instance.RegisterRoute("/slot/:slot_id", "Change Slot", "Deep link direct to a slot", (Dictionary<string, object> parameters) => {
             Debug.Log("CHANGING SLOT TO: " + parameters["slot_id"]);
             StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
-                this.ChangeSlot(Convert.ToInt32(parameters["slot_id"]), true);
+                this.ChangeSlot((int) Convert.ToDouble(parameters["slot_id"]), true);
             }));
         });
 
@@ -118,6 +115,34 @@ public class DemoDriver : MonoBehaviour
         // Load persist data
         this.slotSelection = PlayerPrefs.GetInt("LastSlot", 0);
         this.coinBalance = PlayerPrefs.GetInt("CoinBalance", 50000);
+        this.lastBonusTime = PlayerPrefs.GetInt("LastBonusTime", GetEpochTime());
+
+        // Generate some slot reels
+        List<int> validReelValues = new List<int> { 4, 7, 8, 9, 14 };
+        this.slotMulti = new List<int> {
+            0, 0, 0, 0,
+            20, 0, 0, 10, 
+            50, 5, 0, 0,
+            0, 0, 100, 0
+        };
+        this.slotReels = new List<List<int>>();
+        for (int i = 0; i < 3; i++) {
+            List<int> reel = new List<int>();
+            for (int j = 0; j < 10; j++) {
+                reel.Add(validReelValues[UnityEngine.Random.Range(0, validReelValues.Count)]);
+            }
+            this.slotReels.Add(reel);
+        }
+    }
+
+    void FixedUpdate() {
+        if (!this.bonusIsReady) {
+            int t = GetEpochTime() - this.lastBonusTime;
+            if (t > 10) {
+                this.bonusIsReady = true;
+                this.SetupUI();
+            }
+        }
     }
 
     void Start() {
@@ -217,12 +242,13 @@ public class DemoDriver : MonoBehaviour
             spin.Add(reel[UnityEngine.Random.Range(0, reel.Count)]);
         }
 
-        this.slotSpin = "<align=\"center\">";
+        this.slotSpin = "<mark=#ffffff88><align=\"center\">";
         int multiLookup = spin[0];
         foreach (int i in spin) {
             this.slotSpin += "<sprite=" + i + ">";
             multiLookup = (i == multiLookup ? multiLookup : 0);
         }
+        this.slotSpin += " </mark>";
 
         int winAmount = this.slotMulti[multiLookup] * this.wager;
         if (winAmount > 0) {
@@ -239,7 +265,8 @@ public class DemoDriver : MonoBehaviour
 
 #if !TEAK_NOT_AVAILABLE
         Teak.Instance.SetNumericAttribute("coins", this.coinBalance);
-        Teak.Instance.SetNumericAttribute("last_slot", this.slotSelection);
+        Teak.Instance.SetNumericAttribute("last_slot_id", this.slotSelection);
+        Teak.Instance.SetStringAttribute("last_slot", this.slotNames[this.slotSelection]);
 #endif // TEAK_NOT_AVAILABLE
     }
 
@@ -278,6 +305,10 @@ public class DemoDriver : MonoBehaviour
         teak.CallStatic("pluginPurchaseSucceeded", "{}", "test");
         teak.CallStatic("pluginPurchaseFailed", 42, "cleanroom");
 #endif
+    }
+
+    static int GetEpochTime() {
+        return (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
     }
 
     private void SetupUI() {
@@ -331,18 +362,18 @@ public class DemoDriver : MonoBehaviour
         if (this.bonusIsReady) {
             Button button = this.CreateButton("< Collect Bonus >");
             button.onClick.AddListener(() => {
+                this.lastBonusTime = GetEpochTime();
                 this.bonusIsReady = false;
-
-                StartCoroutine(Coroutine.DoAfterSeconds(10, () => {
-                    this.bonusIsReady = true;
-                    this.SetupUI();
-                }));
 
                 StartCoroutine(TeakNotification.ScheduleNotification("demo_bonus_ready", "Your bonus is ready", 10, (TeakNotification.Reply reply) => {
                 }));
 
                 int bonusAmount = 10000;
                 this.coinBalance += bonusAmount;
+
+                PlayerPrefs.SetInt("LastBonusTime", this.lastBonusTime);
+                PlayerPrefs.SetInt("CoinBalance", this.coinBalance);
+                PlayerPrefs.Save();
 
                 this.winCanvas.GetComponent<Canvas>().enabled = true;
                 this.winCaption.GetComponent<TextMeshProUGUI>().text = "$$$";
