@@ -184,14 +184,24 @@ public class DemoDriver : MonoBehaviour
 
     void OnReward(TeakReward reward) {
         if (reward.Status == TeakReward.RewardStatus.GrantReward) {
-            this.winCanvas.GetComponent<Canvas>().enabled = true;
             var e = reward.Reward.GetEnumerator();
             e.MoveNext();
             var firstElement = e.Current;
+            int rewardCoins = Convert.ToInt32(firstElement.Value);
+
+            this.winCanvas.GetComponent<Canvas>().enabled = true;
             this.winCaption.GetComponent<TextMeshProUGUI>().text = firstElement.Key;
-            this.winText.GetComponent<TextMeshProUGUI>().text = String.Format("{0:n0}", Convert.ToInt32(firstElement.Value));
+            this.winText.GetComponent<TextMeshProUGUI>().text = String.Format("{0:n0}", rewardCoins);
             StartCoroutine(Coroutine.DoAfterSeconds(2, () => {
                 this.winCanvas.GetComponent<Canvas>().enabled = false;
+            }));
+
+            this.coinBalance += rewardCoins;
+            PlayerPrefs.SetInt("CoinBalance", this.coinBalance);
+            PlayerPrefs.Save();
+
+            StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+                this.SetupUI();
             }));
         }
     }
