@@ -113,7 +113,7 @@ public class TeakInterface : MonoBehaviour {
     }
 
     void OnLogEvent(Dictionary<string, object> logData) {
-        Debug.Log("[Teak Unity Cleanroom] OnLogEvent: " + Json.Serialize(logData));
+        Debug.Log(new TeakLogEvent(logData));
     }
 #endregion
 
