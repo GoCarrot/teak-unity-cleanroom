@@ -80,5 +80,18 @@ class Test {
         this.onLaunchCalled = true;
         return CheckStatus();
     }
+
+    public bool OnForegroundNotification(TeakNotification notification) {
+        if (!this.CreativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal)) {
+            this.ReportError("Expected '" + this.CreativeId + "' got:\n" + Json.Serialize(notification.CreativeId));
+        }
+        else if (!string.IsNullOrEmpty(this.VerifyReward) && !notification.Incentivized) {
+            this.ReportError("Expected 'incentivized'");
+        }
+
+        Prepare();
+        this.onLaunchCalled = true;
+        return CheckStatus();
+    }
 #endif
 }

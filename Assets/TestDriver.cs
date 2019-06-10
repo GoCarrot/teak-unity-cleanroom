@@ -55,13 +55,15 @@ public class TestDriver : MonoBehaviour
                 new Test { Name = "Simple Notification", CreativeId = "test_none" },
                 new Test { Name = "Deep Link", CreativeId = "test_deeplink", VerifyDeepLink = "link-only" },
                 new Test { Name = "Reward", CreativeId = "test_reward", VerifyReward = "coins" },
-                new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink", VerifyDeepLink = "with-reward", VerifyReward = "coins" }
+                new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink", VerifyDeepLink = "with-reward", VerifyReward = "coins" },
+                new Test { Name = "Foreground Notification", CreativeId = "test_none", NoAutoBackground = true }
             };
         }
     }
 
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
+    bool gotLogEvent = false;
 
     void Awake() {
         // Facebook
@@ -139,7 +141,9 @@ public class TestDriver : MonoBehaviour
 
 #if !TEAK_NOT_AVAILABLE
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
+        Teak.Instance.OnForegroundNotification += OnForegroundNotification;
         Teak.Instance.OnReward += OnReward;
+        Teak.Instance.OnLogEvent += OnLogEvent;
 #endif // TEAK_NOT_AVAILABLE
 
         this.TestThingsThatShouldBeTestedInBetterWays();
@@ -180,6 +184,17 @@ public class TestDriver : MonoBehaviour
         }
     }
 
+    void OnForegroundNotification(TeakNotification notification) {
+        this.scheduledNotificationId = null;
+
+        if (this.testEnumerator != null && this.testEnumerator.Current.OnForegroundNotification(notification)) {
+            this.AdvanceTests();
+            StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+                this.SetupUI();
+            }));
+        }
+    }
+
     void OnReward(TeakReward reward) {
         if (this.testEnumerator != null && this.testEnumerator.Current.OnReward(reward)) {
             this.AdvanceTests();
@@ -187,6 +202,10 @@ public class TestDriver : MonoBehaviour
                 this.SetupUI();
             }));
         }
+    }
+
+    void OnLogEvent(Dictionary<string, object> logEvent) {
+        this.gotLogEvent = true;
     }
 
 #if USE_PRIME31
@@ -387,6 +406,11 @@ public class TestDriver : MonoBehaviour
             button.onClick.AddListener(() => {
                 Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
             });
+        }
+
+        // Got Log Event?
+        {
+            this.CreateText("Got Log? " + this.gotLogEvent);
         }
 #endif // TEAK_NOT_AVAILABLE
     }
