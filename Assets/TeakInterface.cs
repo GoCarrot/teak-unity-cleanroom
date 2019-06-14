@@ -44,7 +44,9 @@ public class TeakInterface : MonoBehaviour {
         // Assign Teak Callbacks
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
+#if TEAK_2_2_OR_NEWER
         Teak.Instance.OnLogEvent += OnLogEvent;
+#endif
 
 #if TEAK_2_0_OR_NEWER
         // Print out notification state
@@ -112,9 +114,11 @@ public class TeakInterface : MonoBehaviour {
         }
     }
 
+#if TEAK_2_2_OR_NEWER
     void OnLogEvent(Dictionary<string, object> logData) {
         Debug.Log(new TeakLogEvent(logData));
     }
+#endif
 #endregion
 
     public IEnumerator GetUserJson(Action<Dictionary<string, object>> action) {

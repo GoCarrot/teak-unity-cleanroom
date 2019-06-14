@@ -141,9 +141,11 @@ public class TestDriver : MonoBehaviour
 
 #if !TEAK_NOT_AVAILABLE
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
-        Teak.Instance.OnForegroundNotification += OnForegroundNotification;
         Teak.Instance.OnReward += OnReward;
+#if TEAK_2_2_OR_NEWER
         Teak.Instance.OnLogEvent += OnLogEvent;
+        Teak.Instance.OnForegroundNotification += OnForegroundNotification;
+#endif
 #endif // TEAK_NOT_AVAILABLE
 
         this.TestThingsThatShouldBeTestedInBetterWays();
