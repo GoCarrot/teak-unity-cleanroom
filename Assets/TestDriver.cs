@@ -11,6 +11,7 @@ using System.Collections.Generic;
 
 #if !TEAK_NOT_AVAILABLE
 using Facebook.Unity;
+using MiniJSON.Teak;
 #endif
 
 [RequireComponent(typeof(TeakInterface))]
@@ -63,7 +64,7 @@ public class TestDriver : MonoBehaviour
 
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
-    bool gotLogEvent = false;
+    Dictionary<string, object> logVersionInfo = null;
 
     void Awake() {
         // Facebook
@@ -207,7 +208,12 @@ public class TestDriver : MonoBehaviour
     }
 
     void OnLogEvent(Dictionary<string, object> logEvent) {
-        this.gotLogEvent = true;
+        if (this.logVersionInfo == null) {
+            this.logVersionInfo = logEvent["sdk_version"] as Dictionary<string, object>;
+            StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+                this.SetupUI();
+            }));
+        }
     }
 
 #if USE_PRIME31
@@ -412,7 +418,11 @@ public class TestDriver : MonoBehaviour
 
         // Got Log Event?
         {
-            this.CreateText("Got Log? " + this.gotLogEvent);
+            if (this.logVersionInfo == null) {
+                this.CreateText("Waiting for log event...");
+            } else {
+                this.CreateText("Log: " + Json.Serialize(this.logVersionInfo));
+            }
         }
 #endif // TEAK_NOT_AVAILABLE
     }
