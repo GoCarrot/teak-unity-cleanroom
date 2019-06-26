@@ -39,8 +39,6 @@ public class TeakInterface : MonoBehaviour {
     void Start() {
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Start");
 
-        Teak.Instance.IdentifyUser(this.TeakUserId);
-
         // Assign Teak Callbacks
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
@@ -55,6 +53,9 @@ public class TeakInterface : MonoBehaviour {
             Debug.Log("Notifications are disabled!");
         }
 #endif
+
+        // IdentifyUser starts the things
+        Teak.Instance.IdentifyUser(this.TeakUserId);
     }
 
     void OnApplicationPause(bool isPaused) {
