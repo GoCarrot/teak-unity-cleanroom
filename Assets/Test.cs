@@ -2,96 +2,141 @@
 using MiniJSON.Teak;
 #endif
 
-using UnityEngine;
-
+using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
 class Test {
+    public enum TestState {
+        Pending,
+        Passed,
+        Failed
+    }
+
     public string Name { get; set; }
-    public string CreativeId { get; set; }
-    public string VerifyDeepLink { get; set; }
-    public string VerifyReward { get; set; }
-    public int Status { get; set; }
-    public bool NoAutoBackground { get; set; }
-    public string ErrorText { get; set; }
+    public TestState Status { get; set; }
 
-    bool onDeepLinkCalled = false;
-    bool onRewardCalled = false;
-    bool onLaunchCalled = false;
-
-    void Prepare() {
-        if (string.IsNullOrEmpty(this.VerifyReward)) onRewardCalled = true;
-        if (string.IsNullOrEmpty(this.VerifyDeepLink)) onDeepLinkCalled = true;
-    }
-
-    bool CheckStatus() {
-        if (this.onLaunchCalled && this.onDeepLinkCalled && this.onRewardCalled) {
-            if (this.Status == 0) this.Status = 1;
-            return true;
+    // State, this could probably be done better
+    private TestState began, reward, deepLink, launchedFromNotification, foregroundNotification,
+        logEvent;
+    private TestState[] AllStates {
+        get {
+            return new TestState[] {
+                this.began,
+                this.reward,
+                this.deepLink,
+                this.launchedFromNotification,
+                this.foregroundNotification,
+                this.logEvent
+            };
         }
-        return false;
-    }
-
-    public bool OnDeepLink(Dictionary<string, object> parameters) {
-        if (!string.IsNullOrEmpty(this.VerifyDeepLink) &&
-            (!parameters.ContainsKey("data") ||
-            !this.VerifyDeepLink.Equals(parameters["data"] as string, System.StringComparison.Ordinal))) {
-#if !TEAK_NOT_AVAILABLE
-            this.ReportError("Expected '" + this.VerifyDeepLink + "' contents:\n" + Json.Serialize(parameters));
-#endif
-        }
-
-        Prepare();
-        this.onDeepLinkCalled = true;
-        return CheckStatus();
-    }
-
-    private void ReportError(string description) {
-        Debug.LogError("[Test Error]: " + description);
-        this.ErrorText = description;
-        this.Status = 2;
     }
 
 #if !TEAK_NOT_AVAILABLE
-    public bool OnReward(TeakReward reward) {
-        if (!this.CreativeId.Equals(reward.CreativeId, System.StringComparison.Ordinal)) {
-            this.ReportError("Expected '" + this.CreativeId + "' contents: " + reward.CreativeId);
-        }
 
-        if (string.IsNullOrEmpty(reward.RewardId)) {
-            this.ReportError("RewardId was null or empty");
-        }
+    // Teak Events
+    public Action<Test, TeakReward, Action<bool>> OnReward { get; set; }
+    public Action<Test, Dictionary<string, object>, Action<bool>> OnDeepLink { get; set; }
+    public Action<Test, TeakNotification, Action<bool>> OnLaunchedFromNotification { get; set; }
+    public Action<Test, TeakNotification, Action<bool>> OnForegroundNotification { get; set; }
+    public Action<Test, TeakLogEvent, Action<bool>> OnLogEvent { get; set; }
 
-        Prepare();
-        this.onRewardCalled = true;
-        return CheckStatus();
+    // Test Lifecycle
+    public Action<Test, Action<bool>> OnBegin { get; set; }
+    public Action<Test> OnComplete { get; set; }
+
+    /////
+    // Test lifecycle
+    private void ResetTest() {
+        this.Status = TestState.Pending;
+
+        this.began = TestState.Pending;
+        this.reward = (this.OnReward == null ? TestState.Passed : TestState.Pending);
+        this.deepLink = (this.OnDeepLink == null ? TestState.Passed : TestState.Pending);
+        this.launchedFromNotification = (this.OnLaunchedFromNotification == null ? TestState.Passed : TestState.Pending);
+        this.foregroundNotification = (this.OnForegroundNotification == null ? TestState.Passed : TestState.Pending);
+        this.logEvent = (this.OnLogEvent == null ? TestState.Passed : TestState.Pending);
     }
 
-    public bool OnLaunchedFromNotification(TeakNotification notification) {
-        if (!this.CreativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal)) {
-            this.ReportError("Expected '" + this.CreativeId + "' got:\n" + Json.Serialize(notification.CreativeId));
-        }
-        else if (!string.IsNullOrEmpty(this.VerifyReward) && !notification.Incentivized) {
-            this.ReportError("Expected 'incentivized'");
-        }
-
-        Prepare();
-        this.onLaunchCalled = true;
-        return CheckStatus();
+    public void Begin() {
+        this.ResetTest();
+        this.EvaluatePredicate(this.OnBegin, (TestState state) => {
+            this.began = state;
+        });
     }
 
-    public bool OnForegroundNotification(TeakNotification notification) {
-        if (!this.CreativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal)) {
-            this.ReportError("Expected '" + this.CreativeId + "' got:\n" + Json.Serialize(notification.CreativeId));
+    private void Complete() {
+        if (this.OnComplete != null) {
+            this.OnComplete(this);
         }
-        else if (!string.IsNullOrEmpty(this.VerifyReward) && !notification.Incentivized) {
-            this.ReportError("Expected 'incentivized'");
-        }
+    }
 
-        Prepare();
-        this.onLaunchCalled = true;
-        return CheckStatus();
+    /////
+    // Helpers
+    private void EvaluatePredicate(Action<Test, Action<bool>> predicate, Action<TestState> state) {
+        if (predicate != null) {
+            predicate(this, (bool passed) => {
+                state(passed ? TestState.Passed : TestState.Failed);
+                this.ProcessState();
+            });
+        } else {
+            state(TestState.Passed);
+            this.ProcessState();
+        }
+    }
+
+    private void EvaluatePredicate<T>(Action<Test, T, Action<bool>> predicate, T val, Action<TestState> state) {
+        if (predicate != null) {
+            predicate(this, val, (bool passed) => {
+                state(passed ? TestState.Passed : TestState.Failed);
+                this.ProcessState();
+            });
+        } else {
+            state(TestState.Passed);
+            this.ProcessState();
+        }
+    }
+
+    private void ProcessState() {
+        bool allRun = this.AllStates.All(state => state != TestState.Pending);
+        if (allRun) {
+            bool allPassed = this.AllStates.All(state => state == TestState.Passed);
+            this.Status = allPassed ? TestState.Passed : TestState.Failed;
+            this.Complete();
+        }
+    }
+
+    /////
+    // Teak hooks
+    public void Reward(TeakReward reward) {
+        this.EvaluatePredicate(this.OnReward, reward, (TestState state) => {
+            this.reward = state;
+        });
+    }
+
+    public void DeepLink(Dictionary<string, object> parameters) {
+        this.EvaluatePredicate(this.OnDeepLink, parameters, (TestState state) => {
+            this.deepLink = state;
+        });
+    }
+
+    public void LaunchedFromNotification(TeakNotification notification) {
+        this.EvaluatePredicate(this.OnLaunchedFromNotification, notification, (TestState state) => {
+            this.launchedFromNotification = state;
+        });
+    }
+
+    public void ForegroundNotification(TeakNotification notification) {
+        this.EvaluatePredicate(this.OnForegroundNotification, notification, (TestState state) => {
+            this.foregroundNotification = state;
+        });
+    }
+
+    public void LogEvent(TeakLogEvent logEvent) {
+        this.EvaluatePredicate(this.OnLogEvent, logEvent, (TestState state) => {
+            this.logEvent = state;
+        });
     }
 #endif
 }
