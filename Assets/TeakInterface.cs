@@ -117,7 +117,7 @@ public class TeakInterface : MonoBehaviour {
 
 #if TEAK_2_2_OR_NEWER
     void OnLogEvent(Dictionary<string, object> logData) {
-        Debug.Log(new TeakLogEvent(logData));
+        // Debug.Log(new TeakLogEvent(logData));
     }
 #endif
 #endregion
