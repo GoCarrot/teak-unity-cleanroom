@@ -492,6 +492,12 @@ namespace :install do
   end
 end
 
+namespace :test do
+  task :ios do
+    # osascript -e 'tell application "Messages" to send "https://teak-dev.playw.it/h/i-0sMjn-F" to buddy "teak.devices@gmail.com"'
+  end
+end
+
 namespace :kms do
   task :encrypt, [:path] do |_, args|
     raise "Missing keystore to encrypt. 'rake kms:encrypt[/path/to/keystore]'" unless args[:path]
