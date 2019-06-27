@@ -100,7 +100,6 @@ public class TestDriver : MonoBehaviour
                         AndroidJavaObject installedCache = httpResponseCache.CallStatic<AndroidJavaObject>("getInstalled");
                         state(installedCache == null ? Test.TestState.Passed : Test.TestState.Failed);
                     }),
-
 #endif
 
                 TestBuilder.Build("Re-Identify User", this)
@@ -115,6 +114,39 @@ public class TestDriver : MonoBehaviour
                 TestBuilder.Build("Notification Deep Link", this)
                     .ScheduleNotification("test_deeplink"),
                     // .ExpectDeepLink("link-only"), // TODO: Foreground don't deep link obviously
+
+                TestBuilder.Build("Cancel Notification", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.StartCoroutine(TeakNotification.ScheduleNotification("test_none", "test_none", 10, (TeakNotification.Reply reply) => {
+                            if (reply.Status == TeakNotification.Reply.ReplyStatus.Ok) {
+                                string scheduledId = reply.Notifications[0].ScheduleId;
+                                this.StartCoroutine(TeakNotification.CancelScheduledNotification(reply.Notifications[0].ScheduleId, (TeakNotification.Reply cancelReply) => {
+                                    string canceledId = cancelReply.Notifications[0].ScheduleId;
+                                    state(scheduledId.Equals(canceledId, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
+                                }));
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        }));
+                    }),
+
+                TestBuilder.Build("Cancel All Notifications", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.StartCoroutine(TeakNotification.ScheduleNotification("test_none", "test_none", 10, (TeakNotification.Reply reply) => {
+                            if (reply.Status == TeakNotification.Reply.ReplyStatus.Ok) {
+                                string scheduledId = reply.Notifications[0].ScheduleId;
+                                this.StartCoroutine(TeakNotification.CancelAllScheduledNotifications((TeakNotification.Reply cancelReply) => {
+                                    string canceledId = null;
+                                    if (reply.Notifications != null) {
+                                        canceledId = reply.Notifications[0].ScheduleId;
+                                    }
+                                    state(scheduledId.Equals(canceledId, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
+                                }));
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        }));
+                    }),
 
                 TestBuilder.Build("Numeric Attributes (15+ seconds)", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -360,13 +392,12 @@ public class TestDriver : MonoBehaviour
     private void AdvanceTests(bool doNotSerialize) {
         if (this.testEnumerator == null) {
             this.testEnumerator = this.testList.GetEnumerator();
-            this.testEnumerator.MoveNext();
-        } else if (!this.testEnumerator.MoveNext()) {
-            this.testEnumerator = null;
         }
 
-        if (this.testEnumerator != null) {
+        if (this.testEnumerator.MoveNext()) {
             this.testEnumerator.Current.Begin();
+        } else {
+            this.testEnumerator = null;
         }
 
         if (!doNotSerialize) {

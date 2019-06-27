@@ -27,7 +27,7 @@ class TestBuilder {
 
         this.test = new Test();
         this.test.Name = testName;
-        test.OnComplete = this.GetOnCompleteWithAdditionalAction(null);
+        test.OnResult = this.GetOnResultWithAdditionalAction(null);
     }
 
     public TestBuilder WhenStarted(Action<Action<Test.TestState>> action) {
@@ -78,12 +78,17 @@ class TestBuilder {
         return this;
     }
 
-    public TestBuilder WhenDone(Action done) {
-        test.OnComplete = this.GetOnCompleteWithAdditionalAction(done);
+    public TestBuilder BeforeFinished(Action<Action<Test.TestState>> action) {
+        test.OnComplete = action;
         return this;
     }
 
-    private Action GetOnCompleteWithAdditionalAction(Action done) {
+    public TestBuilder WhenFinished(Action done) {
+        test.OnResult = this.GetOnResultWithAdditionalAction(done);
+        return this;
+    }
+
+    private Action GetOnResultWithAdditionalAction(Action done) {
         return () => {
             if (done != null) {
                 done();

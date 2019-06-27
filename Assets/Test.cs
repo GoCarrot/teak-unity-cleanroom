@@ -46,7 +46,8 @@ class Test {
 
     // Test Lifecycle
     public Action<Action<TestState>> OnBegin { get; set; }
-    public Action OnComplete { get; set; }
+    public Action<Action<TestState>> OnComplete { get; set; }
+    public Action OnResult { get; set; }
     public Action<string, Action<TestState>> OnPushTokenChanged { get; set; }
 
     /////
@@ -69,12 +70,6 @@ class Test {
         this.EvaluatePredicate(this.OnBegin, (TestState state) => {
             this.began = state;
         });
-    }
-
-    private void Complete() {
-        if (this.OnComplete != null) {
-            this.OnComplete();
-        }
     }
 
     /////
@@ -106,9 +101,21 @@ class Test {
     private void ProcessState() {
         bool allRun = this.AllStates.All(state => state != TestState.Pending);
         if (allRun) {
-            bool allPassed = this.AllStates.All(state => state == TestState.Passed);
+            TestState onCompleteState = TestState.Passed;
+            if (this.OnComplete != null) {
+                this.OnComplete((TestState state) => {
+                    onCompleteState = state;
+                });
+            }
+
+            bool allPassed = this.AllStates.All(state => state == TestState.Passed) &&
+                (onCompleteState == TestState.Passed);
+
             this.Status = allPassed ? TestState.Passed : TestState.Failed;
-            this.Complete();
+
+            if (this.OnResult != null) {
+                this.OnResult();
+            }
         }
     }
 
