@@ -36,14 +36,18 @@ class TestBuilder {
     }
 
     public TestBuilder ScheduleNotification(string creativeId) {
+#if !TEAK_NOT_AVAILABLE
         test.OnBegin = this.ScheduleNotification(creativeId, false);
         test.OnForegroundNotification = this.ValidateCreativeId(creativeId);
+#endif
         return this;
     }
 
     public TestBuilder ScheduleBackgroundNotification(string creativeId) {
+#if !TEAK_NOT_AVAILABLE
         test.OnBegin = this.ScheduleNotification(creativeId, true);
         test.OnLaunchedFromNotification = this.ValidateCreativeId(creativeId);
+#endif
         return this;
     }
 
@@ -53,9 +57,11 @@ class TestBuilder {
 
     public TestBuilder ExpectReward(string rewardItem) {
         // TODO: rewardItem
+#if !TEAK_NOT_AVAILABLE
         test.OnReward = (TeakReward reward, Action<Test.TestState> state) => {
             state(string.IsNullOrEmpty(reward.RewardId) ? Test.TestState.Failed : Test.TestState.Passed);
         };
+#endif
         return this;
     }
 
@@ -65,9 +71,11 @@ class TestBuilder {
 
     public TestBuilder ExpectDeepLink(string dataContents) {
         // TODO: dataContents
+#if !TEAK_NOT_AVAILABLE
         test.OnDeepLink = (Dictionary<string, object> parameters, Action<Test.TestState> state) => {
             state(Test.TestState.Passed);
         };
+#endif
         return this;
     }
 
@@ -75,6 +83,11 @@ class TestBuilder {
         test.OnPushTokenChanged = (string pushToken, Action<Test.TestState> state) => {
             state(Test.TestState.Passed);
         };
+        return this;
+    }
+
+    public TestBuilder ExpectLogEvent(Action<TeakLogEvent, Action<Test.TestState>> action) {
+        test.OnLogEvent = action;
         return this;
     }
 
@@ -96,7 +109,7 @@ class TestBuilder {
             testDriver.OnTestBuilderTestDone();
         };
     }
-
+#if !TEAK_NOT_AVAILABLE
     private Action<Action<Test.TestState>> ScheduleNotification(string creativeId, bool backgroundApp) {
         return (Action<Test.TestState> state) => {
             testDriver.StartCoroutine(TeakNotification.ScheduleNotification(creativeId, this.test.Name, 5, (TeakNotification.Reply reply) => {
@@ -118,4 +131,5 @@ class TestBuilder {
             state(creativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
         };
     }
+#endif
 }

@@ -141,7 +141,6 @@ public class TeakInterface : MonoBehaviour {
             while (!w.downloadHandler.isDone) {
                 yield return new WaitForEndOfFrame();
             }
-            Debug.Log(w.downloadHandler.text);
             Dictionary<string, object> json = Json.Deserialize(w.downloadHandler.text) as Dictionary<string, object>;
             Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
             Dictionary<string, object> context = Json.Deserialize(userProfile["context"] as string) as Dictionary<string, object>;

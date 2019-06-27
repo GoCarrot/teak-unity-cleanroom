@@ -35,14 +35,14 @@ class Test {
         }
     }
 
-#if !TEAK_NOT_AVAILABLE
-
     // Teak Events
+#if !TEAK_NOT_AVAILABLE
     public Action<TeakReward, Action<TestState>> OnReward { get; set; }
     public Action<Dictionary<string, object>, Action<TestState>> OnDeepLink { get; set; }
     public Action<TeakNotification, Action<TestState>> OnLaunchedFromNotification { get; set; }
     public Action<TeakNotification, Action<TestState>> OnForegroundNotification { get; set; }
     public Action<TeakLogEvent, Action<TestState>> OnLogEvent { get; set; }
+#endif
 
     // Test Lifecycle
     public Action<Action<TestState>> OnBegin { get; set; }
@@ -56,11 +56,13 @@ class Test {
         this.Status = TestState.Pending;
 
         this.began = TestState.Pending;
+#if !TEAK_NOT_AVAILABLE
         this.reward = (this.OnReward == null ? TestState.Passed : TestState.Pending);
         this.deepLink = (this.OnDeepLink == null ? TestState.Passed : TestState.Pending);
         this.launchedFromNotification = (this.OnLaunchedFromNotification == null ? TestState.Passed : TestState.Pending);
         this.foregroundNotification = (this.OnForegroundNotification == null ? TestState.Passed : TestState.Pending);
         this.logEvent = (this.OnLogEvent == null ? TestState.Passed : TestState.Pending);
+#endif
         this.pushTokenChanged = (this.OnPushTokenChanged == null ? TestState.Passed : TestState.Pending);
     }
 
@@ -121,15 +123,16 @@ class Test {
 
     /////
     // Teak hooks
-    public void Reward(TeakReward reward) {
-        this.EvaluatePredicate(this.OnReward, reward, (TestState state) => {
-            this.reward = state;
-        });
-    }
-
+#if !TEAK_NOT_AVAILABLE
     public void DeepLink(Dictionary<string, object> parameters) {
         this.EvaluatePredicate(this.OnDeepLink, parameters, (TestState state) => {
             this.deepLink = state;
+        });
+    }
+
+    public void Reward(TeakReward reward) {
+        this.EvaluatePredicate(this.OnReward, reward, (TestState state) => {
+            this.reward = state;
         });
     }
 
@@ -150,11 +153,11 @@ class Test {
             this.logEvent = state;
         });
     }
+#endif
 
     public void PushTokenChanged(string pushToken) {
         this.EvaluatePredicate(this.OnPushTokenChanged, pushToken, (TestState state) => {
             this.pushTokenChanged = state;
         });
     }
-#endif
 }

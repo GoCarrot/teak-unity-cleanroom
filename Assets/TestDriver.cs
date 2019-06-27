@@ -55,6 +55,7 @@ public class TestDriver : MonoBehaviour
     List<Test> MasterTestList {
         get {
             return new List<Test> {
+#if !TEAK_NOT_AVAILABLE
                 TestBuilder.Build("Reward Link", this)
                     .ExpectDeepLink()
                     .ExpectReward(),
@@ -101,12 +102,6 @@ public class TestDriver : MonoBehaviour
                         state(installedCache == null ? Test.TestState.Passed : Test.TestState.Failed);
                     }),
 #endif
-
-                TestBuilder.Build("Re-Identify User", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
-                        state(Test.TestState.Passed); // TODO: Validate with log events
-                    }),
 
                 TestBuilder.Build("Simple Notification", this)
                     .ScheduleNotification("test_none"),
@@ -159,11 +154,38 @@ public class TestDriver : MonoBehaviour
                 TestBuilder.Build("String Attributes (15+ seconds)", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         string randomString = Utils.RandomNonConfusingCharacterString(20);
-                        Debug.Log(randomString);
                         StartCoroutine(this.TestStringAttribute("automated_test_string", randomString, (str) => {
                             state(randomString.Equals(str, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
                         }));
                     }),
+
+                // This should be the last test in the list, just to keep it easy
+                TestBuilder.Build("Re-Identify User", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        string updatedUserId = "re-identify-test-" + this.teakInterface.TeakUserId;
+                        Teak.Instance.IdentifyUser(updatedUserId);
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("request.send".Equals(logEvent.EventType, System.StringComparison.Ordinal) &&
+                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json")) {
+                            Debug.Log(logEvent);
+                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
+                            string updatedUserId = "re-identify-test-" + this.teakInterface.TeakUserId;
+                            if (updatedUserId.Equals(payload["api_key"] as string, System.StringComparison.Ordinal)) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    })
+                    .BeforeFinished((Action<Test.TestState> state) => {
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
+                        state(Test.TestState.Passed);
+                    })
+#endif // !TEAK_NOT_AVAILABLE
             };
         }
     }
@@ -360,7 +382,6 @@ public class TestDriver : MonoBehaviour
         yield return this.teakInterface.GetUserJson((json) => {
             Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
             Dictionary<string, object> numericAttributes = userProfile["number_attributes"] as Dictionary<string, object>;
-            Debug.Log("Got back: " + numericAttributes[key]);
             action((double) numericAttributes[key]);
         });
     }
@@ -371,7 +392,6 @@ public class TestDriver : MonoBehaviour
         yield return this.teakInterface.GetUserJson((json) => {
             Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
             Dictionary<string, object> stringAttributes = userProfile["string_attributes"] as Dictionary<string, object>;
-            Debug.Log("Got back: " + stringAttributes[key]);
             action(stringAttributes[key] as string);
         });
     }
@@ -444,6 +464,7 @@ public class TestDriver : MonoBehaviour
 
     ///// Store plugin heleprs and events
     private void SetupStorePlugin() {
+#if !TEAK_NOT_AVAILABLE
 #if USE_PRIME31
         // Prime31 Events
         Prime31.GoogleIABManager.billingSupportedEvent += OnBillingSupported;
@@ -474,6 +495,7 @@ public class TestDriver : MonoBehaviour
 #endif // #TEAK_2_0_OR_NEWER
 
 #endif // USE_PRIME31
+#endif // !TEAK_NOT_AVAILABLE
     }
 
 #if USE_PRIME31
