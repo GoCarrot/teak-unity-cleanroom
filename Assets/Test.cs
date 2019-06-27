@@ -11,7 +11,8 @@ class Test {
     public enum TestState {
         Pending,
         Passed,
-        Failed
+        Failed,
+        Running
     }
 
     public string Name { get; set; }
@@ -19,7 +20,7 @@ class Test {
 
     // State, this could probably be done better
     private TestState began, reward, deepLink, launchedFromNotification, foregroundNotification,
-        logEvent;
+        logEvent, pushTokenChanged;
     private TestState[] AllStates {
         get {
             return new TestState[] {
@@ -28,7 +29,8 @@ class Test {
                 this.deepLink,
                 this.launchedFromNotification,
                 this.foregroundNotification,
-                this.logEvent
+                this.logEvent,
+                this.pushTokenChanged
             };
         }
     }
@@ -36,15 +38,16 @@ class Test {
 #if !TEAK_NOT_AVAILABLE
 
     // Teak Events
-    public Action<Test, TeakReward, Action<bool>> OnReward { get; set; }
-    public Action<Test, Dictionary<string, object>, Action<bool>> OnDeepLink { get; set; }
-    public Action<Test, TeakNotification, Action<bool>> OnLaunchedFromNotification { get; set; }
-    public Action<Test, TeakNotification, Action<bool>> OnForegroundNotification { get; set; }
-    public Action<Test, TeakLogEvent, Action<bool>> OnLogEvent { get; set; }
+    public Action<TeakReward, Action<TestState>> OnReward { get; set; }
+    public Action<Dictionary<string, object>, Action<TestState>> OnDeepLink { get; set; }
+    public Action<TeakNotification, Action<TestState>> OnLaunchedFromNotification { get; set; }
+    public Action<TeakNotification, Action<TestState>> OnForegroundNotification { get; set; }
+    public Action<TeakLogEvent, Action<TestState>> OnLogEvent { get; set; }
 
     // Test Lifecycle
-    public Action<Test, Action<bool>> OnBegin { get; set; }
-    public Action<Test> OnComplete { get; set; }
+    public Action<Action<TestState>> OnBegin { get; set; }
+    public Action OnComplete { get; set; }
+    public Action<string, Action<TestState>> OnPushTokenChanged { get; set; }
 
     /////
     // Test lifecycle
@@ -57,10 +60,12 @@ class Test {
         this.launchedFromNotification = (this.OnLaunchedFromNotification == null ? TestState.Passed : TestState.Pending);
         this.foregroundNotification = (this.OnForegroundNotification == null ? TestState.Passed : TestState.Pending);
         this.logEvent = (this.OnLogEvent == null ? TestState.Passed : TestState.Pending);
+        this.pushTokenChanged = (this.OnPushTokenChanged == null ? TestState.Passed : TestState.Pending);
     }
 
     public void Begin() {
         this.ResetTest();
+        this.Status = TestState.Running;
         this.EvaluatePredicate(this.OnBegin, (TestState state) => {
             this.began = state;
         });
@@ -68,16 +73,16 @@ class Test {
 
     private void Complete() {
         if (this.OnComplete != null) {
-            this.OnComplete(this);
+            this.OnComplete();
         }
     }
 
     /////
     // Helpers
-    private void EvaluatePredicate(Action<Test, Action<bool>> predicate, Action<TestState> state) {
+    private void EvaluatePredicate(Action<Action<TestState>> predicate, Action<TestState> state) {
         if (predicate != null) {
-            predicate(this, (bool passed) => {
-                state(passed ? TestState.Passed : TestState.Failed);
+            predicate((TestState newState) => {
+                state(newState);
                 this.ProcessState();
             });
         } else {
@@ -86,10 +91,10 @@ class Test {
         }
     }
 
-    private void EvaluatePredicate<T>(Action<Test, T, Action<bool>> predicate, T val, Action<TestState> state) {
+    private void EvaluatePredicate<T>(Action<T, Action<TestState>> predicate, T val, Action<TestState> state) {
         if (predicate != null) {
-            predicate(this, val, (bool passed) => {
-                state(passed ? TestState.Passed : TestState.Failed);
+            predicate(val, (TestState newState) => {
+                state(newState);
                 this.ProcessState();
             });
         } else {
@@ -136,6 +141,12 @@ class Test {
     public void LogEvent(TeakLogEvent logEvent) {
         this.EvaluatePredicate(this.OnLogEvent, logEvent, (TestState state) => {
             this.logEvent = state;
+        });
+    }
+
+    public void PushTokenChanged(string pushToken) {
+        this.EvaluatePredicate(this.OnPushTokenChanged, pushToken, (TestState state) => {
+            this.pushTokenChanged = state;
         });
     }
 #endif

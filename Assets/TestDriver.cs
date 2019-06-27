@@ -30,8 +30,11 @@ public class TestDriver : MonoBehaviour
     public GameObject bundleIdText;
 
     TeakInterface teakInterface;
-    string pushToken;
     Button userProfileTestButton;
+
+#if UNITY_IOS
+    string pushToken;
+#endif
 
 #if UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
     IStoreController storeController;
@@ -52,28 +55,83 @@ public class TestDriver : MonoBehaviour
     List<Test> MasterTestList {
         get {
             return new List<Test> {
-                new Test {
-                    Name = "Simple Notification",
-                    OnDeepLink = (Test test, Dictionary<string, object> parameters, Action<bool> passed) => {
-                        Debug.Log("DEEP LINK CALLED");
-                        passed(true);
-                    },
-                    OnReward = (Test test, TeakReward reward, Action<bool> passed) => {
-                        Debug.Log("ON REWARD CALLED");
-                        passed(true);
-                    },
-                    OnComplete = (Test test) => {
-                        Debug.Log("TEST COMPLETE");
-                        StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
-                            this.SetupUI();
+                TestBuilder.Build("Reward Link", this)
+                    .ExpectDeepLink()
+                    .ExpectReward(),
+
+#if UNITY_IOS
+                TestBuilder.Build("Push Notification Permission", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        if (this.pushToken == null) {
+                            UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
+                        }
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectPushToken(),
+#endif
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+                // Make sure that these methods don't get obfuscated
+                TestBuilder.Build("Android Plugin Purchase Methods Exposed", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        bool success = true;
+                        AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
+
+                        IntPtr pluginPurchaseSucceeded = AndroidJNI.GetStaticMethodID(
+                            teak.GetRawClass(),
+                            "pluginPurchaseSucceeded",
+                            "(Ljava/lang/String;Ljava/lang/String;)V");
+                        success &= pluginPurchaseSucceeded != IntPtr.Zero;
+
+                        IntPtr pluginPurchaseFailed = AndroidJNI.GetStaticMethodID(
+                            teak.GetRawClass(),
+                            "pluginPurchaseFailed",
+                            "(ILjava/lang/String;)V");
+                        success &= pluginPurchaseFailed != IntPtr.Zero;
+
+                        state(success ? Test.TestState.Passed : Test.TestState.Failed);
+                    }),
+
+                // For 2.1.1, test to make certain that io_teak_enable_caching is definitely
+                // removed and disabled (even if the XML persists)
+                TestBuilder.Build("Android io_teak_enable_caching is disabled", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        AndroidJavaClass httpResponseCache = new AndroidJavaClass("android.net.http.HttpResponseCache");
+                        AndroidJavaObject installedCache = httpResponseCache.CallStatic<AndroidJavaObject>("getInstalled");
+                        state(installedCache == null ? Test.TestState.Passed : Test.TestState.Failed);
+                    }),
+
+#endif
+
+                TestBuilder.Build("Re-Identify User", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
+                        state(Test.TestState.Passed); // TODO: Validate with log events
+                    }),
+
+                TestBuilder.Build("Simple Notification", this)
+                    .ScheduleNotification("test_none"),
+
+                TestBuilder.Build("Notification Deep Link", this)
+                    .ScheduleNotification("test_deeplink"),
+                    // .ExpectDeepLink("link-only"), // TODO: Foreground don't deep link obviously
+
+                TestBuilder.Build("Numeric Attributes (15+ seconds)", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        double randomDouble = UnityEngine.Random.value;
+                        StartCoroutine(this.TestNumericAttribute("automated_test_number", randomDouble, (n) => {
+                            state(n == randomDouble ? Test.TestState.Passed : Test.TestState.Failed);
                         }));
-                    }
-                },
-                // new Test { Name = "Simple Notification", CreativeId = "test_none" },
-                // new Test { Name = "Deep Link", CreativeId = "test_deeplink", VerifyDeepLink = "link-only" },
-                // new Test { Name = "Reward", CreativeId = "test_reward", VerifyReward = "coins" },
-                // new Test { Name = "Reward + Deep Link", CreativeId = "test_rewarddeeplink", VerifyDeepLink = "with-reward", VerifyReward = "coins" },
-                // new Test { Name = "Foreground Notification", CreativeId = "test_none", NoAutoBackground = true }
+                    }),
+
+                TestBuilder.Build("String Attributes (15+ seconds)", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        string randomString = Utils.RandomNonConfusingCharacterString(20);
+                        Debug.Log(randomString);
+                        StartCoroutine(this.TestStringAttribute("automated_test_string", randomString, (str) => {
+                            state(randomString.Equals(str, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
+                        }));
+                    }),
             };
         }
     }
@@ -105,6 +163,9 @@ public class TestDriver : MonoBehaviour
     }
 
     void Start() {
+        // Don't turn off the screen while running the test suite
+        Screen.sleepTimeout = SleepTimeout.NeverSleep;
+
         this.teakInterface = GetComponent<TeakInterface>();
         this.teakInterface.OnPushTokenChanged += OnPushTokenChanged;
 
@@ -131,18 +192,6 @@ public class TestDriver : MonoBehaviour
         Teak.Instance.OnForegroundNotification += OnForegroundNotification;
 #endif
 #endif // TEAK_NOT_AVAILABLE
-
-        this.TestThingsThatShouldBeTestedInBetterWays();
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-        // For 2.1.1, test to make certain that io_teak_enable_caching is definitely
-        // removed and disabled (even if the XML persists)
-        AndroidJavaClass httpResponseCache = new AndroidJavaClass("android.net.http.HttpResponseCache");
-        AndroidJavaObject installedCache = httpResponseCache.CallStatic<AndroidJavaObject>("getInstalled");
-        if (installedCache != null) {
-            Debug.LogError("Android Cache is installed!");
-        }
-#endif
     }
 
     void OnValidate() {
@@ -152,10 +201,12 @@ public class TestDriver : MonoBehaviour
     }
 
     void OnPushTokenChanged(string pushToken) {
+#if UNITY_IOS
         this.pushToken = pushToken;
-        StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
-            this.SetupUI();
-        }));
+#endif
+        if (this.testEnumerator != null) {
+            this.testEnumerator.Current.PushTokenChanged(pushToken);
+        }
     }
 
 #if !TEAK_NOT_AVAILABLE
@@ -184,15 +235,6 @@ public class TestDriver : MonoBehaviour
     }
 #endif // TEAK_NOT_AVAILABLE
 
-    private void TestThingsThatShouldBeTestedInBetterWays() {
-        // Ensure the plugin purchase methods are exposed on Android
-#if UNITY_ANDROID && !UNITY_EDITOR
-        AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
-        teak.CallStatic("pluginPurchaseSucceeded", "{}", "test");
-        teak.CallStatic("pluginPurchaseFailed", 42, "cleanroom");
-#endif
-    }
-
     private void SetupUI() {
 #if !TEAK_NOT_AVAILABLE
         this.sdkVersionText.GetComponent<Text>().text = "Teak SDK Version: " + Teak.Version;
@@ -204,21 +246,13 @@ public class TestDriver : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        // If no push token, show button to register (on iOS)
-        if (this.pushToken == null) {
-#if UNITY_IOS
-            Button button = this.CreateButton("Request Push Permissions");
-            button.onClick.AddListener(() => {
-                UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
-            });
-#endif
-        }
-
         // Completed tests
         foreach (Test test in this.testList) {
             if (test.Status > 0) {
-                Text text = this.CreateText(test.Name);
-                int colorIndex = 0; // HAX: test.Status - 1 < 0 ? 0 : test.Status - 1;
+                string textString = test.Name;
+                if (test.Status == Test.TestState.Running) textString = "Running: " + textString;
+                Text text = this.CreateText(textString);
+                int colorIndex = (test.Status == Test.TestState.Failed) ? 1 : 0;
                 text.color = this.testColor[colorIndex];
                 // if (test.ErrorText != null) {
                 //     Text errorText = this.CreateText(test.ErrorText);
@@ -260,17 +294,6 @@ public class TestDriver : MonoBehaviour
         }
 #endif // USE_PRIME31
 
-        // TrackEvent
-#if TEAK_2_1_OR_NEWER
-        {
-            Button button = this.CreateButton("IncrementEvent Spin");
-            button.onClick.AddListener(() => {
-                Teak.Instance.IncrementEvent("spin", "slot", "asshole_cats", 1);
-                Teak.Instance.IncrementEvent("coin_sink", "slot", "asshole_cats", 50000);
-            });
-        }
-#endif
-
         // TestExceptionReporting
         {
             Button button = this.CreateButton("TestExceptionReporting");
@@ -301,7 +324,7 @@ public class TestDriver : MonoBehaviour
 #if !TEAK_NOT_AVAILABLE
     private IEnumerator TestNumericAttribute(string key, double value, Action<double> action) {
         Teak.Instance.SetNumericAttribute(key, value);
-        yield return new WaitForSeconds(10.0f);
+        yield return new WaitForSeconds(15.0f);
         yield return this.teakInterface.GetUserJson((json) => {
             Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
             Dictionary<string, object> numericAttributes = userProfile["number_attributes"] as Dictionary<string, object>;
@@ -312,7 +335,7 @@ public class TestDriver : MonoBehaviour
 
     private IEnumerator TestStringAttribute(string key, string value, Action<string> action) {
         Teak.Instance.SetStringAttribute(key, value);
-        yield return new WaitForSeconds(10.0f);
+        yield return new WaitForSeconds(15.0f);
         yield return this.teakInterface.GetUserJson((json) => {
             Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
             Dictionary<string, object> stringAttributes = userProfile["string_attributes"] as Dictionary<string, object>;
@@ -323,6 +346,13 @@ public class TestDriver : MonoBehaviour
 #endif // TEAK_NOT_AVAILABLE
 
     ///// Test Helpers
+    public void OnTestBuilderTestDone() {
+        this.AdvanceTests();
+        StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+            this.SetupUI();
+        }));
+    }
+
     private void AdvanceTests() {
         this.AdvanceTests(false);
     }
