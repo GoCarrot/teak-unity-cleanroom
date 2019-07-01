@@ -86,10 +86,12 @@ class TestBuilder {
         return this;
     }
 
+#if !TEAK_NOT_AVAILABLE
     public TestBuilder ExpectLogEvent(Action<TeakLogEvent, Action<Test.TestState>> action) {
         test.OnLogEvent = action;
         return this;
     }
+#endif
 
     public TestBuilder BeforeFinished(Action<Action<Test.TestState>> action) {
         test.OnComplete = action;

@@ -150,7 +150,8 @@ class Test {
 
     public void LogEvent(TeakLogEvent logEvent) {
         this.EvaluatePredicate(this.OnLogEvent, logEvent, (TestState state) => {
-            this.logEvent = state;
+            // Only assign when it changes from Pending to not pending
+            this.logEvent = this.logEvent == TestState.Pending ? state : this.logEvent;
         });
     }
 #endif

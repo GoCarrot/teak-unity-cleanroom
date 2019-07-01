@@ -63,7 +63,6 @@ public class TestDriver : MonoBehaviour
                         // Make sure it has app_version and app_version_name (Android only)
                         if ("request.send".Equals(logEvent.EventType) &&
                             "rewards.gocarrot.com".Equals(logEvent.EventData["hostname"] as string)) {
-                            Debug.Log(logEvent);
                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
                             if (payload.ContainsKey("app_version")
 #if UNITY_ANDROID
