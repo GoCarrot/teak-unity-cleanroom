@@ -58,7 +58,26 @@ public class TestDriver : MonoBehaviour
 #if !TEAK_NOT_AVAILABLE
                 TestBuilder.Build("Reward Link", this)
                     .ExpectDeepLink()
-                    .ExpectReward(),
+                    .ExpectReward()
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        // Make sure it has app_version and app_version_name (Android only)
+                        if ("request.send".Equals(logEvent.EventType) &&
+                            "rewards.gocarrot.com".Equals(logEvent.EventData["hostname"] as string)) {
+                            Debug.Log(logEvent);
+                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
+                            if (payload.ContainsKey("app_version")
+#if UNITY_ANDROID
+                                && payload.ContainsKey("app_version_name")
+#endif
+                                ) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    }),
 
 #if UNITY_IOS
                 TestBuilder.Build("Push Notification Permission", this)
@@ -117,7 +136,7 @@ public class TestDriver : MonoBehaviour
                                 string scheduledId = reply.Notifications[0].ScheduleId;
                                 this.StartCoroutine(TeakNotification.CancelScheduledNotification(reply.Notifications[0].ScheduleId, (TeakNotification.Reply cancelReply) => {
                                     string canceledId = cancelReply.Notifications[0].ScheduleId;
-                                    state(scheduledId.Equals(canceledId, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
+                                    state(scheduledId.Equals(canceledId) ? Test.TestState.Passed : Test.TestState.Failed);
                                 }));
                             } else {
                                 state(Test.TestState.Failed);
@@ -135,7 +154,7 @@ public class TestDriver : MonoBehaviour
                                     if (reply.Notifications != null) {
                                         canceledId = reply.Notifications[0].ScheduleId;
                                     }
-                                    state(scheduledId.Equals(canceledId, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
+                                    state(scheduledId.Equals(canceledId) ? Test.TestState.Passed : Test.TestState.Failed);
                                 }));
                             } else {
                                 state(Test.TestState.Failed);
@@ -155,7 +174,7 @@ public class TestDriver : MonoBehaviour
                     .WhenStarted((Action<Test.TestState> state) => {
                         string randomString = Utils.RandomNonConfusingCharacterString(20);
                         StartCoroutine(this.TestStringAttribute("automated_test_string", randomString, (str) => {
-                            state(randomString.Equals(str, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
+                            state(randomString.Equals(str) ? Test.TestState.Passed : Test.TestState.Failed);
                         }));
                     }),
 
@@ -167,12 +186,12 @@ public class TestDriver : MonoBehaviour
                         state(Test.TestState.Passed);
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        if ("request.send".Equals(logEvent.EventType, System.StringComparison.Ordinal) &&
+                        if ("request.send".Equals(logEvent.EventType) &&
                             (logEvent.EventData["endpoint"] as string).EndsWith("/users.json")) {
                             Debug.Log(logEvent);
                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
                             string updatedUserId = "re-identify-test-" + this.teakInterface.TeakUserId;
-                            if (updatedUserId.Equals(payload["api_key"] as string, System.StringComparison.Ordinal)) {
+                            if (updatedUserId.Equals(payload["api_key"] as string)) {
                                 state(Test.TestState.Passed);
                             } else {
                                 state(Test.TestState.Failed);
