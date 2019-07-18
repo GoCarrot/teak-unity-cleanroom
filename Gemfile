@@ -1,6 +1,7 @@
 source 'https://rubygems.org' # frozen_string_literal: true
 gem 'awesome_print'
 gem 'fastlane'
+gem 'headdesk'
 gem 'httparty'
 gem 'mustache'
 gem 'rake'
