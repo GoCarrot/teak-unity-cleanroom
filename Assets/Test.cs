@@ -60,9 +60,15 @@ class Test {
         this.reward = (this.OnReward == null ? TestState.Passed : TestState.Pending);
         this.deepLink = (this.OnDeepLink == null ? TestState.Passed : TestState.Pending);
         this.launchedFromNotification = (this.OnLaunchedFromNotification == null ? TestState.Passed : TestState.Pending);
+
+#if UNITY_WEBGL
+        this.foregroundNotification = TestState.Passed;
+        this.logEvent = TestState.Passed;
+#else
         this.foregroundNotification = (this.OnForegroundNotification == null ? TestState.Passed : TestState.Pending);
         this.logEvent = (this.OnLogEvent == null ? TestState.Passed : TestState.Pending);
-#endif
+#endif // UNITY_WEBGL
+#endif // !TEAK_NOT_AVAILABLE
         this.pushTokenChanged = (this.OnPushTokenChanged == null ? TestState.Passed : TestState.Pending);
     }
 
