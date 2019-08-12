@@ -1,0 +1,10 @@
+<dependencies>
+  <androidPackages>
+    <!-- AndroidX for FacebookSDK -->
+    <!--<androidPackage spec="androidx.appcompat:appcompat:1.0.0">
+      <androidSdkPackageIds>
+        <androidSdkPackageId>extra-android-m2repository</androidSdkPackageId>
+      </androidSdkPackageIds>
+    </androidPackage>-->
+  </androidPackages>
+</dependencies>

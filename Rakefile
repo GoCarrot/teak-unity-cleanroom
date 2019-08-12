@@ -40,7 +40,7 @@ UNITY_HOME = ENV.fetch('UNITY_HOME', Dir.glob('/Applications/Unity*').first)
 RVM_VARS = %w[GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH].freeze
 PROJECT_PATH = Rake.application.original_dir
 BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
-TARGET_API = ENV.fetch('TARGET_API', 26)
+TARGET_API = ENV.fetch('TARGET_API', 28)
 TEAK_CREDENTIALS = {
   'dev' => {
     package_name: 'io.teak.app.unity.dev',
