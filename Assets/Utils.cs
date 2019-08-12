@@ -28,6 +28,16 @@ class Utils {
 #endif
     }
 
+    public static void ClearAllNotifications() {
+#if UNITY_ANDROID
+        AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+        AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+        AndroidJavaObject context = activity.Call<AndroidJavaObject>("getApplicationContext");
+        AndroidJavaObject notificationManager = context.Call<AndroidJavaObject>("getSystemService", "notification"); // Context.NOTIFICATION_SERVICE
+        notificationManager.Call("cancelAll");
+#endif
+    }
+
     public static string RandomNonConfusingCharacterString(int length) {
         var chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghkmnpqrstuvwxyz23456789";
         char[] stringChars = new char[length];

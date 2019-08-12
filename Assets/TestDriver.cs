@@ -177,8 +177,33 @@ public class TestDriver : MonoBehaviour
                         }));
                     }),
 
+#if TEAK_2_3_OR_NEWER
+                TestBuilder.Build("Re-Identify User Providing Email", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, "bogus@teak.io");
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("request.send".Equals(logEvent.EventType) &&
+                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json")) {
+                            Debug.Log(logEvent);
+                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
+
+                            if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
+                                "bogus@teak.io".Equals(payload["email"] as string) &&
+                                ((bool)payload["do_not_track_event"])) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    }),
+#endif
+
                 // This should be the last test in the list, just to keep it easy
-                TestBuilder.Build("Re-Identify User", this)
+                TestBuilder.Build("Re-Identify User with New User Id", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         string updatedUserId = "re-identify-test-" + this.teakInterface.TeakUserId;
                         Teak.Instance.IdentifyUser(updatedUserId);
@@ -211,6 +236,8 @@ public class TestDriver : MonoBehaviour
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
 
+    string launchedFromDeepLinkPath;
+
     void Awake() {
         // Facebook
 #if !TEAK_NOT_AVAILABLE
@@ -225,6 +252,9 @@ public class TestDriver : MonoBehaviour
         }
 
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
+            this.launchedFromDeepLinkPath = parameters["__incoming_url"] as string;
+            Debug.Log(this.launchedFromDeepLinkPath);
+
             if (this.testEnumerator != null) {
                 this.testEnumerator.Current.DeepLink(parameters);
             }
@@ -374,6 +404,16 @@ public class TestDriver : MonoBehaviour
             });
         }
 
+#if UNITY_ANDROID
+        // TestExceptionReporting
+        {
+            Button button = this.CreateButton("Clear All System Notifications");
+            button.onClick.AddListener(() => {
+                Utils.ClearAllNotifications();
+            });
+        }
+#endif
+
         // Facebook Login/Logout
         if (FB.IsLoggedIn) {
             Button button = this.CreateButton("Facebook Logout");
@@ -391,6 +431,14 @@ public class TestDriver : MonoBehaviour
             });
         }
 #endif // TEAK_NOT_AVAILABLE
+
+        // Deep Link Path
+        if (this.launchedFromDeepLinkPath != null) {
+            Text text = CreateText(this.launchedFromDeepLinkPath);
+            // text.resizeTextForBestFit = true;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.alignment = TextAnchor.UpperLeft;
+        }
     }
 
 #if !TEAK_NOT_AVAILABLE
