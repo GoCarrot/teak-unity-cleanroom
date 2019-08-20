@@ -76,6 +76,28 @@ Assets/Plugins/Android/androidx.core.core-*
 Assets/Plugins/Android/androidx.lifecycle.lifecycle-common-*
 Assets/Plugins/Android/androidx.lifecycle.lifecycle-runtime-*
 Assets/Plugins/Android/androidx.versionedparcelable.versionedparcelable-*
+Assets/Plugins/Android/androidx.arch.core.core-runtime-*
+Assets/Plugins/Android/androidx.asynclayoutinflater.asynclayoutinflater-*
+Assets/Plugins/Android/androidx.coordinatorlayout.coordinatorlayout-*
+Assets/Plugins/Android/androidx.cursoradapter.cursoradapter-*
+Assets/Plugins/Android/androidx.customview.customview-*
+Assets/Plugins/Android/androidx.documentfile.documentfile-*
+Assets/Plugins/Android/androidx.drawerlayout.drawerlayout-*
+Assets/Plugins/Android/androidx.fragment.fragment-*
+Assets/Plugins/Android/androidx.interpolator.interpolator-*
+Assets/Plugins/Android/androidx.legacy.legacy-support-core-ui-*
+Assets/Plugins/Android/androidx.legacy.legacy-support-core-utils-*
+Assets/Plugins/Android/androidx.legacy.legacy-support-v4-*
+Assets/Plugins/Android/androidx.lifecycle.lifecycle-livedata-*
+Assets/Plugins/Android/androidx.lifecycle.lifecycle-livedata-core-*
+Assets/Plugins/Android/androidx.lifecycle.lifecycle-viewmodel-*
+Assets/Plugins/Android/androidx.loader.loader-*
+Assets/Plugins/Android/androidx.localbroadcastmanager.localbroadcastmanager-*
+Assets/Plugins/Android/androidx.media.media-*
+Assets/Plugins/Android/androidx.print.print-*
+Assets/Plugins/Android/androidx.slidingpanelayout.slidingpanelayout-*
+Assets/Plugins/Android/androidx.swiperefreshlayout.swiperefreshlayout-*
+Assets/Plugins/Android/androidx.viewpager.viewpager-*
 
 # Prime31
 Assets/Editor/Prime31*
