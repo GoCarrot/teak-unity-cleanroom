@@ -269,7 +269,7 @@ end
 
 namespace :facebook do
   task :import do
-    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', '7.9.4')
+    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', '7.17.2')
     zip_name = if facebook_sdk_version
                  "facebook-unity-sdk-#{facebook_sdk_version}"
                else

@@ -98,6 +98,22 @@ Assets/Plugins/Android/androidx.print.print-*
 Assets/Plugins/Android/androidx.slidingpanelayout.slidingpanelayout-*
 Assets/Plugins/Android/androidx.swiperefreshlayout.swiperefreshlayout-*
 Assets/Plugins/Android/androidx.viewpager.viewpager-*
+Assets/Plugins/Android/androidx.appcompat.appcompat-1.0.0*
+
+# Facebook SDK brings these in
+Assets/Plugins/Android/androidx.browser.browser-1.0.0*
+Assets/Plugins/Android/androidx.cardview.cardview-1.0.0*
+Assets/Plugins/Android/androidx.vectordrawable.vectordrawable-1.0.0*
+Assets/Plugins/Android/androidx.vectordrawable.vectordrawable-animated-1.0.0*
+Assets/Plugins/Android/com.facebook.android.facebook-applinks-5.5.0*
+Assets/Plugins/Android/com.facebook.android.facebook-common-5.5.0*
+Assets/Plugins/Android/com.facebook.android.facebook-core-5.5.0*
+Assets/Plugins/Android/com.facebook.android.facebook-login-5.5.0*
+Assets/Plugins/Android/com.facebook.android.facebook-share-5.5.0*
+Assets/Plugins/Android/com.google.zxing.core-3.3.3*
+Assets/Plugins/Android/com.parse.bolts.bolts-android-1.4.0*
+Assets/Plugins/Android/com.parse.bolts.bolts-applinks-1.4.0*
+Assets/Plugins/Android/com.parse.bolts.bolts-tasks-1.4.0*
 
 # Prime31
 Assets/Editor/Prime31*
