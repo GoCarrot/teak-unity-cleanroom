@@ -14,7 +14,7 @@
       <!-- These are all the manifest additions required for Teak 2.0 -->
       <meta-data android:name="io.teak.sdk.initialize" android:value="true"/>
 
-      <intent-filter>
+      <intent-filter android:autoVerify="true">
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
