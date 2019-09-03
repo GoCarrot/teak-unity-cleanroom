@@ -90,6 +90,12 @@ def android_il2cpp?
   ENV.fetch('USE_IL2CPP_ON_ANDROID', false).to_s == 'true'
 end
 
+def kms_decrypt(file)
+  current_task = Rake.application.current_task
+  Rake::Task['kms:decrypt'].invoke(file)
+  Rake.application.current_task = current_task
+end
+
 #
 # Template parameters
 #
@@ -360,7 +366,7 @@ namespace :build do
 
     print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', IL2Cpp: build_il2cpp
 
-    Rake::Task['kms:decrypt'].invoke(SIGNING_KEY)
+    kms_decrypt SIGNING_KEY
     unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
     File.delete(SIGNING_KEY)
   end
@@ -435,7 +441,7 @@ namespace :deploy do
   end
 
   task :google_play do
-    Rake::Task['kms:decrypt'].invoke('supply.key.json')
+    kms_decrypt 'supply.key.json'
     # fastlane 'supply', '--apk', 'teak-unity-cleanroom.apk', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
     # fastlane 'google_play_track_version_codes', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
     fastlane 'android', 'deploy'
