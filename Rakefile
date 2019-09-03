@@ -313,6 +313,38 @@ namespace :package do
     fastlane 'sdk', env: { FL_TEAK_SDK_SOURCE: "#{PROJECT_PATH}/../teak-unity/" }
   end
 
+  task build: [:clean] do
+    Rake::Task['package:build:ios'].invoke(true)
+    Rake::Task['package:build:android'].invoke(true)
+    Rake::Task['package:build:unity'].invoke
+  end
+
+  namespace :build do
+    task :ios, [:skip_unity?] => %i[clean] do |_, args|
+      cd "#{PROJECT_PATH}/../teak-ios/", verbose: false do
+        sh "./compile"
+      end
+
+      Rake::Task['package:build:unity'].invoke unless args[:skip_unity?]
+    end
+
+    task :android, [:skip_unity?] => %i[clean] do |_, args|
+      cd "#{PROJECT_PATH}/../teak-android/", verbose: false do
+        sh "./compile"
+      end
+
+      Rake::Task['package:build:unity'].invoke unless args[:skip_unity?]
+    end
+
+    task :unity do
+      cd "#{PROJECT_PATH}/../teak-unity/", verbose: false do
+        sh "BUILD_LOCAL=true NOTIFY=false rake"
+      end
+
+      Rake::Task['package:copy'].invoke
+    end
+  end
+
   task :import do
     without_teak_available do
       unity '-importPackage', 'Teak.unitypackage'
