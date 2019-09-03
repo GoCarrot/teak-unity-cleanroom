@@ -512,6 +512,7 @@ namespace :install do
       end
       adb.call "push #{apk_path} #{android_destination}"
       adb.call "shell pm install -i #{installer_package} -r #{android_destination}"
+      sleep 1
       adb.call "shell rm #{android_destination}"
       adb.call "shell am start -n #{PACKAGE_NAME}/com.unity3d.player.UnityPlayerActivity"
     end
