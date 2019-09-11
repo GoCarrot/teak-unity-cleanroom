@@ -90,12 +90,6 @@ def android_il2cpp?
   ENV.fetch('USE_IL2CPP_ON_ANDROID', false).to_s == 'true'
 end
 
-def kms_decrypt(file)
-  current_task = Rake.application.current_task
-  Rake::Task['kms:decrypt'].invoke(file)
-  Rake.application.current_task = current_task
-end
-
 #
 # Template parameters
 #
@@ -163,6 +157,14 @@ def without_teak_available
   with_defined(['TEAK_NOT_AVAILABLE']) do
     yield
   end
+end
+
+def with_kms_decrypt(file, &block)
+  current_task = Rake.application.current_task
+  Rake::Task['kms:decrypt'].invoke(file)
+  Rake.application.current_task = current_task
+  yield file
+  File.delete file
 end
 
 def print_build_msg(platform, args = nil)
@@ -400,9 +402,19 @@ namespace :build do
 
     print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', IL2Cpp: build_il2cpp
 
-    kms_decrypt SIGNING_KEY
-    unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
-    File.delete(SIGNING_KEY)
+    # This appeared when using Facebook SDK 7.17.2
+    # When the file is deleted, it appears again during the build process
+    # Writing an empty JAR file suppresses it
+    if File.exist? 'Assets/Plugins/Android/com.google.zxing.core-3.3.3.jar'
+      File.delete 'Assets/Plugins/Android/com.google.zxing.core-3.3.3.jar'
+      Dir.mktmpdir do |dir|
+        sh "jar -cf Assets/Plugins/Android/com.google.zxing.core-3.3.3.jar -C #{dir}/ ."
+      end
+    end
+
+    with_kms_decrypt SIGNING_KEY do
+      unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
+    end
   end
 
   task :amazon do
@@ -475,11 +487,11 @@ namespace :deploy do
   end
 
   task :google_play do
-    kms_decrypt 'supply.key.json'
-    # fastlane 'supply', '--apk', 'teak-unity-cleanroom.apk', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
-    # fastlane 'google_play_track_version_codes', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
-    fastlane 'android', 'deploy'
-    File.delete('supply.key.json')
+    with_kms_decrypt 'supply.key.json' do
+      # fastlane 'supply', '--apk', 'teak-unity-cleanroom.apk', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
+      # fastlane 'google_play_track_version_codes', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
+      fastlane 'android', 'deploy'
+    end
   end
 end
 
