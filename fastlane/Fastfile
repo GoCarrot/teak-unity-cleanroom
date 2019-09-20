@@ -16,6 +16,10 @@ CONFIG_TYPE = 'development'
 TEAK_APP_EXTENSIONS = %w[TeakNotificationService TeakNotificationContent].freeze
 BUILD_CONFIGURATIONS = %w[Debug Release ReleaseForRunning ReleaseForProfiling].freeze
 
+def ci?
+  ENV.fetch('CI', false).to_s == 'true'
+end
+
 default_platform(:ios)
 
 desc 'Copy or download the Teak SDK'
@@ -46,52 +50,56 @@ platform :ios do
   lane :dev do
     BUILD_CONFIGURATION = 'Debug'
 
-    # Create/fetch and store provisioning profiles
-    ios_provisioning_profile = {}
-    ['io.teak.app.unity.dev'].each do |app_id|
-      match(
-        app_identifier: app_id,
-        type: CONFIG_TYPE,
-        readonly: true
-      )
-      provisioning_profile_env = Match::Utils.environment_variable_name_profile_path(
-        app_identifier: app_id,
-        type: CONFIG_TYPE
-      )
-      ios_provisioning_profile['Unity-iPhone'] = ENV[provisioning_profile_env]
-
-      TEAK_APP_EXTENSIONS.each do |app_extension_name|
+    if ci?
+      # Create/fetch and store provisioning profiles
+      ios_provisioning_profile = {}
+      ['io.teak.app.unity.dev'].each do |app_id|
         match(
-          app_identifier: "#{app_id}.#{app_extension_name}",
+          app_identifier: app_id,
           type: CONFIG_TYPE,
           readonly: true
         )
-
         provisioning_profile_env = Match::Utils.environment_variable_name_profile_path(
-          app_identifier: "#{app_id}.#{app_extension_name}",
+          app_identifier: app_id,
           type: CONFIG_TYPE
         )
-        ios_provisioning_profile[app_extension_name] = ENV[provisioning_profile_env]
+        ios_provisioning_profile['Unity-iPhone'] = ENV[provisioning_profile_env]
+
+        TEAK_APP_EXTENSIONS.each do |app_extension_name|
+          match(
+            app_identifier: "#{app_id}.#{app_extension_name}",
+            type: CONFIG_TYPE,
+            readonly: true
+          )
+
+          provisioning_profile_env = Match::Utils.environment_variable_name_profile_path(
+            app_identifier: "#{app_id}.#{app_extension_name}",
+            type: CONFIG_TYPE
+          )
+          ios_provisioning_profile[app_extension_name] = ENV[provisioning_profile_env]
+        end
       end
+
+      # Add Teak app extensions -- This is done by Unity now
+      # teak_extensions(
+      #   xcodeproj: XCODE_PROJECT,
+      #   # source:"~/Code/teak-ios"
+      # )
+
+      (TEAK_APP_EXTENSIONS + ['Unity-iPhone']).each do |target|
+        update_project_provisioning(
+          xcodeproj: XCODE_PROJECT,
+          target_filter: target,
+          profile: ios_provisioning_profile[target],
+          build_configuration: BUILD_CONFIGURATION
+        )
+      end
+
+      sync_code_signing
+      disable_automatic_code_signing(path: XCODE_PROJECT)
     end
 
-    # Add Teak app extensions -- This is done by Unity now
-    # teak_extensions(
-    #   xcodeproj: XCODE_PROJECT,
-    #   # source:"~/Code/teak-ios"
-    # )
-
-    (TEAK_APP_EXTENSIONS + ['Unity-iPhone']).each do |target|
-      update_project_provisioning(
-        xcodeproj: XCODE_PROJECT,
-        target_filter: target,
-        profile: ios_provisioning_profile[target],
-        build_configuration: BUILD_CONFIGURATION
-      )
-    end
-
-    sync_code_signing
-    disable_automatic_code_signing(path: XCODE_PROJECT)
+    enable_automatic_code_signing(path: XCODE_PROJECT) unless ci?
 
     build_ios_app(
       project: XCODE_PROJECT,
@@ -102,8 +110,6 @@ platform :ios do
       output_name: 'teak-unity-cleanroom.ipa',
       export_method: CONFIG_TYPE
     )
-
-    enable_automatic_code_signing(path: XCODE_PROJECT)
   end
 
   desc 'Fast build with no code signing'
