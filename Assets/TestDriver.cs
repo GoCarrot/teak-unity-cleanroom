@@ -10,8 +10,11 @@ using System.Collections;
 using System.Collections.Generic;
 
 #if !TEAK_NOT_AVAILABLE
-using Facebook.Unity;
 using MiniJSON.Teak;
+#endif
+
+#if USE_FACEBOOK
+using Facebook.Unity;
 #endif
 
 [RequireComponent(typeof(TeakInterface))]
@@ -239,8 +242,7 @@ public class TestDriver : MonoBehaviour
     string launchedFromDeepLinkPath;
 
     void Awake() {
-        // Facebook
-#if !TEAK_NOT_AVAILABLE
+#if USE_FACEBOOK
         if (!FB.IsInitialized) {
             FB.Init(() => {
                 if (FB.IsInitialized) {
@@ -250,7 +252,9 @@ public class TestDriver : MonoBehaviour
         } else {
             FB.ActivateApp();
         }
+#endif // USE_FACEBOOK
 
+#if !TEAK_NOT_AVAILABLE
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
             this.launchedFromDeepLinkPath = parameters["__incoming_url"] as string;
             Debug.Log(this.launchedFromDeepLinkPath);
@@ -414,6 +418,7 @@ public class TestDriver : MonoBehaviour
         }
 #endif
 
+#if USE_FACEBOOK
         // Facebook Login/Logout
         if (FB.IsLoggedIn) {
             Button button = this.CreateButton("Facebook Logout");
@@ -430,6 +435,8 @@ public class TestDriver : MonoBehaviour
                 });
             });
         }
+#endif // USE_FACEBOOK
+
 #endif // TEAK_NOT_AVAILABLE
 
         // Deep Link Path

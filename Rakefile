@@ -90,6 +90,10 @@ def android_il2cpp?
   ENV.fetch('USE_IL2CPP_ON_ANDROID', false).to_s == 'true'
 end
 
+def facebook?
+  ENV.fetch('USE_FACEBOOK', true).to_s == 'true'
+end
+
 #
 # Template parameters
 #
@@ -97,7 +101,8 @@ def template_parameters
   teak_version = File.read(File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')).match(/return "(.*)"/).captures[0]
   TEAK_CREDENTIALS[BUILD_TYPE].merge(
     app_name: "#{BUILD_TYPE.capitalize} #{teak_version}",
-    target_api: TARGET_API
+    target_api: TARGET_API,
+    use_facebook: facebook?
   )
 end
 
@@ -354,7 +359,7 @@ namespace :package do
 
     Rake::Task['prime31:import'].invoke if use_prime31?
     Rake::Task['unity_iap:import'].invoke if use_unityiap?
-    Rake::Task['facebook:import'].invoke
+    Rake::Task['facebook:import'].invoke if facebook?
   end
 end
 
@@ -373,9 +378,11 @@ namespace :config do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'TeakSettings.asset.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Resources', 'TeakSettings.asset'), Mustache.render(template, template_parameters))
 
-    mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
-    template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
-    File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
+    if facebook?
+      mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
+      template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
+      File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
+    end
   end
 end
 
@@ -398,6 +405,7 @@ namespace :build do
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
+    additional_args.concat(['--define', 'USE_FACEBOOK']) if facebook?
     additional_args.concat(['--il2cpp']) if build_il2cpp
 
     print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', IL2Cpp: build_il2cpp
@@ -432,6 +440,7 @@ namespace :build do
       FileUtils.mv 'Assets/Plugins/UnityChannel', "#{tmpdir}/UnityChannel", force: true
 
       additional_args = ['--debug']
+      additional_args.concat(['--define', 'USE_FACEBOOK']) if facebook?
       unity '-buildTarget', 'WebGL', '-executeMethod', 'BuildPlayer.WebGL', *additional_args
 
       template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
