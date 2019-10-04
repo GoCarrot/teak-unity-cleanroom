@@ -431,7 +431,7 @@ namespace :build do
 
   task ios: ['ios:all']
 
-  task webgl: [:warnings_as_errors] do
+  task webgl: [] do # TODO: When we can update UnityPurchasing etc, put back :warnings_as_errors
     print_build_msg 'WebGL'
 
     begin
