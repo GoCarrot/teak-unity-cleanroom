@@ -80,11 +80,13 @@ class TestBuilder {
     }
 
     public TestBuilder ExpectPushToken() {
+#if UNITY_IOS
         if (UnityEngine.iOS.NotificationServices.deviceToken == null) {
             test.OnPushTokenChanged = (string pushToken, Action<Test.TestState> state) => {
                 state(Test.TestState.Passed);
             };
         }
+#endif
         return this;
     }
 
