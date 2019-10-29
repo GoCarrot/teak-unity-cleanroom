@@ -20,7 +20,10 @@ class Test {
 
     // State, this could probably be done better
     private TestState began, reward, deepLink, launchedFromNotification, foregroundNotification,
-        logEvent, pushTokenChanged;
+#if TEAK_2_2_OR_NEWER
+        logEvent,
+#endif
+        pushTokenChanged;
     private TestState[] AllStates {
         get {
             return new TestState[] {
@@ -29,7 +32,9 @@ class Test {
                 this.deepLink,
                 this.launchedFromNotification,
                 this.foregroundNotification,
+#if TEAK_2_2_OR_NEWER
                 this.logEvent,
+#endif
                 this.pushTokenChanged
             };
         }
@@ -41,7 +46,10 @@ class Test {
     public Action<Dictionary<string, object>, Action<TestState>> OnDeepLink { get; set; }
     public Action<TeakNotification, Action<TestState>> OnLaunchedFromNotification { get; set; }
     public Action<TeakNotification, Action<TestState>> OnForegroundNotification { get; set; }
+
+#   if TEAK_2_2_OR_NEWER
     public Action<TeakLogEvent, Action<TestState>> OnLogEvent { get; set; }
+#   endif
 #endif
 
     // Test Lifecycle
@@ -66,7 +74,10 @@ class Test {
         this.logEvent = TestState.Passed;
 #else
         this.foregroundNotification = (this.OnForegroundNotification == null ? TestState.Passed : TestState.Pending);
+
+#if TEAK_2_2_OR_NEWER
         this.logEvent = (this.OnLogEvent == null ? TestState.Passed : TestState.Pending);
+#endif // TEAK_2_2_OR_NEWER
 #endif // UNITY_WEBGL
 #endif // !TEAK_NOT_AVAILABLE
         this.pushTokenChanged = (this.OnPushTokenChanged == null ? TestState.Passed : TestState.Pending);
@@ -153,13 +164,14 @@ class Test {
             this.foregroundNotification = state;
         });
     }
-
+#if TEAK_2_2_OR_NEWER
     public void LogEvent(TeakLogEvent logEvent) {
         this.EvaluatePredicate(this.OnLogEvent, logEvent, (TestState state) => {
             // Only assign when it changes from Pending to not pending
             this.logEvent = this.logEvent == TestState.Pending ? state : this.logEvent;
         });
     }
+#endif
 #endif
 
     public void PushTokenChanged(string pushToken) {

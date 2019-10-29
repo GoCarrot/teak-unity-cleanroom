@@ -59,6 +59,7 @@ public class TestDriver : MonoBehaviour
         get {
             return new List<Test> {
 #if !TEAK_NOT_AVAILABLE
+#if TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Reward Link", this)
                     .ExpectDeepLink()
                     .ExpectReward()
@@ -80,6 +81,8 @@ public class TestDriver : MonoBehaviour
                             state(Test.TestState.Pending);
                         }
                     }),
+
+#endif // TEAK_2_2_OR_NEWER
 
 #if UNITY_IOS
                 TestBuilder.Build("Push Notification Permission", this)
@@ -205,6 +208,7 @@ public class TestDriver : MonoBehaviour
                     }),
 #endif
 
+#if TEAK_2_2_OR_NEWER
                 // This should be the last test in the list, just to keep it easy
                 TestBuilder.Build("Re-Identify User with New User Id", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -231,6 +235,7 @@ public class TestDriver : MonoBehaviour
                         Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
                         state(Test.TestState.Passed);
                     })
+#endif // TEAK_2_2_OR_NEWER
 #endif // !TEAK_NOT_AVAILABLE
             };
         }
@@ -333,12 +338,13 @@ public class TestDriver : MonoBehaviour
             this.testEnumerator.Current.Reward(reward);
         }
     }
-
+#if TEAK_2_2_OR_NEWER
     void OnLogEvent(Dictionary<string, object> logEvent) {
         if (this.testEnumerator != null) {
             this.testEnumerator.Current.LogEvent(new TeakLogEvent(logEvent));
         }
     }
+#endif // TEAK_2_2_OR_NEWER
 #endif // TEAK_NOT_AVAILABLE
 
     private void SetupUI() {

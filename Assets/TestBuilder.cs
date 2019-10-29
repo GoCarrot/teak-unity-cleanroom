@@ -90,7 +90,7 @@ class TestBuilder {
         return this;
     }
 
-#if !TEAK_NOT_AVAILABLE
+#if !TEAK_NOT_AVAILABLE && TEAK_2_2_OR_NEWER
     public TestBuilder ExpectLogEvent(Action<TeakLogEvent, Action<Test.TestState>> action) {
         test.OnLogEvent = action;
         return this;
