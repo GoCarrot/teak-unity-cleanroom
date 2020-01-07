@@ -34,6 +34,9 @@
     <meta-data android:name="io_teak_enable_caching" android:value="true" />
     <!-- End io_teak_enable_caching -->
 
+    <!-- Test 3.0.1 io_teak_ignore_default_firebase_configuration -->
+    <meta-data android:name="io_teak_ignore_default_firebase_configuration" android:value="true" />
+
 
     <!-- Amazon IAP -->
     <receiver android:name = "com.amazon.device.iap.ResponseReceiver" >

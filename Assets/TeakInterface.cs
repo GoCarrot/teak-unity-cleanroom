@@ -13,7 +13,11 @@ using MiniJSON.Teak;
 
 public class TeakInterface : MonoBehaviour {
     public string TeakUserId { get; private set; }
+
+    // Suppress the "is never used and will always have its default value" warning
+#pragma warning disable 0649
     public event Action<string> OnPushTokenChanged;
+#pragma warning restore 0649
 
 #if !TEAK_NOT_AVAILABLE
 #region Unity
