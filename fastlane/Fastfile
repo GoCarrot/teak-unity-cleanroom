@@ -64,8 +64,7 @@ platform :ios do
 
   lane :prod do
     increment_build_number(
-      username: 'pat@teak.io',
-      build_number: latest_testflight_build_number() + 1,
+      build_number: latest_testflight_build_number(username: 'pat@teak.io', team_id: '95841023') + 1,
       xcodeproj: XCODE_PROJECT
     )
 
