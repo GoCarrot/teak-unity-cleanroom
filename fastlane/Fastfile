@@ -12,7 +12,6 @@
 # update_fastlane
 FASTFILE_PATH = File.expand_path(File.dirname(File.dirname(__FILE__)))
 XCODE_PROJECT = File.join(FASTFILE_PATH, '..', 'Unity-iPhone', 'Unity-iPhone.xcodeproj')
-CONFIG_TYPE = 'development'
 TEAK_APP_EXTENSIONS = %w[TeakNotificationService TeakNotificationContent].freeze
 BUILD_CONFIGURATIONS = %w[Debug Release ReleaseForRunning ReleaseForProfiling].freeze
 
@@ -46,14 +45,46 @@ platform :ios do
     setup_circle_ci
   end
 
-  desc 'Build targeting Dev profile'
+  desc 'Deploy to TestFlight'
+  lane :deploy do
+    upload_to_testflight(
+      team_id: '95841023',
+      username: 'pat@teak.io',
+      app_identifier: 'io.teak.app.unity.prod',
+      skip_waiting_for_build_processing: true
+    )
+  end
+
   lane :dev do
-    BUILD_CONFIGURATION = 'Debug'
+    build(
+      build_configuration: 'Debug',
+      app_ids: ['io.teak.app.unity.dev']
+    )
+  end
+
+  lane :prod do
+    increment_build_number(
+      username: 'pat@teak.io',
+      build_number: latest_testflight_build_number() + 1,
+      xcodeproj: XCODE_PROJECT
+    )
+
+    build(
+      build_configuration: 'Release',
+      app_ids: ['io.teak.app.unity.prod'],
+      config_type: 'appstore'
+    )
+  end
+
+  lane :build do |params|
+    BUILD_CONFIGURATION = params[:build_configuration] || 'Debug'
+    APP_IDS = params[:app_ids] || ['io.teak.app.unity.dev']
+    CONFIG_TYPE = params[:config_type] || 'development'
 
     if ci?
       # Create/fetch and store provisioning profiles
       ios_provisioning_profile = {}
-      ['io.teak.app.unity.dev'].each do |app_id|
+      APP_IDS.each do |app_id|
         match(
           app_identifier: app_id,
           type: CONFIG_TYPE,
@@ -108,7 +139,7 @@ platform :ios do
       clean: true,
       output_directory: File.join(FASTFILE_PATH, '..'),
       output_name: 'teak-unity-cleanroom.ipa',
-      export_method: CONFIG_TYPE
+      export_method: CONFIG_TYPE.sub('appstore', 'app-store')
     )
   end
 

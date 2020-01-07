@@ -198,10 +198,22 @@ task :clean do
 end
 
 task :warnings_as_errors do
-  UNITY_COMPILERS.each do |compiler|
-    File.open("Assets/#{compiler}.rsp", 'w') do |f|
-      f.puts '-warnaserror+'
-    end
+  # Disabling this until Unity fixes their shit
+  #
+  # UNITY_COMPILERS.each do |compiler|
+  #   File.open("Assets/#{compiler}.rsp", 'w') do |f|
+  #     f.puts '-warnaserror+'
+  #   end
+  # end
+end
+
+namespace :pilot do
+  task :list do
+    fastlane 'pilot', 'list', '--app_identifier', 'io.teak.app.unity.prod', '-u', 'pat@teak.io', env: { FASTLANE_ITC_TEAM_ID: '95841023' }
+  end
+
+  task :add, [:email] do |t, args|
+    fastlane 'pilot', 'add', args[:email], '-g', 'Teak', '--app_identifier', 'io.teak.app.unity.prod', '-u', 'pat@teak.io', env: { FASTLANE_ITC_TEAM_ID: '95841023' }
   end
 end
 
@@ -501,6 +513,10 @@ namespace :deploy do
       # fastlane 'google_play_track_version_codes', '--json_key', 'supply.key.json', '--track', 'internal', '--package_name', PACKAGE_NAME
       fastlane 'android', 'deploy'
     end
+  end
+
+  task :testflight do
+    fastlane 'ios', 'deploy'
   end
 end
 
