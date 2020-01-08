@@ -2,8 +2,12 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-using UnityEditor;
 using UnityEngine;
+using UnityEditor;
+using UnityEditor.Callbacks;
+
+using UnityEditor.iOS.Xcode;
+using UnityEditor.iOS.Xcode.Extensions;
 
 #if UNITY_2018_1_OR_NEWER
 using UnityEditor.Build.Reporting;
@@ -210,6 +214,20 @@ public class BuildPlayer
         buildPlayerOptions.target = BuildTarget.Android;
         if (isDevelopmentBuild) buildPlayerOptions.options = BuildOptions.Development;
         DoBuildPlayer(buildPlayerOptions);
+    }
+
+    [PostProcessBuild(100)]
+    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
+        if (target != BuildTarget.iOS) return;
+
+        string projectPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
+        string plistPath = pathToBuiltProject + "/Info.plist";
+
+        // Skip App Store Connect export compliance questionnaire
+        PlistDocument plist = new PlistDocument();
+        plist.ReadFromString(File.ReadAllText(plistPath));
+        plist.root.SetBoolean("ITSAppUsesNonExemptEncryption", false);
+        File.WriteAllText(plistPath, plist.WriteToString());
     }
 
     static void iOS()
