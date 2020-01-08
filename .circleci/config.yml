@@ -29,7 +29,9 @@ jobs:
           command: HOMEBREW_NO_AUTO_UPDATE=1 ./setup
       - run:
           name: Ruby Gems
-          command: bundle check || bundle install --path vendor/bundle
+          command: |
+            gem update bundler
+            bundle check || bundle install --path vendor/bundle
       - save_cache:
           paths:
             - /usr/local/share/android-sdk
