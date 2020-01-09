@@ -1,5 +1,6 @@
 source 'https://rubygems.org' # frozen_string_literal: true
 gem 'awesome_print'
+gem 'cocoapods'
 gem 'fastlane'
 gem 'headdesk'
 gem 'httparty'

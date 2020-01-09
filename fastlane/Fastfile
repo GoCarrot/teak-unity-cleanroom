@@ -12,6 +12,7 @@
 # update_fastlane
 FASTFILE_PATH = File.expand_path(File.dirname(File.dirname(__FILE__)))
 XCODE_PROJECT = File.join(FASTFILE_PATH, '..', 'Unity-iPhone', 'Unity-iPhone.xcodeproj')
+XCODE_WORKSPACE = File.join(FASTFILE_PATH, '..', 'Unity-iPhone', 'Unity-iPhone.xcworkspace')
 TEAK_APP_EXTENSIONS = %w[TeakNotificationService TeakNotificationContent].freeze
 BUILD_CONFIGURATIONS = %w[Debug Release ReleaseForRunning ReleaseForProfiling].freeze
 
@@ -132,7 +133,7 @@ platform :ios do
     enable_automatic_code_signing(path: XCODE_PROJECT) unless ci?
 
     build_ios_app(
-      project: XCODE_PROJECT,
+      workspace: XCODE_WORKSPACE,
       scheme: 'Unity-iPhone',
       configuration: BUILD_CONFIGURATION,
       clean: true,
@@ -145,7 +146,7 @@ platform :ios do
   desc 'Fast build with no code signing'
   lane :ci do
     xcodebuild(
-      project: XCODE_PROJECT,
+      workspace: XCODE_WORKSPACE,
       scheme: 'Unity-iPhone',
       configuration: 'Release',
       build: true,

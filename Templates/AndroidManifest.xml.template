@@ -50,7 +50,6 @@
     <meta-data android:name="unityplayer.SkipPermissionsDialog" android:value="true" />
 
     <!-- Facebook -->
-    {{#use_facebook}}
     <meta-data android:name="unityplayer.SkipPermissionsDialog" android:value="true" />
     <activity android:name="com.facebook.unity.FBUnityLoginActivity" android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen" android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
     <activity android:name="com.facebook.unity.FBUnityDialogsActivity" android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen" android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
@@ -64,7 +63,6 @@
     <meta-data android:name="com.facebook.sdk.AutoLogAppEventsEnabled" android:value="true" />
     <meta-data android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled" android:value="true" />
     <provider android:name="com.facebook.FacebookContentProvider" android:authorities="com.facebook.app.FacebookContentProvider{{teak_app_id}}" android:exported="true" />
-    {{/use_facebook}}
   </application>
 
   <!-- Work-around to stop Unity 5 from adding these permissions -->

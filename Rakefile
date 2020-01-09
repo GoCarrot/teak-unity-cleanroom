@@ -90,8 +90,8 @@ def android_il2cpp?
   ENV.fetch('USE_IL2CPP_ON_ANDROID', false).to_s == 'true'
 end
 
-def facebook?
-  ENV.fetch('USE_FACEBOOK', true).to_s == 'true'
+def prod?
+  BUILD_TYPE.to_s == 'prod'
 end
 
 #
@@ -101,8 +101,7 @@ def template_parameters
   teak_version = File.read(File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')).match(/return "(.*)"/).captures[0]
   TEAK_CREDENTIALS[BUILD_TYPE].merge(
     app_name: "#{BUILD_TYPE.capitalize} #{teak_version}",
-    target_api: TARGET_API,
-    use_facebook: facebook?
+    target_api: TARGET_API
   )
 end
 
@@ -288,7 +287,7 @@ end
 
 namespace :facebook do
   task :import do
-    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', '7.17.2')
+    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', '7.18.0')
     zip_name = if facebook_sdk_version
                  "facebook-unity-sdk-#{facebook_sdk_version}"
                else
@@ -371,7 +370,7 @@ namespace :package do
 
     Rake::Task['prime31:import'].invoke if use_prime31?
     Rake::Task['unity_iap:import'].invoke if use_unityiap?
-    Rake::Task['facebook:import'].invoke if facebook?
+    Rake::Task['facebook:import'].invoke
   end
 end
 
@@ -390,11 +389,9 @@ namespace :config do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'TeakSettings.asset.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Resources', 'TeakSettings.asset'), Mustache.render(template, template_parameters))
 
-    if facebook?
-      mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
-      template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
-      File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
-    end
+    mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
+    template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
+    File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
   end
 end
 
@@ -411,16 +408,17 @@ namespace :build do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
-    additional_args = ['--debug']
+    additional_args = []
+    additional_args.concat(['--debug']) unless prod?
+
     build_amazon = args[:amazon?] ? args[:amazon?].to_s == 'true' : false
     build_il2cpp = android_il2cpp? || use_prime31?
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
-    additional_args.concat(['--define', 'USE_FACEBOOK']) if facebook?
     additional_args.concat(['--il2cpp']) if build_il2cpp
 
-    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', IL2Cpp: build_il2cpp
+    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', Args: additional_args
 
     # This appeared when using Facebook SDK 7.17.2
     # When the file is deleted, it appears again during the build process
@@ -444,15 +442,16 @@ namespace :build do
   task ios: ['ios:all']
 
   task webgl: [] do # TODO: When we can update UnityPurchasing etc, put back :warnings_as_errors
-    print_build_msg 'WebGL'
-
     begin
       tmpdir = Dir.mktmpdir
       FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", force: true
       FileUtils.mv 'Assets/Plugins/UnityChannel', "#{tmpdir}/UnityChannel", force: true
 
-      additional_args = ['--debug']
-      additional_args.concat(['--define', 'USE_FACEBOOK']) if facebook?
+      additional_args = []
+      additional_args.concat(['--debug']) unless prod?
+
+      print_build_msg 'WebGL', Args: additional_args
+
       unity '-buildTarget', 'WebGL', '-executeMethod', 'BuildPlayer.WebGL', *additional_args
 
       template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
@@ -475,14 +474,19 @@ namespace :ios do
   end
 
   task build: [:warnings_as_errors] do
-    print_build_msg 'iOS'
-
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
 
-    additional_args = ['--debug']
+    additional_args = []
+    additional_args.concat(['--debug']) unless prod?
+
+    print_build_msg 'iOS', Args: additional_args
 
     unity '-buildTarget', 'iOS', '-executeMethod', 'BuildPlayer.iOS', *additional_args
+
+    cd 'Unity-iPhone', verbose: false do
+      sh 'pod install'
+    end
   end
 
   task fastlane: [:fastlane_match] do

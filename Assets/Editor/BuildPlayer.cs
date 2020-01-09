@@ -6,8 +6,10 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
 
-using UnityEditor.iOS.Xcode;
-using UnityEditor.iOS.Xcode.Extensions;
+#if !TEAK_NOT_AVAILABLE
+using TeakEditor.iOS.Xcode;
+using TeakEditor.iOS.Xcode.Extensions;
+#endif
 
 #if UNITY_2018_1_OR_NEWER
 using UnityEditor.Build.Reporting;
@@ -216,19 +218,26 @@ public class BuildPlayer
         DoBuildPlayer(buildPlayerOptions);
     }
 
+#if !TEAK_NOT_AVAILABLE
     [PostProcessBuild(100)]
     public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
         if (target != BuildTarget.iOS) return;
 
         string projectPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
         string plistPath = pathToBuiltProject + "/Info.plist";
-
-        // Skip App Store Connect export compliance questionnaire
         PlistDocument plist = new PlistDocument();
         plist.ReadFromString(File.ReadAllText(plistPath));
+
+        // Skip App Store Connect export compliance questionnaire
         plist.root.SetBoolean("ITSAppUsesNonExemptEncryption", false);
+
+        // Add Facebook things
+        // plist.root.SetString("FacebookAppID", TeakSettings.AppId);
+        // AddURLSchemeToPlist(plist, "fb" + TeakSettings.AppId);
+
         File.WriteAllText(plistPath, plist.WriteToString());
     }
+#endif
 
     static void iOS()
     {
@@ -292,4 +301,48 @@ public class BuildPlayer
         }
         return buildOptions;
     }
+
+#if !TEAK_NOT_AVAILABLE
+    public static void AddURLSchemeToPlist(PlistDocument plist, string urlSchemeToAdd) {
+        // Get/create array of URL types
+        PlistElementArray urlTypesArray = null;
+        if (!plist.root.values.ContainsKey("CFBundleURLTypes")) {
+            urlTypesArray = plist.root.CreateArray("CFBundleURLTypes");
+        } else {
+            urlTypesArray = plist.root.values["CFBundleURLTypes"].AsArray();
+        }
+        if (urlTypesArray == null) {
+            urlTypesArray = plist.root.CreateArray("CFBundleURLTypes");
+        }
+
+        // Get/create an entry in the array
+        PlistElementDict urlTypesItems = null;
+        if (urlTypesArray.values.Count == 0) {
+            urlTypesItems = urlTypesArray.AddDict();
+        } else {
+            urlTypesItems = urlTypesArray.values[0].AsDict();
+
+            if (urlTypesItems == null) {
+                urlTypesItems = urlTypesArray.AddDict();
+            }
+        }
+
+        // Get/create array of URL schemes
+        PlistElementArray urlSchemesArray = null;
+        if (!urlTypesItems.values.ContainsKey("CFBundleURLSchemes")) {
+            urlSchemesArray = urlTypesItems.CreateArray("CFBundleURLSchemes");
+        } else {
+            urlSchemesArray = urlTypesItems.values["CFBundleURLSchemes"].AsArray();
+
+            if (urlSchemesArray == null) {
+                urlSchemesArray = urlTypesItems.CreateArray("CFBundleURLSchemes");
+            }
+        }
+
+        // Add URL scheme
+        if (!urlSchemesArray.ContainsElement(urlSchemeToAdd)) {
+            urlSchemesArray.Add(urlSchemeToAdd);
+        }
+    }
+#endif // #if !TEAK_NOT_AVAILABLE
 }
