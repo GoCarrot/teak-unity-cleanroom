@@ -231,9 +231,8 @@ public class BuildPlayer
         // Skip App Store Connect export compliance questionnaire
         plist.root.SetBoolean("ITSAppUsesNonExemptEncryption", false);
 
-        // Add Facebook things
-        // plist.root.SetString("FacebookAppID", TeakSettings.AppId);
-        // AddURLSchemeToPlist(plist, "fb" + TeakSettings.AppId);
+        // Add a non-Teak URL scheme
+        AddURLSchemeToPlist(plist, "nonteak");
 
         File.WriteAllText(plistPath, plist.WriteToString());
     }
