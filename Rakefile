@@ -340,7 +340,7 @@ namespace :package do
   namespace :build do
     task :ios, [:skip_unity?] => %i[clean] do |_, args|
       cd "#{PROJECT_PATH}/../teak-ios/", verbose: false do
-        sh "./compile"
+        sh "BUILD_TYPE=Debug ./compile"
       end
 
       Rake::Task['package:build:unity'].invoke unless args[:skip_unity?]
@@ -356,7 +356,7 @@ namespace :package do
 
     task :unity do
       cd "#{PROJECT_PATH}/../teak-unity/", verbose: false do
-        sh "BUILD_LOCAL=true NOTIFY=false rake"
+        sh "BUILD_TYPE=Debug BUILD_LOCAL=true NOTIFY=false rake"
       end
 
       Rake::Task['package:copy'].invoke
