@@ -189,6 +189,18 @@ public class TestDriver : MonoBehaviour
                         }));
                     }),
 
+#if UNITY_IOS && TEAK_2_2_OR_NEWER
+                TestBuilder.Build("Notification with Non-Teak Deep Link (backgrounded)", this)
+                    .ScheduleBackgroundNotification("test_nonteak_deeplink")
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("test.delegate".Equals(logEvent.EventType)) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    }),
+#endif // UNITY_IOS && TEAK_2_2_OR_NEWER
+
                 TestBuilder.Build("Numeric Attributes (15+ seconds)", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         double randomDouble = UnityEngine.Random.value;
