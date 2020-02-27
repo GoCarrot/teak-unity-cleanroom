@@ -125,30 +125,6 @@ public class TestDriver : MonoBehaviour
                     }),
 #endif
 
-#if TEAK_2_2_OR_NEWER
-                TestBuilder.Build("Unity Log Message Crash", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        TextAsset textFile = Resources.Load<TextAsset>("EmojiLogMessageFixture");
-                        if (textFile == null) {
-                            state(Test.TestState.Failed);
-                            return;
-                        }
-
-                        StartCoroutine(Coroutine.DoAfterSeconds(1, () => {
-                            MethodInfo m = Teak.Instance.GetType().GetMethod("LogEvent", BindingFlags.NonPublic | BindingFlags.Instance);
-                            m.Invoke(Teak.Instance, new object[] { textFile.text });
-                        }));
-                        state(Test.TestState.Passed);
-                    })
-                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        if ("992623615a8b49ba8071b44306a9d5d8".Equals(logEvent.RunId) && 57 == logEvent.EventId) {
-                            state(Test.TestState.Passed);
-                        } else {
-                            state(Test.TestState.Pending);
-                        }
-                    }),
-#endif // TEAK_2_2_OR_NEWER
-
                 TestBuilder.Build("Simple Notification", this)
                     .ScheduleNotification("test_none"),
 
@@ -372,8 +348,13 @@ public class TestDriver : MonoBehaviour
     }
 #if TEAK_2_2_OR_NEWER
     void OnLogEvent(Dictionary<string, object> logEvent) {
+        TeakLogEvent teakLogEvent = new TeakLogEvent(logEvent);
         if (this.testEnumerator != null) {
-            this.testEnumerator.Current.LogEvent(new TeakLogEvent(logEvent));
+            this.testEnumerator.Current.LogEvent(teakLogEvent);
+        }
+
+        if (teakLogEvent.LogLevel == TeakLogEvent.Level.ERROR) {
+            Debug.LogError(teakLogEvent.ToString());
         }
     }
 #endif // TEAK_2_2_OR_NEWER
