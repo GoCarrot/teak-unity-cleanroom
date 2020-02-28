@@ -356,6 +356,11 @@ public class TestDriver : MonoBehaviour
         if (teakLogEvent.LogLevel == TeakLogEvent.Level.ERROR) {
             Debug.LogError(teakLogEvent.ToString());
         }
+
+        if ("test.delegate".Equals(teakLogEvent.EventType)) {
+            launchedFromDeepLinkPath = teakLogEvent.EventData["url"] as string;
+            this.SetupUI();
+        }
     }
 #endif // TEAK_2_2_OR_NEWER
 #endif // TEAK_NOT_AVAILABLE
