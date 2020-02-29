@@ -99,6 +99,12 @@ Assets/Plugins/Android/androidx.slidingpanelayout.slidingpanelayout-*
 Assets/Plugins/Android/androidx.swiperefreshlayout.swiperefreshlayout-*
 Assets/Plugins/Android/androidx.viewpager.viewpager-*
 Assets/Plugins/Android/androidx.appcompat.appcompat-1.0.0*
+Assets/Plugins/Android/com.facebook.android.facebook-applinks-*
+Assets/Plugins/Android/com.facebook.android.facebook-common-*
+Assets/Plugins/Android/com.facebook.android.facebook-core-*
+Assets/Plugins/Android/com.facebook.android.facebook-login-*
+Assets/Plugins/Android/com.facebook.android.facebook-share-*
+
 
 # Facebook SDK brings these in
 Assets/Plugins/Android/androidx.browser.browser-1.0.0*
