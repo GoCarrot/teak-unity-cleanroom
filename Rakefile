@@ -197,13 +197,11 @@ task :clean do
 end
 
 task :warnings_as_errors do
-  # Disabling this until Unity fixes their shit
-  #
-  # UNITY_COMPILERS.each do |compiler|
-  #   File.open("Assets/#{compiler}.rsp", 'w') do |f|
-  #     f.puts '-warnaserror+'
-  #   end
-  # end
+  UNITY_COMPILERS.each do |compiler|
+    File.open("Assets/#{compiler}.rsp", 'w') do |f|
+      f.puts '-warnaserror+'
+    end
+  end
 end
 
 namespace :pilot do
