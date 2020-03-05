@@ -66,6 +66,7 @@ public partial class TestDriver : MonoBehaviour
 
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
+    Dictionary<string, object> testContext;
 
     private string _launchedFromDeepLinkPath;
     string LaunchedFromDeepLinkPath {
@@ -329,6 +330,8 @@ public partial class TestDriver : MonoBehaviour
         if (this.testEnumerator == null) {
             this.testEnumerator = this.testList.GetEnumerator();
         }
+
+        this.testContext = new Dictionary<string, object>();
 
         if (this.testEnumerator.MoveNext()) {
             this.testEnumerator.Current.Begin();

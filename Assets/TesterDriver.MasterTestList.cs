@@ -195,7 +195,8 @@ public partial class TestDriver : MonoBehaviour {
 #if TEAK_2_3_OR_NEWER
                 TestBuilder.Build("Re-Identify User Providing Email", this)
                     .WhenStarted((Action<Test.TestState> state) => {
-                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, "bogus@teak.io");
+                        this.testContext["userEmail"] = "bogus@teak.io";
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
                         state(Test.TestState.Passed);
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
@@ -205,7 +206,7 @@ public partial class TestDriver : MonoBehaviour {
                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
 
                             if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
-                                "bogus@teak.io".Equals(payload["email"] as string) &&
+                                (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
                                 ((bool)payload["do_not_track_event"])) {
                                 state(Test.TestState.Passed);
                             } else {
@@ -221,8 +222,8 @@ public partial class TestDriver : MonoBehaviour {
                 // This should be the last test in the list, just to keep it easy
                 TestBuilder.Build("Re-Identify User with New User Id", this)
                     .WhenStarted((Action<Test.TestState> state) => {
-                        string updatedUserId = "re-identify-test-" + this.teakInterface.TeakUserId;
-                        Teak.Instance.IdentifyUser(updatedUserId);
+                        this.testContext["updatedUserId"] = "re-identify-test-" + this.teakInterface.TeakUserId;
+                        Teak.Instance.IdentifyUser(this.testContext["updatedUserId"] as string);
                         state(Test.TestState.Passed);
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
@@ -230,8 +231,7 @@ public partial class TestDriver : MonoBehaviour {
                             (logEvent.EventData["endpoint"] as string).EndsWith("/users.json")) {
                             Debug.Log(logEvent);
                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
-                            string updatedUserId = "re-identify-test-" + this.teakInterface.TeakUserId;
-                            if (updatedUserId.Equals(payload["api_key"] as string)) {
+                            if ((this.testContext["updatedUserId"] as string).Equals(payload["api_key"] as string)) {
                                 state(Test.TestState.Passed);
                             } else {
                                 state(Test.TestState.Failed);
@@ -241,8 +241,10 @@ public partial class TestDriver : MonoBehaviour {
                         }
                     })
                     .BeforeFinished((Action<Test.TestState> state) => {
-                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
                         state(Test.TestState.Passed);
+                    })
+                    .WhenFinished(() => {
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
                     })
 #endif // TEAK_2_2_OR_NEWER
 #endif // !TEAK_NOT_AVAILABLE
