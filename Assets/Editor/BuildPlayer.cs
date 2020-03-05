@@ -223,7 +223,6 @@ public class BuildPlayer
     public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
         if (target != BuildTarget.iOS) return;
 
-        string projectPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
         string plistPath = pathToBuiltProject + "/Info.plist";
         PlistDocument plist = new PlistDocument();
         plist.ReadFromString(File.ReadAllText(plistPath));
