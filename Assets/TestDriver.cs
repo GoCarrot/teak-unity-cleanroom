@@ -67,7 +67,17 @@ public partial class TestDriver : MonoBehaviour
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
 
-    string launchedFromDeepLinkPath;
+    private string _launchedFromDeepLinkPath;
+    string LaunchedFromDeepLinkPath {
+        get {
+            return _launchedFromDeepLinkPath;
+        }
+
+        set {
+            _launchedFromDeepLinkPath = DateTime.Now.ToString("hh:mm:ss") + " " + value;
+            this.SetupUI();
+        }
+    }
 
     void Awake() {
 #if !TEAK_NOT_AVAILABLE
@@ -82,8 +92,8 @@ public partial class TestDriver : MonoBehaviour
         }
 
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
-            this.launchedFromDeepLinkPath = parameters["__incoming_url"] as string;
-            Debug.Log(this.launchedFromDeepLinkPath);
+            this.LaunchedFromDeepLinkPath = parameters["__incoming_url"] as string;
+            Debug.Log(this.LaunchedFromDeepLinkPath);
 
             if (this.testEnumerator != null) {
                 this.testEnumerator.Current.DeepLink(parameters);
@@ -171,8 +181,7 @@ public partial class TestDriver : MonoBehaviour
         }
 
         if ("test.delegate".Equals(teakLogEvent.EventType)) {
-            launchedFromDeepLinkPath = teakLogEvent.EventData["url"] as string;
-            this.SetupUI();
+            this.LaunchedFromDeepLinkPath = teakLogEvent.EventData["url"] as string;
         }
     }
 #endif // TEAK_2_2_OR_NEWER
@@ -275,10 +284,9 @@ public partial class TestDriver : MonoBehaviour
 #endif // TEAK_NOT_AVAILABLE
 
         // Deep Link Path
-        if (this.launchedFromDeepLinkPath != null) {
-            Text text = CreateText(this.launchedFromDeepLinkPath);
-            // text.resizeTextForBestFit = true;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+        if (this.LaunchedFromDeepLinkPath != null) {
+            Text text = CreateText(this.LaunchedFromDeepLinkPath);
+            text.resizeTextForBestFit = true;
             text.alignment = TextAnchor.UpperLeft;
         }
     }
