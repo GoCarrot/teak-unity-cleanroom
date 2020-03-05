@@ -67,6 +67,7 @@ public partial class TestDriver : MonoBehaviour
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
     Dictionary<string, object> testContext;
+    Dictionary<string, object> globalContext = new Dictionary<string, object>();
 
     private string _launchedFromDeepLinkPath;
     string LaunchedFromDeepLinkPath {

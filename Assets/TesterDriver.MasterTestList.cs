@@ -192,6 +192,15 @@ public partial class TestDriver : MonoBehaviour {
                         }));
                     }),
 
+#if TEAK_2_2_OR_NEWER
+                TestBuilder.Build("Store Current Deep Link Path", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        Debug.Log("Last deep link: " + this.LaunchedFromDeepLinkPath);
+                        this.globalContext["lastDeepLink"] = this.LaunchedFromDeepLinkPath;
+                        state(Test.TestState.Passed);
+                    }),
+#endif // TEAK_2_2_OR_NEWER
+
 #if TEAK_2_3_OR_NEWER
                 TestBuilder.Build("Re-Identify User Providing Email", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -216,7 +225,7 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Pending);
                         }
                     }),
-#endif
+#endif // TEAK_2_3_OR_NEWER
 
 #if TEAK_2_2_OR_NEWER
                 // This should be the last test in the list, just to keep it easy
@@ -240,13 +249,25 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Pending);
                         }
                     })
-                    .BeforeFinished((Action<Test.TestState> state) => {
-                        state(Test.TestState.Passed);
-                    })
                     .WhenFinished(() => {
                         Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
+                    }),
+#endif // TEAK_2_2_OR_NEWER
+
+#if TEAK_2_2_OR_NEWER
+                TestBuilder.Build("Ensure re-identifying the user didn't re-run deep links", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Coroutine.DoAfterSeconds(5.0f, () => {
+                            Debug.Log("Current deep link: " + this.LaunchedFromDeepLinkPath);
+                            if (this.LaunchedFromDeepLinkPath.Equals(this.globalContext["lastDeepLink"] as string)) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        }));
                     })
 #endif // TEAK_2_2_OR_NEWER
+
 #endif // !TEAK_NOT_AVAILABLE
             };
         }
