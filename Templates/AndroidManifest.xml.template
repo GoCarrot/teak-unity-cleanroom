@@ -37,6 +37,8 @@
     <!-- Test 3.0.1 io_teak_ignore_default_firebase_configuration -->
     <meta-data android:name="io_teak_ignore_default_firebase_configuration" android:value="true" />
 
+    <!-- 3.2.0 trace log mode -->
+    <meta-data android:name="io_teak_log_trace" android:value="true" />
 
     <!-- Amazon IAP -->
     <receiver android:name = "com.amazon.device.iap.ResponseReceiver" >
