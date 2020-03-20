@@ -81,10 +81,6 @@ public partial class TestDriver : MonoBehaviour {
                 TestBuilder.Build("Simple Notification", this)
                     .ScheduleNotification("test_none"),
 
-                TestBuilder.Build("Notification Deep Link", this)
-                    .ScheduleNotification("test_deeplink"),
-                    // .ExpectDeepLink("link-only"), // TODO: Foreground don't deep link obviously
-
                 TestBuilder.Build("Cancel Notification", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.StartCoroutine(TeakNotification.ScheduleNotification("test_none", "test_none", 10, (TeakNotification.Reply reply) => {
