@@ -197,6 +197,22 @@ public partial class TestDriver : MonoBehaviour {
                     }),
 #endif // TEAK_2_2_OR_NEWER
 
+#if TEAK_3_2_OR_NEWER
+                TestBuilder.Build("Logout", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        Teak.Instance.Logout();
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("session.state".Equals(logEvent.EventType) &&
+                            "Expired".Equals(logEvent.EventData["state"] as string)) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    }),
+#endif
+
 #if TEAK_2_3_OR_NEWER
                 TestBuilder.Build("Re-Identify User Providing Email", this)
                     .WhenStarted((Action<Test.TestState> state) => {
