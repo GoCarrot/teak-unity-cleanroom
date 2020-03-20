@@ -230,6 +230,9 @@ public class BuildPlayer
         // Skip App Store Connect export compliance questionnaire
         plist.root.SetBoolean("ITSAppUsesNonExemptEncryption", false);
 
+        // Trace logging
+        plist.root.SetBoolean("TeakLogTrace", true);
+
         // Add a non-Teak URL scheme
         AddURLSchemeToPlist(plist, "nonteak");
 
