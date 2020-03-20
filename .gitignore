@@ -99,12 +99,24 @@ Assets/Plugins/Android/androidx.slidingpanelayout.slidingpanelayout-*
 Assets/Plugins/Android/androidx.swiperefreshlayout.swiperefreshlayout-*
 Assets/Plugins/Android/androidx.viewpager.viewpager-*
 Assets/Plugins/Android/androidx.appcompat.appcompat-1.0.0*
+
 Assets/Plugins/Android/com.facebook.android.facebook-applinks-*
 Assets/Plugins/Android/com.facebook.android.facebook-common-*
 Assets/Plugins/Android/com.facebook.android.facebook-core-*
 Assets/Plugins/Android/com.facebook.android.facebook-login-*
 Assets/Plugins/Android/com.facebook.android.facebook-share-*
 
+Assets/Plugins/Android/com.google.android.datatransport.transport-api-2.2.0*
+Assets/Plugins/Android/com.google.android.datatransport.transport-backend-cct-2.2.0*
+Assets/Plugins/Android/com.google.android.datatransport.transport-runtime-2.2.0*
+Assets/Plugins/Android/com.google.auto.value.auto-value-annotations-1.6.5*
+Assets/Plugins/Android/com.google.dagger.dagger-2.24*
+Assets/Plugins/Android/com.google.firebase.firebase-components-16.0.0*
+Assets/Plugins/Android/com.google.firebase.firebase-datatransport-17.0.3*
+Assets/Plugins/Android/com.google.firebase.firebase-encoders-json-16.0.0*
+Assets/Plugins/Android/com.google.firebase.firebase-installations-16.1.0*
+Assets/Plugins/Android/com.google.firebase.firebase-installations-interop-16.0.0*
+Assets/Plugins/Android/javax.inject.javax.inject-1*
 
 # Facebook SDK brings these in
 Assets/Plugins/Android/androidx.browser.browser-1.0.0*
