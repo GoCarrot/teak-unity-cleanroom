@@ -16,4 +16,5 @@ MonoBehaviour:
   mShortlinkDomain: {{teak_short_url_domain}}
   mGCMSenderId: {{teak_gcm_sender_id}}
   mFirebaseAppId: {{teak_firebase_app_id}}
+  mFirebaseApiKey: {{teak_firebase_api_key}}
   mJustShutUpIKnowWhatImDoing: 0

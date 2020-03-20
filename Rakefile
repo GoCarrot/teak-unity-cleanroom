@@ -48,6 +48,7 @@ TEAK_CREDENTIALS = {
     teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
     teak_gcm_sender_id: '12126273415',
     teak_firebase_app_id: '1:12126273415:android:102329156b15bf0c',
+    teak_firebase_api_key: 'AIzaSyA_lmYrQPyGS8QQtCKk05-YRU92zWcIZbQ',
     teak_short_url_domain: 'teak-dev.playw.it',
     signing_key: 'io.teak.app.unity.dev.upload.keystore'
   },
@@ -57,6 +58,7 @@ TEAK_CREDENTIALS = {
     teak_api_key: '1f3850f794b9093864a0778009744d03',
     teak_gcm_sender_id: '12126273415',
     teak_firebase_app_id: '1:12126273415:android:102329156b15bf0c',
+    teak_firebase_api_key: 'AIzaSyA_lmYrQPyGS8QQtCKk05-YRU92zWcIZbQ',
     teak_short_url_domain: 'teak-prod.playw.it',
     signing_key: 'io.teak.app.unity.prod.keystore'
   }
