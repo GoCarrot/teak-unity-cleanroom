@@ -128,6 +128,12 @@ end
 # Helper methods
 #
 def unity(*args, quit: true, nographics: true)
+  if UNITY_HOME.include? '2018'
+    FileUtils.ln_s 'Packages/2018.manifest.json', 'Packages/manifest.json', force: true
+  else
+    FileUtils.ln_s 'Packages/2019.manifest.json', 'Packages/manifest.json', force: true
+  end
+
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')

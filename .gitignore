@@ -40,6 +40,9 @@ Assets/Plugins/Teak/WebGL/Teak.jslib*
 Assets/Teak.meta
 Assets/Teak/
 
+# Symlink
+Packages/manifest.json
+
 # Play Services Resolver
 # Future-Pat: Leave these as specific ignores so we know what all gets put into
 #             resolves in future versions.
