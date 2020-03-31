@@ -78,8 +78,48 @@ public partial class TestDriver : MonoBehaviour {
                     }),
 #endif
 
+#if TEAK_2_2_OR_NEWER
+                TestBuilder.Build("Notification with Emoji", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+
+                        // Have to use "WhenStarted" because ScheduleNotification will wait for a received log event
+                        this.StartCoroutine(TeakNotification.ScheduleNotification("test_emoji_log_exception", "test_emoji_log_exception", 10, (TeakNotification.Reply reply) => {
+                            if (reply.Status == TeakNotification.Reply.ReplyStatus.Ok) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        }));
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+
+#   if UNITY_IOS
+                        // On iOS there should be no errors
+#       if TEAK_3_1_OR_NEWER
+                        if ("notification.foreground".Equals(logEvent.EventType) || "notification.received".Equals(logEvent.EventType)) {
+#       else
+                        if ("notification.received".Equals(logEvent.EventType) || "notification.received".Equals(logEvent.EventType)) {
+#       endif // TEAK_3_1_OR_NEWER
+                            state(Test.TestState.Passed);
+                            return;
+                        }
+#   elif UNITY_ANDROID
+                        // Should be fine on API Level 22+
+                        if (this.AndroidAPILevel > 21 && "notification.received".Equals(logEvent.EventType)) {
+                            state(Test.TestState.Passed);
+                            return;
+                        } else if("error.loghandler".Equals(logEvent.EventType)) {
+                            // On API < 22 it should report the parse error
+                            state(Test.TestState.Passed);
+                            return;
+                        }
+#   endif // UNITY_IOS
+                        state(Test.TestState.Pending);
+                    }),
+#else // TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Simple Notification", this)
                     .ScheduleNotification("test_none"),
+#endif // TEAK_2_2_OR_NEWER
 
                 TestBuilder.Build("Cancel Notification", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -119,46 +159,6 @@ public partial class TestDriver : MonoBehaviour {
                             }
                         }));
                     }),
-
-#if TEAK_2_2_OR_NEWER
-                TestBuilder.Build("Notification with Emoji", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-
-                        // Have to use "WhenStarted" because ScheduleNotification will wait for a received log event
-                        this.StartCoroutine(TeakNotification.ScheduleNotification("test_emoji_log_exception", "test_emoji_log_exception", 10, (TeakNotification.Reply reply) => {
-                            if (reply.Status == TeakNotification.Reply.ReplyStatus.Ok) {
-                                state(Test.TestState.Passed);
-                            } else {
-                                state(Test.TestState.Failed);
-                            }
-                        }));
-                    })
-                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-
-#   if UNITY_IOS
-                        // On iOS there should be no errors
-#       if TEAK_3_1_OR_NEWER
-                        if ("notification.foreground".Equals(logEvent.EventType) ||"notification.received".Equals(logEvent.EventType)) {
-#       else
-                        if ("notification.received".Equals(logEvent.EventType) ||"notification.received".Equals(logEvent.EventType)) {
-#       endif // TEAK_3_1_OR_NEWER
-                            state(Test.TestState.Passed);
-                            return;
-                        }
-#   elif UNITY_ANDROID
-                        // Should be fine on API Level 22+
-                        if (this.AndroidAPILevel > 21 && "notification.received".Equals(logEvent.EventType)) {
-                            state(Test.TestState.Passed);
-                            return;
-                        } else if("error.loghandler".Equals(logEvent.EventType)) {
-                            // On API < 22 it should report the parse error
-                            state(Test.TestState.Passed);
-                            return;
-                        }
-#   endif // UNITY_IOS
-                        state(Test.TestState.Pending);
-                    }),
-#endif // TEAK_2_2_OR_NEWER
 
 #if UNITY_IOS && TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Notification with Non-Teak Deep Link (backgrounded)", this)
@@ -211,7 +211,7 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Pending);
                         }
                     }),
-#endif
+#endif // TEAK_3_2_OR_NEWER
 
 #if TEAK_2_3_OR_NEWER
                 TestBuilder.Build("Re-Identify User Providing Email", this)
