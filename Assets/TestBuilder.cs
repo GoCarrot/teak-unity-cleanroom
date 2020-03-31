@@ -38,7 +38,7 @@ class TestBuilder {
     public TestBuilder ScheduleNotification(string creativeId) {
 #if !TEAK_NOT_AVAILABLE
         test.OnBegin = this.ScheduleNotification(creativeId, false);
-        test.OnForegroundNotification = this.ValidateCreativeId(creativeId);
+        test.OnForegroundNotification = this.ValidateNotification(creativeId);
 #endif
         return this;
     }
@@ -46,7 +46,7 @@ class TestBuilder {
     public TestBuilder ScheduleBackgroundNotification(string creativeId) {
 #if !TEAK_NOT_AVAILABLE
         test.OnBegin = this.ScheduleNotification(creativeId, true);
-        test.OnLaunchedFromNotification = this.ValidateCreativeId(creativeId);
+        test.OnLaunchedFromNotification = this.ValidateNotification(creativeId);
 #endif
         return this;
     }
@@ -132,7 +132,7 @@ class TestBuilder {
         };
     }
 
-    private Action<TeakNotification, Action<Test.TestState>> ValidateCreativeId(string creativeId) {
+    private Action<TeakNotification, Action<Test.TestState>> ValidateNotification(string creativeId) {
         return (TeakNotification notification, Action<Test.TestState> state) => {
             state(creativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
         };
