@@ -134,7 +134,16 @@ class TestBuilder {
 
     private Action<TeakNotification, Action<Test.TestState>> ValidateNotification(string creativeId) {
         return (TeakNotification notification, Action<Test.TestState> state) => {
-            state(creativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal) ? Test.TestState.Passed : Test.TestState.Failed);
+            bool notificationValid = true;
+            notificationValid &= creativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal);
+#if TEAK_3_2_OR_NEWER
+#   if UNITY_IOS
+            notificationValid &= "ios_push".Equals(notification.ChannelName, System.StringComparison.Ordinal);
+#   elif UNITY_ANDROID
+            notificationValid &= "android_push".Equals(notification.ChannelName, System.StringComparison.Ordinal);
+#   endif
+#endif // TEAK_3_2_OR_NEWER
+            state(notificationValid ? Test.TestState.Passed : Test.TestState.Failed);
         };
     }
 #endif
