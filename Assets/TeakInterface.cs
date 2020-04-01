@@ -15,9 +15,9 @@ public class TeakInterface : MonoBehaviour {
     public string TeakUserId { get; private set; }
 
     // Suppress the "is never used and will always have its default value" warning
-#pragma warning disable 0649
+#pragma warning disable
     public event Action<string> OnPushTokenChanged;
-#pragma warning restore 0649
+#pragma warning restore
 
 #if !TEAK_NOT_AVAILABLE
 #region Unity
