@@ -286,7 +286,7 @@ namespace :unity_iap do
       end
 
       unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
-      # File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor*'])
+      File.delete(*Dir['Assets/Plugins/UnityChannel/XiaomiSupport*'])
     end
   end
 end
