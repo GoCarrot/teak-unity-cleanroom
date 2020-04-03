@@ -100,6 +100,13 @@ public partial class TestDriver : MonoBehaviour
             if (this.testEnumerator != null) {
                 this.testEnumerator.Current.DeepLink(parameters);
             }
+
+#if TEAK_3_2_OR_NEWER
+            // Throw a test exception
+            if (!this.DeepLinkTestExceptionThrown) {
+                throw new ArgumentException("Test exception");
+            }
+#endif
         });
 
         this.SetupStorePlugin();
@@ -134,6 +141,9 @@ public partial class TestDriver : MonoBehaviour
 #if TEAK_2_2_OR_NEWER
         Teak.Instance.OnLogEvent += OnLogEvent;
         Teak.Instance.OnForegroundNotification += OnForegroundNotification;
+#endif
+#if TEAK_3_2_OR_NEWER
+    Teak.Instance.OnCallbackError += OnCallbackError;
 #endif
 #endif // TEAK_NOT_AVAILABLE
     }
@@ -187,6 +197,13 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 #endif // TEAK_2_2_OR_NEWER
+
+#if TEAK_3_2_OR_NEWER
+    bool DeepLinkTestExceptionThrown { get; set; }
+    void OnCallbackError(string callback, Exception exception, Dictionary<string, object> data) {
+        this.DeepLinkTestExceptionThrown = true;
+    }
+#endif // TEAK_3_2_OR_NEWER
 #endif // TEAK_NOT_AVAILABLE
 
     private void SetupUI() {

@@ -66,15 +66,14 @@ class TestBuilder {
     }
 
     public TestBuilder ExpectDeepLink() {
-        return this.ExpectDeepLink(null);
+        return this.ExpectDeepLink((Dictionary<string, object> parameters, Action<Test.TestState> state) => {
+            state(Test.TestState.Passed);
+        });
     }
 
-    public TestBuilder ExpectDeepLink(string dataContents) {
-        // TODO: dataContents
+    public TestBuilder ExpectDeepLink(Action<Dictionary<string, object>, Action<Test.TestState>> callback) {
 #if !TEAK_NOT_AVAILABLE
-        test.OnDeepLink = (Dictionary<string, object> parameters, Action<Test.TestState> state) => {
-            state(Test.TestState.Passed);
-        };
+        test.OnDeepLink = callback;
 #endif
         return this;
     }

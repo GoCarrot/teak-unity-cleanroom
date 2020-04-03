@@ -31,7 +31,13 @@ public partial class TestDriver : MonoBehaviour {
                         } else {
                             state(Test.TestState.Pending);
                         }
-                    }),
+                    })
+#if TEAK_3_2_OR_NEWER
+                    .BeforeFinished((Action<Test.TestState> state) => {
+                        state(this.DeepLinkTestExceptionThrown ? Test.TestState.Passed : Test.TestState.Failed);
+                    })
+#endif // TEAK_3_2_OR_NEWER
+                    ,
 
 #endif // TEAK_2_2_OR_NEWER
 
