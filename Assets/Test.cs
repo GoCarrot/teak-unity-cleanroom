@@ -71,13 +71,16 @@ class Test {
 
 #if UNITY_WEBGL
         this.foregroundNotification = TestState.Passed;
+
+#   if TEAK_2_2_OR_NEWER
         this.logEvent = TestState.Passed;
+#   endif
 #else
         this.foregroundNotification = (this.OnForegroundNotification == null ? TestState.Passed : TestState.Pending);
 
-#if TEAK_2_2_OR_NEWER
+#   if TEAK_2_2_OR_NEWER
         this.logEvent = (this.OnLogEvent == null ? TestState.Passed : TestState.Pending);
-#endif // TEAK_2_2_OR_NEWER
+#   endif // TEAK_2_2_OR_NEWER
 #endif // UNITY_WEBGL
 #endif // !TEAK_NOT_AVAILABLE
         this.pushTokenChanged = (this.OnPushTokenChanged == null ? TestState.Passed : TestState.Pending);
