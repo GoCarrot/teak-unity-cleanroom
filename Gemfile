@@ -1,5 +1,6 @@
 source 'https://rubygems.org' # frozen_string_literal: true
 gem 'awesome_print'
+gem 'aws-sdk-s3'
 gem 'cocoapods'
 gem 'fastlane'
 gem 'headdesk'
