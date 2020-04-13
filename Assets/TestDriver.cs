@@ -66,8 +66,12 @@ public partial class TestDriver : MonoBehaviour
 
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
+
+    // IL2CPP builds incorrectly report these as unused?
+#pragma warning disable
     Dictionary<string, object> testContext;
     Dictionary<string, object> globalContext = new Dictionary<string, object>();
+#pragma warning restore
 
     private string _launchedFromDeepLinkPath;
     string LaunchedFromDeepLinkPath {
