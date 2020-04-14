@@ -417,10 +417,10 @@ public partial class TestDriver : MonoBehaviour
 #elif UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
 
 #if AMAZON
-        Debug.Log("Initializing Unity IAP for: Amazon");
+        Debug.Log("[TestDriver] Initializing Unity IAP for: Amazon");
         ConfigurationBuilder builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance(AppStore.AmazonAppStore));
 #else
-        Debug.Log("Initializing Unity IAP for: Google Play");
+        Debug.Log("[TestDriver] Initializing Unity IAP for: Google Play");
         ConfigurationBuilder builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance(AppStore.GooglePlay));
 #endif
 
@@ -431,7 +431,7 @@ public partial class TestDriver : MonoBehaviour
         });
 
 #if TEAK_2_0_OR_NEWER
-        Debug.Log("Initializing UnityPurchasing...");
+        Debug.Log("[TestDriver] Initializing UnityPurchasing...");
         UnityPurchasing.Initialize(new TeakStoreListener(this), builder);
 #endif // #TEAK_2_0_OR_NEWER
 
