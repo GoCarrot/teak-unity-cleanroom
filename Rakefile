@@ -7,6 +7,7 @@ require 'mustache'
 require 'httparty'
 require 'terminal-notifier'
 require 'tmpdir'
+require 'fileutils'
 CLEAN.include '**/.DS_Store'
 
 #
@@ -286,7 +287,9 @@ namespace :unity_iap do
       end
 
       unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
-      File.delete(*Dir['Assets/Plugins/UnityChannel/XiaomiSupport*'])
+      if Dir.exist? 'Assets/Plugins/UnityChannel/XiaomiSupport'
+        FileUtils.rm_rf('Assets/Plugins/UnityChannel/XiaomiSupport*')
+      end
     end
   end
 end
