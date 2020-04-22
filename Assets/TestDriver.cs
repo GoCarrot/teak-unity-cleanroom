@@ -81,7 +81,9 @@ public partial class TestDriver : MonoBehaviour
 
         set {
             _launchedFromDeepLinkPath = DateTime.Now.ToString("hh:mm:ss") + " " + value;
-            this.SetupUI();
+            StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+                this.SetupUI();
+            }));
         }
     }
 
@@ -205,7 +207,12 @@ public partial class TestDriver : MonoBehaviour
 #if TEAK_3_2_OR_NEWER
     bool DeepLinkTestExceptionThrown { get; set; }
     void OnCallbackError(string callback, Exception exception, Dictionary<string, object> data) {
-        this.DeepLinkTestExceptionThrown = true;
+        if (!this.DeepLinkTestExceptionThrown) {
+            this.DeepLinkTestExceptionThrown = true;
+#   if UNITY_WEBGL
+            Debug.ClearDeveloperConsole();
+#   endif
+        }
     }
 #endif // TEAK_3_2_OR_NEWER
 #endif // TEAK_NOT_AVAILABLE
@@ -375,7 +382,7 @@ public partial class TestDriver : MonoBehaviour
     }
 
     private void ResetTests() {
-        this.testList = this.MasterTestList;
+        this.testList = this.MasterTestList.FindAll(e => !e.ExcludedPlatforms.Contains(Application.platform));
         this.testEnumerator = null;
         this.AdvanceTests();
         this.SetupUI();

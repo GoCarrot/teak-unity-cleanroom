@@ -1,6 +1,7 @@
 using UnityEngine;
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -14,15 +15,16 @@ public partial class TestDriver : MonoBehaviour {
                 TestBuilder.Build("Reward Link", this)
                     .ExpectDeepLink()
                     .ExpectReward()
+#   if !UNITY_WEBGL
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
                         // Make sure it has app_version and app_version_name (Android only)
                         if ("request.send".Equals(logEvent.EventType) &&
                             "rewards.gocarrot.com".Equals(logEvent.EventData["hostname"] as string)) {
                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
                             if (payload.ContainsKey("app_version")
-#if UNITY_ANDROID
+#   if UNITY_ANDROID
                                 && payload.ContainsKey("app_version_name")
-#endif
+#   endif
                                 ) {
                                 state(Test.TestState.Passed);
                             } else {
@@ -32,11 +34,12 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Pending);
                         }
                     })
-#if TEAK_3_2_OR_NEWER
+#   endif // UNITY_WEBGL
+#   if TEAK_3_2_OR_NEWER
                     .BeforeFinished((Action<Test.TestState> state) => {
                         state(this.DeepLinkTestExceptionThrown ? Test.TestState.Passed : Test.TestState.Failed);
                     })
-#endif // TEAK_3_2_OR_NEWER
+#   endif // TEAK_3_2_OR_NEWER
                     ,
 
 #endif // TEAK_2_2_OR_NEWER
@@ -84,7 +87,7 @@ public partial class TestDriver : MonoBehaviour {
                     }),
 #endif
 
-#if TEAK_2_2_OR_NEWER
+#if TEAK_2_2_OR_NEWER && !UNITY_WEBGL
                 TestBuilder.Build("Notification with Emoji", this)
                     .WhenStarted((Action<Test.TestState> state) => {
 
@@ -122,10 +125,10 @@ public partial class TestDriver : MonoBehaviour {
 #   endif // UNITY_IOS
                         state(Test.TestState.Pending);
                     }),
-#else // TEAK_2_2_OR_NEWER
+#else // TEAK_2_2_OR_NEWER && !UNITY_WEBGL
                 TestBuilder.Build("Simple Notification", this)
                     .ScheduleNotification("test_none"),
-#endif // TEAK_2_2_OR_NEWER
+#endif // TEAK_2_2_OR_NEWER && !UNITY_WEBGL
 
                 TestBuilder.Build("Cancel Notification", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -151,32 +154,17 @@ public partial class TestDriver : MonoBehaviour {
                             if (reply.Status == TeakNotification.Reply.ReplyStatus.Ok) {
                                 string scheduledId = reply.Notifications[0].ScheduleId;
                                 this.StartCoroutine(TeakNotification.CancelAllScheduledNotifications((TeakNotification.Reply cancelReply) => {
-                                    string canceledId = null;
-                                    Debug.Log("LOOKING FOR: " + scheduledId);
+                                    List<string> canceledIds = new List<string>();
                                     if (cancelReply.Notifications != null) {
-                                        canceledId = cancelReply.Notifications[0].ScheduleId;
-                                        Debug.Log("FOUND: " + cancelReply.Notifications);
-                                        Debug.Log("FOUND: " + cancelReply.Notifications[0]);
+                                        canceledIds = cancelReply.Notifications.Select(e => e.ScheduleId).ToList();
                                     }
-                                    state(scheduledId.Equals(canceledId) ? Test.TestState.Passed : Test.TestState.Failed);
+                                    state(canceledIds.Contains(scheduledId) ? Test.TestState.Passed : Test.TestState.Failed);
                                 }));
                             } else {
                                 state(Test.TestState.Failed);
                             }
                         }));
                     }),
-
-#if UNITY_IOS && TEAK_2_2_OR_NEWER
-                TestBuilder.Build("Notification with Non-Teak Deep Link (backgrounded)", this)
-                    .ScheduleBackgroundNotification("test_nonteak_deeplink")
-                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        if ("test.delegate".Equals(logEvent.EventType)) {
-                            state(Test.TestState.Passed);
-                        } else {
-                            state(Test.TestState.Pending);
-                        }
-                    }),
-#endif // UNITY_IOS && TEAK_2_2_OR_NEWER
 
                 TestBuilder.Build("Numeric Attributes (15+ seconds)", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -195,32 +183,36 @@ public partial class TestDriver : MonoBehaviour {
                     }),
 
 #if TEAK_2_2_OR_NEWER
-                TestBuilder.Build("Store Current Deep Link Path", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        Debug.Log("Last deep link: " + this.LaunchedFromDeepLinkPath);
-                        this.globalContext["lastDeepLink"] = this.LaunchedFromDeepLinkPath;
-                        state(Test.TestState.Passed);
-                    }),
-#endif // TEAK_2_2_OR_NEWER
-
-#if TEAK_3_2_OR_NEWER
-                TestBuilder.Build("Logout", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        Teak.Instance.Logout();
-                        state(Test.TestState.Passed);
-                    })
+                TestBuilder.Build("Notification with Non-Teak Deep Link (backgrounded)", this)
+                    .OnlyIOS()
+                    .ScheduleBackgroundNotification("test_nonteak_deeplink")
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        if ("session.state".Equals(logEvent.EventType) &&
-                            "Expired".Equals(logEvent.EventData["state"] as string)) {
+                        if ("test.delegate".Equals(logEvent.EventType)) {
                             state(Test.TestState.Passed);
                         } else {
                             state(Test.TestState.Pending);
                         }
                     }),
-#endif // TEAK_3_2_OR_NEWER
+#endif // TEAK_2_2_OR_NEWER
+
+#if TEAK_2_2_OR_NEWER
+                TestBuilder.Build("Store Current Deep Link Path", this)
+                    .ExcludeWebGL()
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        // We wait for a few seconds to allow the new attribution to kick in.
+                        // This is really a hack, and in no way good.
+                        StartCoroutine(Coroutine.DoAfterSeconds(5.0f,() => {
+                            this.LaunchedFromDeepLinkPath = "fake_deep_link_path";
+                            Debug.Log("Storing deep link: " + this.LaunchedFromDeepLinkPath);
+                            this.globalContext["lastDeepLink"] = this.LaunchedFromDeepLinkPath;
+                            state(Test.TestState.Passed);
+                        }));
+                    }),
+#endif // TEAK_2_2_OR_NEWER
 
 #if TEAK_2_3_OR_NEWER
                 TestBuilder.Build("Re-Identify User Providing Email", this)
+                    .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.testContext["userEmail"] = "bogus@teak.io";
                         Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
@@ -233,6 +225,7 @@ public partial class TestDriver : MonoBehaviour {
                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
 
                             if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
+                                payload.ContainsKey("email") &&
                                 (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
                                 ((bool)payload["do_not_track_event"])) {
                                 state(Test.TestState.Passed);
@@ -248,6 +241,7 @@ public partial class TestDriver : MonoBehaviour {
 #if TEAK_2_2_OR_NEWER
                 // This should be the last test in the list, just to keep it easy
                 TestBuilder.Build("Re-Identify User with New User Id", this)
+                    .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.testContext["updatedUserId"] = "re-identify-test-" + this.teakInterface.TeakUserId;
                         Teak.Instance.IdentifyUser(this.testContext["updatedUserId"] as string);
@@ -274,6 +268,7 @@ public partial class TestDriver : MonoBehaviour {
 
 #if TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Ensure re-identifying the user didn't re-run deep links", this)
+                    .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Coroutine.DoAfterSeconds(5.0f, () => {
                             Debug.Log("Current deep link: " + this.LaunchedFromDeepLinkPath);
@@ -283,8 +278,25 @@ public partial class TestDriver : MonoBehaviour {
                                 state(Test.TestState.Failed);
                             }
                         }));
-                    })
+                    }),
 #endif // TEAK_2_2_OR_NEWER
+
+#if TEAK_3_2_OR_NEWER
+                TestBuilder.Build("Logout", this)
+                    .ExcludeWebGL()
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        Teak.Instance.Logout();
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("session.state".Equals(logEvent.EventType) &&
+                            "Expired".Equals(logEvent.EventData["state"] as string)) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    })
+#endif // TEAK_3_2_OR_NEWER
 
 #endif // !TEAK_NOT_AVAILABLE
             };

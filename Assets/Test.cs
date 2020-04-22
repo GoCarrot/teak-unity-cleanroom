@@ -17,6 +17,7 @@ class Test {
 
     public string Name { get; set; }
     public TestState Status { get; set; }
+    public HashSet<UnityEngine.RuntimePlatform> ExcludedPlatforms { get; set; }
 
     // State, this could probably be done better
     private TestState began, reward, deepLink, launchedFromNotification, foregroundNotification,

@@ -577,15 +577,17 @@ namespace :install do
   end
 
   task :webgl do
-    sh 'ruby -run -e httpd WebGlBuild -p 8000 &'
-    sh 'open http://localhost:8000'
-    sh 'fg'
+    sh 'ruby -run -e httpd WebGlBuild -p 8000'
   end
 end
 
 namespace :test do
   task :ios do
     # osascript -e 'tell application "Messages" to send "https://teak-dev.playw.it/h/i-0sMjn-F" to buddy "teak.devices@gmail.com"'
+  end
+
+  task :webgl do
+    sh 'open http://localhost:8000/?teak_deep_link=%2Ftest%2F2.2.0&foo=bar&teak_rewardlink_id=104128&teak_rewardlink_name=New%20Test%20Suite%20Deep%20Link&teak_channel_name=generic_link&teak_reward_id=1144007127933784064'
   end
 end
 

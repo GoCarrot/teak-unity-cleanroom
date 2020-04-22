@@ -27,7 +27,21 @@ class TestBuilder {
 
         this.test = new Test();
         this.test.Name = testName;
+        this.test.ExcludedPlatforms = new HashSet<RuntimePlatform>();
         test.OnResult = this.GetOnResultWithAdditionalAction(null);
+    }
+
+    public TestBuilder ExcludePlatform(RuntimePlatform platform) {
+        this.test.ExcludedPlatforms.Add(platform);
+        return this;
+    }
+
+    public TestBuilder ExcludeWebGL() {
+        return this.ExcludePlatform(RuntimePlatform.WebGLPlayer);
+    }
+
+    public TestBuilder OnlyIOS() {
+        return this.ExcludePlatform(RuntimePlatform.Android).ExcludePlatform(RuntimePlatform.WebGLPlayer);
     }
 
     public TestBuilder WhenStarted(Action<Action<Test.TestState>> action) {
