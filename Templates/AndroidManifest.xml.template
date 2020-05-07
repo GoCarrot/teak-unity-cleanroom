@@ -14,6 +14,7 @@
       <!-- These are all the manifest additions required for Teak 2.0 -->
       <meta-data android:name="io.teak.sdk.initialize" android:value="true"/>
 
+      <!-- Teak 3.3.0+ can auto-generate these -->
       <intent-filter android:autoVerify="true">
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />

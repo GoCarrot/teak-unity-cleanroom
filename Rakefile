@@ -53,6 +53,16 @@ TEAK_CREDENTIALS = {
     teak_short_url_domain: 'teak-dev.playw.it',
     signing_key: 'io.teak.app.unity.dev.upload.keystore'
   },
+  'mismatch' => { # Mis-matched Firebase project and Teak Firebase Credentials
+    package_name: 'io.teak.app.unity.dev',
+    teak_app_id: '613659812345256',
+    teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
+    teak_gcm_sender_id: '757671492343',
+    teak_firebase_app_id: '1:757671492343:android:a42b1df35f855a5b1a71f2',
+    teak_firebase_api_key: 'AIzaSyBUZqofajb4GkmbVl1HfTeBv4Kza3GvJCM',
+    teak_short_url_domain: 'teak-dev.playw.it',
+    signing_key: 'io.teak.app.unity.dev.upload.keystore'
+  },
   'prod' => {
     package_name: 'io.teak.app.unity.prod',
     teak_app_id: '1136371193060244',
@@ -286,9 +296,15 @@ namespace :unity_iap do
         end
       end
 
-      unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
+      # unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
+
+      # Assets/Plugins/UnityChannel/XiaomiSupport/Editor/AppStoreSettingsEditor.cs(36,18):
+      #  error CS0649: Field 'AppStoreSettingsEditor.ReqStruct.currentStep' is never assigned to,
+      #  and will always have its default value null
       if Dir.exist? 'Assets/Plugins/UnityChannel/XiaomiSupport'
-        FileUtils.rm_rf('Assets/Plugins/UnityChannel/XiaomiSupport*')
+        file_name = 'Assets/Plugins/UnityChannel/XiaomiSupport/Editor/AppStoreSettingsEditor.cs'
+        fixed_text = File.read(file_name).gsub(/public string currentStep;/, "#pragma warning disable\npublic string currentStep;\n#pragma warning restore")
+        File.open(file_name, 'w') { |file| file.puts fixed_text }
       end
     end
   end
