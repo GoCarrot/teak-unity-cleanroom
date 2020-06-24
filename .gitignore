@@ -171,6 +171,7 @@ TEAK_VERSION
 .DS_Store
 Assets/*.rsp*
 AndroidManifest.merged.xml
+Assets/Plugins/Android/res/values/cleanroom_values.xml*
 
 # Generated Configuration Files
 Assets/Plugins/Android/AndroidManifest.xml*

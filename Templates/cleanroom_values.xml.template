@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="teak_host_url">{{teak_short_url_domain}}</string>
+    <string name="teak_scheme_id">teak{{teak_app_id}}</string>
+</resources>

@@ -433,6 +433,10 @@ namespace :build do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
+    template = File.read(File.join(PROJECT_PATH, 'Templates', 'cleanroom_values.xml.template'))
+    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'res', 'values'))
+    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
+
     additional_args = []
     additional_args.concat(['--debug']) unless prod?
 

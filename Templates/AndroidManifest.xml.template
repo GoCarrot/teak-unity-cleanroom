@@ -19,14 +19,14 @@
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="http" android:host="{{teak_short_url_domain}}" />
-        <data android:scheme="https" android:host="{{teak_short_url_domain}}" />
+        <data android:scheme="http" android:host="@string/teak_host_url" />
+        <data android:scheme="https" android:host="@string/teak_host_url" />
       </intent-filter>
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="teak{{teak_app_id}}" android:host="*" />
+        <data android:scheme="@string/teak_scheme_id" android:host="*" />
       </intent-filter>
     </activity>
     <!-- End Teak 2.0 -->
