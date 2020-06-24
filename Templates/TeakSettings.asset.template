@@ -17,4 +17,5 @@ MonoBehaviour:
   mGCMSenderId: {{teak_gcm_sender_id}}
   mFirebaseAppId: {{teak_firebase_app_id}}
   mFirebaseApiKey: {{teak_firebase_api_key}}
+  mFirebaseProjectId: {{teak_firebase_project_id}}
   mJustShutUpIKnowWhatImDoing: 0
