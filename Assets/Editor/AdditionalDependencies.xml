@@ -1,9 +1,31 @@
 <dependencies>
   <androidPackages>
-    <androidPackage spec="com.google.firebase:firebase-messaging:20.1.5">
+    <!-- Pre-Teak 3.2.0 -->
+    <!-- <androidPackage spec="com.google.firebase:firebase-messaging:20.1.0">
+      <androidSdkPackageIds>
+        <androidSdkPackageId>extra-google-m2repository</androidSdkPackageId>
+      </androidSdkPackageIds>
+    </androidPackage> -->
+
+    <!-- For Teak 3.2.0+ -->
+    <androidPackage spec="com.google.firebase:firebase-messaging:20.1.7">
       <androidSdkPackageIds>
         <androidSdkPackageId>extra-google-m2repository</androidSdkPackageId>
       </androidSdkPackageIds>
     </androidPackage>
+
+    <!-- Goldfish Setup -->
+    <!-- <androidPackage spec="com.google.firebase:firebase-messaging:20.1.0">
+      <androidSdkPackageIds>
+        <androidSdkPackageId>extra-google-m2repository</androidSdkPackageId>
+      </androidSdkPackageIds>
+    </androidPackage>
+
+    <androidPackage spec="com.google.firebase:firebase-iid:20.0.2">
+      <androidSdkPackageIds>
+        <androidSdkPackageId>extra-google-m2repository</androidSdkPackageId>
+      </androidSdkPackageIds>
+    </androidPackage> -->
+
   </androidPackages>
 </dependencies>

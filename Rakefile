@@ -473,7 +473,7 @@ namespace :build do
 
   task ios: ['ios:all']
 
-  task webgl: [] do # TODO: When we can update UnityPurchasing etc, put back :warnings_as_errors
+  task webgl: [:warnings_as_errors] do
     begin
       tmpdir = Dir.mktmpdir
       FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", force: true
