@@ -556,6 +556,20 @@ namespace :deploy do
   end
 end
 
+namespace :debug do
+  task :android do
+    Rake::Task['install:android'].invoke(nil, true)
+  end
+
+  task :google_play do
+    Rake::Task['install:android'].invoke('com.android.vending', true)
+  end
+
+  task :amazon do
+    Rake::Task['install:android'].invoke('com.amazon.venezia', true)
+  end
+end
+
 namespace :install do
   task :ios do
     ipa_path = 'teak-unity-cleanroom.ipa'
@@ -569,7 +583,7 @@ namespace :install do
     sh "ideviceinstaller --install #{ipa_path}"
   end
 
-  task :android, [:store] do |_, args|
+  task :android, [:store, :debug] do |_, args|
     apk_path = 'teak-unity-cleanroom.apk'
     installer_package = args[:store] || 'com.android.vending'
     android_destination = '/data/local/tmp/teak-unity-cleanroom.apk'
@@ -587,7 +601,7 @@ namespace :install do
       adb.call "shell pm install -i #{installer_package} -r #{android_destination}"
       sleep 1
       adb.call "shell rm #{android_destination}"
-      adb.call "shell am start -n #{PACKAGE_NAME}/com.unity3d.player.UnityPlayerActivity"
+      adb.call "shell am start -n #{PACKAGE_NAME}/com.unity3d.player.UnityPlayerActivity#{' -d teakdebug://break' if args[:debug]}"
     end
   end
 
