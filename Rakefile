@@ -45,36 +45,29 @@ TARGET_API = ENV.fetch('TARGET_API', 28)
 TEAK_CREDENTIALS = {
   'dev' => {
     package_name: 'io.teak.app.unity.dev',
+    facebook_app_id: '274159874171598',
     teak_app_id: '613659812345256',
     teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
     teak_gcm_sender_id: '12126273415',
     teak_firebase_project_id: 'teak-sdk-test',
     teak_firebase_app_id: '1:12126273415:android:102329156b15bf0c',
     teak_firebase_api_key: 'AIzaSyA_lmYrQPyGS8QQtCKk05-YRU92zWcIZbQ',
-    teak_short_url_domain: 'teak-dev.playw.it',
-    signing_key: 'io.teak.app.unity.dev.upload.keystore'
-  },
-  'mismatch' => { # Mis-matched Firebase project and Teak Firebase Credentials
-    package_name: 'io.teak.app.unity.dev',
-    teak_app_id: '613659812345256',
-    teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
-    teak_gcm_sender_id: '757671492343',
-    teak_firebase_project_id: 'teak-sdk-test',
-    teak_firebase_app_id: '1:757671492343:android:a42b1df35f855a5b1a71f2',
-    teak_firebase_api_key: 'AIzaSyBUZqofajb4GkmbVl1HfTeBv4Kza3GvJCM',
-    teak_short_url_domain: 'teak-dev.playw.it',
-    signing_key: 'io.teak.app.unity.dev.upload.keystore'
+    teak_short_url_domain: 'teak-dev.freechips.link',
+    signing_key: 'io.teak.app.unity.dev.upload.keystore',
+    adm_key: 'eyJhbGciOiJSU0EtU0hBMjU2IiwidmVyIjoiMSJ9.eyJ2ZXIiOiIzIiwiZW5kcG9pbnRzIjp7ImF1dGh6IjoiaHR0cHM6Ly93d3cuYW1hem9uLmNvbS9hcC9vYSIsInRva2VuRXhjaGFuZ2UiOiJodHRwczovL2FwaS5hbWF6b24uY29tL2F1dGgvbzIvdG9rZW4ifSwiY2xpZW50SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi1vYTItY2xpZW50LmJlM2Q1YzA0YWM3NTQyMTZhNjk0YWJmNzhkOGRhNTE0IiwiYXBwRmFtaWx5SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi43OGUwMmEwZGM5ZGI0ZTRhODRiNmUyYTk5NWY3NDhmMCIsImlzcyI6IkFtYXpvbiIsInR5cGUiOiJBUElLZXkiLCJwa2ciOiJpby50ZWFrLmFwcC51bml0eS5kZXYiLCJhcHBWYXJpYW50SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi1jbGllbnQuNjc3ODdmY2QwYjQ0NDE4MWE0MTMwN2M4YTlmNGFkOGEiLCJ0cnVzdFBvb2wiOm51bGwsImFwcHNpZ1NoYTI1NiI6IjNFOjc1OkU4Ojk1OkIyOjc0OjM5OkNGOjNFOkQ0OkIzOjJBOkM4OjhCOjE5OkEyOkEzOjM4OkZBOjEzOkYyOkIyOjQ4OjIwOjNBOjczOjNCOjE1OjkxOkVBOjMxOjYzIiwiYXBwc2lnIjoiMTk6QTY6MzQ6MUI6QkI6NDY6NTk6RkU6Nzk6MzE6QjI6QTE6QTY6Qjk6MDY6M0EiLCJhcHBJZCI6ImFtem4xLmFwcGxpY2F0aW9uLWNsaWVudC42Nzc4N2ZjZDBiNDQ0MTgxYTQxMzA3YzhhOWY0YWQ4YSIsImlkIjoiZTRjODRlMzktYzBiNi00YmRhLWFiMzAtYmI3NjVjMDk5ZDJiIiwiaWF0IjoiMTYwMDgwNTAyMjgzOCJ9.eBml9Nu6l6qfVRmeB9vz9ObwQ8/nhroi+D7nft+ZF2RycYFSFQVrX+W/bTucAwWlbBaitPh07kcnT65ZFV3F1EEq1np6B8hCqQ2HnIYKwnt8fu8MRzg4026Wrl1B449RuHjmQnBPGB5jTHfAkx1jyX8bU+70fSKi+X0AifQ1OZs/zden2URwbQWyY+PotLV6B2gI0p1SC9MtYqCthME5mF9ONj+WnrrLdomKpJ+vjxuD8buxha4ZS8dAuPfjvaUmHAEiXTqXt9i+61un4KPQCOh/0XFXrl94gnmaaR6CWiTe1jevthM5ibBx370gzA4uvBKJVpws17WBv7n0Mxqv7w=='
   },
   'prod' => {
     package_name: 'io.teak.app.unity.prod',
+    facebook_app_id: '1136371193060244',
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
     teak_gcm_sender_id: '12126273415',
     teak_firebase_project_id: 'teak-sdk-test',
     teak_firebase_app_id: '1:12126273415:android:102329156b15bf0c',
     teak_firebase_api_key: 'AIzaSyA_lmYrQPyGS8QQtCKk05-YRU92zWcIZbQ',
-    teak_short_url_domain: 'teak-prod.playw.it',
-    signing_key: 'io.teak.app.unity.prod.keystore'
+    teak_short_url_domain: 'teak-prod.freechips.link',
+    signing_key: 'io.teak.app.unity.prod.keystore',
+    adm_key: 'eyJhbGciOiJSU0EtU0hBMjU2IiwidmVyIjoiMSJ9.eyJ2ZXIiOiIzIiwiZW5kcG9pbnRzIjp7ImF1dGh6IjoiaHR0cHM6Ly93d3cuYW1hem9uLmNvbS9hcC9vYSIsInRva2VuRXhjaGFuZ2UiOiJodHRwczovL2FwaS5hbWF6b24uY29tL2F1dGgvbzIvdG9rZW4ifSwiY2xpZW50SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi1vYTItY2xpZW50LmE0NGU4Yzc5ODQ3ODQ3ODE4NzU1ZWU4YjliNDI2ZDgyIiwiYXBwRmFtaWx5SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi43OGUwMmEwZGM5ZGI0ZTRhODRiNmUyYTk5NWY3NDhmMCIsImlzcyI6IkFtYXpvbiIsInR5cGUiOiJBUElLZXkiLCJwa2ciOiJpby50ZWFrLmFwcC51bml0eS5wcm9kIiwiYXBwVmFyaWFudElkIjoiYW16bjEuYXBwbGljYXRpb24tY2xpZW50LjJiMzA2ODM2Yjk3MzRmYjNhZTA0NzVhYWM0ZmFjZTVjIiwidHJ1c3RQb29sIjpudWxsLCJhcHBzaWdTaGEyNTYiOiJGQjoxMTo3NjowQToxRDo1Nzo3QjpBMjo4RDpGNjpERDo4NDpDODo2NzpGNzpFMTozRjpEQjo3NToyQjoyRTpCQzozNjo3NTo5QTo2Qjo5MDo3MDpDNjowQzo5QTpBOCIsImFwcHNpZyI6IjQ1OkI1OjVEOkM0OjI5OjNFOjREOjc5OjAwOkUwOjg0OjZGOjQ5OkRCOjZCOjgwIiwiYXBwSWQiOiJhbXpuMS5hcHBsaWNhdGlvbi1jbGllbnQuMmIzMDY4MzZiOTczNGZiM2FlMDQ3NWFhYzRmYWNlNWMiLCJpZCI6IjY4MjFhZWIyLWQ1Y2UtNDVjOS1hMDUyLTBhOWYwMGJkNTUyMCIsImlhdCI6IjE1OTg5MDc2MjUwMjUifQ==.G/ShmiPOBiKOKCoTVKdec+INUZIdOlZRB8CeZRzz4LVSMGJkzzkapZAl7/aQ8khk5PuQVpMbQqhcSEjYhhvBlXzkW0XlqJHKQ4viA30sF5e2wbo62UINL38/6TQKj7m1bre/JEfTupnWnxHHib6sL0T4iYRO7pteeg9PFKDanlC+CFBY29XWWzypE6cfrWY/rsXazCUF2Tw9vP96zfsQy6KZ/jsG3PvOUppMlhw9m7kWPZp+nKCso5UTrYYUxtrpTOnZSGZCKtXm2KmsFqAUQgSjakYZPzrnSroficz/vwDwJG6zlktKwDeD+j0+KM11bsOgnpLnAUOPfF5gZ+xcjg=='
   }
 }.freeze
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
@@ -439,6 +432,9 @@ namespace :build do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'cleanroom_values.xml.template'))
     FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'res', 'values'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
+
+    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'assets'))
+    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'assets', 'api_key.txt'), TEAK_CREDENTIALS[BUILD_TYPE][:adm_key])
 
     additional_args = []
     additional_args.concat(['--debug']) unless prod?

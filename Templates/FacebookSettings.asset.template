@@ -16,7 +16,7 @@ MonoBehaviour:
   clientTokens:
   - 
   appIds:
-  - {{teak_app_id}}
+  - {{facebook_app_id}}
   appLabels:
   - {{app_name}}
   cookie: 1
