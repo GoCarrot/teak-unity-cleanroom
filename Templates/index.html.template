@@ -17,7 +17,7 @@
     <script>
       window.fbAsyncInit = function() {
         FB.init({
-          appId            : '{{teak_app_id}}',
+          appId            : '{{facebook_app_id}}',
           autoLogAppEvents : true,
           xfbml            : true,
           version          : 'v2.12'
