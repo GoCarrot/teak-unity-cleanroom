@@ -305,9 +305,17 @@ public partial class TestDriver : MonoBehaviour
             Button button = this.CreateButton("Facebook Login");
             button.onClick.AddListener(() => {
                 var perms = new List<string>(){"public_profile", "email"};
-                FB.LogInWithReadPermissions(perms, (ILoginResult result) => {
+                FacebookDelegate<ILoginResult>  handler = (ILoginResult result) => {
                     SetupUI();
-                });
+
+                    Debug.Log("[TestDriver] Token: " + AccessToken.CurrentAccessToken.TokenString);
+                };
+#if UNITY_IOS
+                // The Null is nonce
+                FB.Mobile.LoginWithTrackingPreference(LoginTracking.LIMITED, perms, null, handler);
+#else
+                FB.LogInWithReadPermissions(perms, handler);
+#endif
             });
         }
 

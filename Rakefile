@@ -308,13 +308,13 @@ end
 
 namespace :facebook do
   task :import do
-    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', '7.19.2')
+    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', '9.0.0')
     zip_name = if facebook_sdk_version
                  "facebook-unity-sdk-#{facebook_sdk_version}"
                else
                  'FacebookSDK-current'
                end
-    url = "https://origincache.facebook.com/developers/resources/?id=#{zip_name}.zip"
+    url = "https://lookaside.facebook.com/developers/resources/?id=#{zip_name}.zip"
     begin
       tmpdir = Dir.mktmpdir
       sdk_name = nil
