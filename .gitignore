@@ -50,97 +50,22 @@ Packages/packages-lock.json*
 Assets/StreamingAssets/google-services-desktop.json*
 
 # Play Services Resolver
-# Future-Pat: Leave these as specific ignores so we know what all gets put into
-#             resolves in future versions.
-Assets/Plugins/Android/android.arch.core.common-*
-Assets/Plugins/Android/android.arch.lifecycle.common-*
-Assets/Plugins/Android/android.arch.lifecycle.runtime-*
-Assets/Plugins/Android/com.android.support.support-annotations-*
-Assets/Plugins/Android/com.android.support.support-compat-*
-Assets/Plugins/Android/com.android.support.support-core-ui-*
-Assets/Plugins/Android/com.android.support.support-core-utils-*
-Assets/Plugins/Android/com.android.support.support-fragment-*
-Assets/Plugins/Android/com.android.support.support-media-compat-*
-Assets/Plugins/Android/com.android.support.support-v4-*
-Assets/Plugins/Android/com.android.support.customtabs-*
-Assets/Plugins/Android/com.google.firebase.firebase-common-*
-Assets/Plugins/Android/com.google.firebase.firebase-iid-*
-Assets/Plugins/Android/com.google.firebase.firebase-iid-interop-*
-Assets/Plugins/Android/com.google.firebase.firebase-measurement-connector-*
-Assets/Plugins/Android/com.google.firebase.firebase-messaging-*
-Assets/Plugins/Android/com.firebase.firebase-jobdispatcher-0.8.5*
-Assets/Plugins/Android/com.google.android.gms.play-services-ads-*
-Assets/Plugins/Android/com.google.android.gms.play-services-ads-base-*
-Assets/Plugins/Android/com.google.android.gms.play-services-ads-identifier-*
-Assets/Plugins/Android/com.google.android.gms.play-services-base-*
-Assets/Plugins/Android/com.google.android.gms.play-services-basement-*
-Assets/Plugins/Android/com.google.android.gms.play-services-gass-*
-Assets/Plugins/Android/com.google.android.gms.play-services-stats-*
-Assets/Plugins/Android/com.google.android.gms.play-services-tasks-*
-Assets/Plugins/Android/com.android.installreferrer.installreferrer-*
-Assets/Plugins/Android/androidx.annotation.annotation-*
-Assets/Plugins/Android/androidx.arch.core.core-common-*
-Assets/Plugins/Android/androidx.collection.collection-*
-Assets/Plugins/Android/androidx.core.core-*
-Assets/Plugins/Android/androidx.lifecycle.lifecycle-common-*
-Assets/Plugins/Android/androidx.lifecycle.lifecycle-runtime-*
-Assets/Plugins/Android/androidx.versionedparcelable.versionedparcelable-*
-Assets/Plugins/Android/androidx.arch.core.core-runtime-*
-Assets/Plugins/Android/androidx.asynclayoutinflater.asynclayoutinflater-*
-Assets/Plugins/Android/androidx.coordinatorlayout.coordinatorlayout-*
-Assets/Plugins/Android/androidx.cursoradapter.cursoradapter-*
-Assets/Plugins/Android/androidx.customview.customview-*
-Assets/Plugins/Android/androidx.documentfile.documentfile-*
-Assets/Plugins/Android/androidx.drawerlayout.drawerlayout-*
-Assets/Plugins/Android/androidx.fragment.fragment-*
-Assets/Plugins/Android/androidx.interpolator.interpolator-*
-Assets/Plugins/Android/androidx.legacy.legacy-support-core-ui-*
-Assets/Plugins/Android/androidx.legacy.legacy-support-core-utils-*
-Assets/Plugins/Android/androidx.legacy.legacy-support-v4-*
-Assets/Plugins/Android/androidx.lifecycle.lifecycle-livedata-*
-Assets/Plugins/Android/androidx.lifecycle.lifecycle-livedata-core-*
-Assets/Plugins/Android/androidx.lifecycle.lifecycle-viewmodel-*
-Assets/Plugins/Android/androidx.loader.loader-*
-Assets/Plugins/Android/androidx.localbroadcastmanager.localbroadcastmanager-*
-Assets/Plugins/Android/androidx.media.media-*
-Assets/Plugins/Android/androidx.print.print-*
-Assets/Plugins/Android/androidx.slidingpanelayout.slidingpanelayout-*
-Assets/Plugins/Android/androidx.swiperefreshlayout.swiperefreshlayout-*
-Assets/Plugins/Android/androidx.viewpager.viewpager-*
-Assets/Plugins/Android/androidx.appcompat.appcompat-1.0.0*
+Assets/Plugins/Android/FirebaseApp.androidlib*
 
-Assets/Plugins/Android/com.facebook.android.facebook-applinks-*
-Assets/Plugins/Android/com.facebook.android.facebook-common-*
-Assets/Plugins/Android/com.facebook.android.facebook-core-*
-Assets/Plugins/Android/com.facebook.android.facebook-login-*
-Assets/Plugins/Android/com.facebook.android.facebook-share-*
+Assets/Plugins/Android/androidx.*
+Assets/Plugins/Android/com.facebook.android.*
+Assets/Plugins/Android/com.google.android.*
+Assets/Plugins/Android/com.google.firebase.*
+Assets/Plugins/Android/org.greenrobot.eventbus*
+Assets/Plugins/Android/org.jetbrains.annotations-*
+Assets/Plugins/Android/org.jetbrains.kotlin.*
+Assets/Plugins/Android/com.android.installreferrer.*
+Assets/Plugins/Android/com.google.zxing.core*
+Assets/Plugins/Android/com.parse.bolts.*
+Assets/Plugins/Android/javax.inject.javax.inject*
 
-Assets/Plugins/Android/com.google.android.datatransport.transport-api-2.2.0*
-Assets/Plugins/Android/com.google.android.datatransport.transport-backend-cct-2.2.0*
-Assets/Plugins/Android/com.google.android.datatransport.transport-runtime-2.2.0*
-Assets/Plugins/Android/com.google.auto.value.auto-value-annotations-1.6.5*
-Assets/Plugins/Android/com.google.dagger.dagger-2.24*
-Assets/Plugins/Android/com.google.firebase.firebase-components-16.0.0*
-Assets/Plugins/Android/com.google.firebase.firebase-datatransport-17.0.3*
-Assets/Plugins/Android/com.google.firebase.firebase-encoders-json-16.0.0*
-Assets/Plugins/Android/com.google.firebase.firebase-installations-16.1.0*
-Assets/Plugins/Android/com.google.firebase.firebase-installations-interop-16.0.0*
-Assets/Plugins/Android/javax.inject.javax.inject-1*
-
-# Facebook SDK brings these in
-Assets/Plugins/Android/androidx.browser.browser-1.0.0*
-Assets/Plugins/Android/androidx.cardview.cardview-1.0.0*
-Assets/Plugins/Android/androidx.vectordrawable.vectordrawable-1.0.0*
-Assets/Plugins/Android/androidx.vectordrawable.vectordrawable-animated-1.0.0*
-Assets/Plugins/Android/com.facebook.android.facebook-applinks-5.5.0*
-Assets/Plugins/Android/com.facebook.android.facebook-common-5.5.0*
-Assets/Plugins/Android/com.facebook.android.facebook-core-5.5.0*
-Assets/Plugins/Android/com.facebook.android.facebook-login-5.5.0*
-Assets/Plugins/Android/com.facebook.android.facebook-share-5.5.0*
-Assets/Plugins/Android/com.google.zxing.core-3.3.3*
-Assets/Plugins/Android/com.parse.bolts.bolts-android-1.4.0*
-Assets/Plugins/Android/com.parse.bolts.bolts-applinks-1.4.0*
-Assets/Plugins/Android/com.parse.bolts.bolts-tasks-1.4.0*
+# TODO REMOVE THIS
+Assets/Plugins/Android/com.firebase.firebase-jobdispatcher*
 
 # Prime31
 Assets/Editor/Prime31*
