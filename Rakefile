@@ -136,11 +136,11 @@ end
 #
 def unity(*args, quit: true, nographics: true)
   if UNITY_HOME.include? '2018'
-    FileUtils.ln_s 'Packages/2018.manifest.json', 'Packages/manifest.json', force: true
+    FileUtils.cp 'Packages/2018.manifest.json', 'Packages/manifest.json'
   elsif UNITY_HOME.include? '2019'
-    FileUtils.ln_s 'Packages/2019.manifest.json', 'Packages/manifest.json', force: true
+    FileUtils.cp 'Packages/2019.manifest.json', 'Packages/manifest.json'
   else
-    FileUtils.ln_s 'Packages/2020.manifest.json', 'Packages/manifest.json', force: true
+    FileUtils.cp 'Packages/2020.manifest.json', 'Packages/manifest.json'
   end
 
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
