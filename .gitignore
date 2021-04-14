@@ -40,8 +40,12 @@ Assets/Plugins/Teak/WebGL/Teak.jslib*
 Assets/Teak.meta
 Assets/Teak/
 
-# Symlink
+# Package files
 Packages/manifest.json
+Packages/packages-lock.json*
+
+# Firebase plugin generated files
+Assets/StreamingAssets/google-services-desktop.json*
 
 # Play Services Resolver
 # Future-Pat: Leave these as specific ignores so we know what all gets put into
