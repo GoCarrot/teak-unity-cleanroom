@@ -103,6 +103,7 @@ TEAK_VERSION
 Assets/*.rsp*
 AndroidManifest.merged.xml
 Assets/Plugins/Android/res/values/cleanroom_values.xml*
+Assets/WebGLTemplates/FacebookCanvas/index.html*
 
 # Generated Configuration Files
 Assets/Plugins/Android/assets/api_key.txt*

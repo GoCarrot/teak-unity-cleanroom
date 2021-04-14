@@ -477,6 +477,10 @@ namespace :build do
       FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", force: true
       FileUtils.mv 'Assets/Plugins/UnityChannel', "#{tmpdir}/UnityChannel", force: true
 
+      template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
+      File.write(File.join(PROJECT_PATH, 'Assets', 'WebGLTemplates', 'FacebookCanvas', 'index.html'),
+        Mustache.render(template, template_parameters.merge('utopen' => '{{{', 'utclose' => '}}}')))
+
       additional_args = []
       additional_args.concat(['--debug']) unless prod?
 
@@ -484,9 +488,6 @@ namespace :build do
 
       unity '-buildTarget', 'WebGL', '-executeMethod', 'BuildPlayer.WebGL', *additional_args
 
-      template = File.read(File.join(PROJECT_PATH, 'Templates', 'index.html.template'))
-      FileUtils.mkdir_p(File.join(PROJECT_PATH, 'WebGLBuild'))
-      File.write(File.join(PROJECT_PATH, 'WebGLBuild', 'index.html'), Mustache.render(template, template_parameters))
       sh '(cd WebGLBuild/; zip -r ../teak-unity-cleanroom.zip .)'
     ensure
       FileUtils.mv "#{tmpdir}/UnityPurchasing", 'Assets/Plugins/UnityPurchasing', force: true

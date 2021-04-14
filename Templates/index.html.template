@@ -3,18 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | teak-unity-cleanroom</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <script src="TemplateData/UnityProgress.js"></script>  
-    <script src="Build/UnityLoader.js"></script>
+    <title>Unity WebGL Player | {{utopen}} PRODUCT_NAME {{utclose}}</title>
     <script>
       window.teakCleanroom = {};
-      var gameInstance = UnityLoader.instantiate("gameContainer", "Build/WebGLBuild.json", {onProgress: UnityProgress});
-    </script>
-  </head>
-  <body>
-    <script>
+
       window.fbAsyncInit = function() {
         FB.init({
           appId            : '{{facebook_app_id}}',
@@ -42,14 +34,26 @@
          fjs.parentNode.insertBefore(js, fjs);
        }(document, 'script', 'facebook-jssdk'));
     </script>
-    
-    <div class="webgl-content">
-      <div id="gameContainer" style="width: 960px; height: 900px"></div>
-      <div class="footer">
-        <div class="webgl-logo"></div>
-        <div class="fullscreen" onclick="gameInstance.SetFullscreen(1)"></div>
-        <div class="title">teak-unity-cleanroom</div>
-      </div>
-    </div>
+  </head>
+  <body style="text-align: center">
+    <canvas id="unity-canvas" style="width: {{utopen}} WIDTH {{utclose}}px; height: {{utopen}} HEIGHT {{utclose}}px; background: {{utopen}} BACKGROUND_FILENAME ? 'url(\'Build/' + BACKGROUND_FILENAME.replace(/'/g, '%27') + '\') center / cover' : BACKGROUND_COLOR {{utclose}}"></canvas>
+    <script src="Build/{{utopen}} LOADER_FILENAME {{utclose}}"></script>
+    <script>
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        dataUrl: "Build/{{utopen}} DATA_FILENAME {{utclose}}",
+        frameworkUrl: "Build/{{utopen}} FRAMEWORK_FILENAME {{utclose}}",
+        codeUrl: "Build/{{utopen}} CODE_FILENAME {{utclose}}",
+#if MEMORY_FILENAME
+        memoryUrl: "Build/{{utopen}} MEMORY_FILENAME {{utclose}}",
+#endif
+#if SYMBOLS_FILENAME
+        symbolsUrl: "Build/{{utopen}} SYMBOLS_FILENAME {{utclose}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "{{utopen}} COMPANY_NAME {{utclose}}",
+        productName: "{{utopen}} PRODUCT_NAME {{utclose}}",
+        productVersion: "{{utopen}} PRODUCT_VERSION {{utclose}}",
+      });
+    </script>
   </body>
 </html>
