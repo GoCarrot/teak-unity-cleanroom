@@ -285,11 +285,6 @@ public class TeakInterface : MonoBehaviour {
     }
 */
 
-#if UNITY_WEBGL
-    [DllImport ("__Internal")]
-    private static extern string TeakCleanroomGetFacebookId();
-#endif
-
     public void TestExceptionReporting()
     {
 #if UNITY_EDITOR
