@@ -4,36 +4,6 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Unity WebGL Player | {{utopen}} PRODUCT_NAME {{utclose}}</title>
-    <script>
-      window.teakCleanroom = {};
-
-      window.fbAsyncInit = function() {
-        FB.init({
-          appId            : '{{facebook_app_id}}',
-          autoLogAppEvents : true,
-          xfbml            : true,
-          version          : 'v2.12'
-        });
-        FB.getLoginStatus(function(response) {
-          if(response.status !== "connected") {
-            FB.login(function(loginResponse) {
-              console.log(loginResponse);
-              window.teakCleanroom.fbId = response.authResponse.userID;
-            }, {scope: 'email'});
-          } else {
-            window.teakCleanroom.fbId = response.authResponse.userID;
-          }
-        });
-      };
-
-      (function(d, s, id){
-         var js, fjs = d.getElementsByTagName(s)[0];
-         if (d.getElementById(id)) {return;}
-         js = d.createElement(s); js.id = id;
-         js.src = "https://connect.facebook.net/en_US/sdk.js";
-         fjs.parentNode.insertBefore(js, fjs);
-       }(document, 'script', 'facebook-jssdk'));
-    </script>
   </head>
   <body style="text-align: center">
     <canvas id="unity-canvas" style="width: {{utopen}} WIDTH {{utclose}}px; height: {{utopen}} HEIGHT {{utclose}}px; background: {{utopen}} BACKGROUND_FILENAME ? 'url(\'Build/' + BACKGROUND_FILENAME.replace(/'/g, '%27') + '\') center / cover' : BACKGROUND_COLOR {{utclose}}"></canvas>
