@@ -432,8 +432,8 @@ namespace :build do
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
 
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'cleanroom_values.xml.template'))
-    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'res', 'values'))
-    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
+    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values'))
+    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
 
     FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'assets'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'assets', 'api_key.txt'), TEAK_CREDENTIALS[BUILD_TYPE][:adm_key])

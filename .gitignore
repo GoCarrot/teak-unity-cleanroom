@@ -34,9 +34,10 @@ ExportedObj/
 sysinfo.txt
 
 # Teak SDK Files
-Assets/Plugins/Android/res.meta
-Assets/Plugins/Android/res/values.meta
 Assets/Plugins/Android/res/values/teak.xml*
+Assets/Plugins/Android/teak-resources.androidlib/res/values.meta
+Assets/Plugins/Android/teak-resources.androidlib/res/values/
+
 Assets/Plugins/Teak/Android/teak.aar*
 Assets/Plugins/Teak/WebGL/Teak.jslib*
 Assets/Teak.meta
