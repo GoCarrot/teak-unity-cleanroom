@@ -45,7 +45,7 @@ TARGET_API = ENV.fetch('TARGET_API', 28)
 TEAK_CREDENTIALS = {
   'dev' => {
     package_name: 'io.teak.app.unity.dev',
-    facebook_app_id: '274159874171598',
+    facebook_app_id: '613659812345256', # Test app 274159874171598
     teak_app_id: '613659812345256',
     teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
     teak_gcm_sender_id: '12126273415',
