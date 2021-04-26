@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:amazon="http://schemas.amazon.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="com.unity3d.player" android:installLocation="preferExternal" android:versionCode="1" android:versionName="1.0">
   <supports-screens android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" android:xlargeScreens="true" android:anyDensity="true" />
-  <application android:theme="@android:style/Theme.NoTitleBar.Fullscreen" android:icon="@drawable/icon_large_unity" android:label="{{app_name}} API {{target_api}}" android:debuggable="true">
+  <application android:theme="@android:style/Theme.NoTitleBar.Fullscreen" android:debuggable="true">
     <activity android:name="com.unity3d.player.UnityPlayerActivity" android:label="{{app_name}} API {{target_api}}">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -13,32 +13,12 @@
 
       <!-- These are all the manifest additions required for Teak 2.0 -->
       <meta-data android:name="io.teak.sdk.initialize" android:value="true"/>
-
-      <!-- Teak 3.3.0+ can auto-generate these -->
-      <intent-filter android:autoVerify="true">
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="http" android:host="@string/teak_host_url" />
-        <data android:scheme="https" android:host="@string/teak_host_url" />
-      </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="@string/teak_scheme_id" android:host="*" />
-      </intent-filter>
     </activity>
-    <!-- End Teak 2.0 -->
 
-    <!-- Test the 2.1.1 removal of io_teak_enable_caching -->
-    <meta-data android:name="io_teak_enable_caching" android:value="true" />
-    <!-- End io_teak_enable_caching -->
+    <!-- hax -->
+    <meta-data android:name="io_teak_developer_version" android:value="teakasdf"/>
 
-    <!-- Test 3.0.1 io_teak_ignore_default_firebase_configuration -->
-    <meta-data android:name="io_teak_ignore_default_firebase_configuration" android:value="true" />
-
-    <!-- 3.2.0 trace log mode -->
+    <!-- Teak SDK 3.2.0+ trace log mode -->
     <meta-data android:name="io_teak_log_trace" android:value="true" />
 
     <!-- Amazon IAP -->
