@@ -337,8 +337,6 @@ namespace :facebook do
         File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-v4-*'])
         File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
       end
-      sh 'git clean -fdx Assets/PlayServicesResolver/Editor/', verbose: false
-      sh 'git checkout -- Assets/PlayServicesResolver/Editor/*', verbose: false
 
       FileUtils.remove_entry tmpdir
     end
