@@ -65,9 +65,7 @@ Assets/Plugins/Android/com.android.installreferrer.*
 Assets/Plugins/Android/com.google.zxing.core*
 Assets/Plugins/Android/com.parse.bolts.*
 Assets/Plugins/Android/javax.inject.javax.inject*
-
-# TODO REMOVE THIS
-Assets/Plugins/Android/com.firebase.firebase-jobdispatcher*
+Assets/Plugins/Android/com.google.guava.listenablefuture-*
 
 # Prime31
 Assets/Editor/Prime31*
