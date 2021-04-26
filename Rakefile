@@ -462,6 +462,7 @@ namespace :build do
 
     with_kms_decrypt SIGNING_KEY do
       unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
+      # sh "keytool -list -v -alias alias_name -storepass pointless -keystore #{File.join(PROJECT_PATH, SIGNING_KEY)}"
     end
   end
 
