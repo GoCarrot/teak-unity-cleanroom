@@ -63,6 +63,12 @@ public class TeakInterface : MonoBehaviour {
 
         // IdentifyUser starts the things
         Teak.Instance.IdentifyUser(this.TeakUserId);
+
+        // Add Prime31 event listeners
+#if USE_PRIME31 && UNITY_ANDROID
+        Prime31.GoogleIABManager.purchaseFailedEvent += Teak.Instance.prime31PurchaseFailed;
+        Prime31.GoogleIABManager.purchaseSucceededEvent += Teak.Instance.prime31PurchaseSucceded;
+#endif
     }
 
     void OnApplicationPause(bool isPaused) {
