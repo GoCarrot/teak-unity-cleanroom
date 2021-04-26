@@ -599,7 +599,7 @@ namespace :install do
       adb.call "shell pm install -i #{installer_package} -r #{android_destination}"
       sleep 1
       adb.call "shell rm #{android_destination}"
-      adb.call "shell am start -n #{PACKAGE_NAME}/com.unity3d.player.UnityPlayerActivity#{' -d teakdebug://break' if args[:debug]}"
+      adb.call "shell am start -n #{PACKAGE_NAME}/com.unity3d.player.UnityPlayerActivity#{" -d teak#{TEAK_CREDENTIALS[BUILD_TYPE][:teak_app_id]}:///?teak_debug=true" if args[:debug]}"
     end
   end
 
