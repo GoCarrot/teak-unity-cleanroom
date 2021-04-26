@@ -41,9 +41,7 @@ public partial class TestDriver : MonoBehaviour
     IStoreController storeController;
 #endif
 
-#if (UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)) || USE_PRIME31
     string testPurchaseSku = "io.teak.app.sku.dollar";
-#endif
 
 #if UNITY_ANDROID
     int AndroidAPILevel {
@@ -93,10 +91,16 @@ public partial class TestDriver : MonoBehaviour
             FB.Init(() => {
                 if (FB.IsInitialized) {
                     FB.ActivateApp();
+#if UNITY_WEBGL
+                    FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"});
+#endif
                 }
             });
         } else {
             FB.ActivateApp();
+#if UNITY_WEBGL
+            FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"});
+#endif
         }
 
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
@@ -253,8 +257,42 @@ public partial class TestDriver : MonoBehaviour
             });
         }
 
-#if USE_PRIME31
-        // Purchase
+        // Purchase testing
+#if UNITY_WEBGL
+        {
+            Button button = this.CreateButton("Test Purchase");
+            button.onClick.AddListener(() => {
+                FB.Canvas.PayWithProductId(
+                    this.testPurchaseSku,
+                    "purchaseiap",
+                    null,
+                    null,
+                    (IPayResult result) => {
+                        if(!string.IsNullOrEmpty(result.Error)) {
+                            Debug.LogError(result.Error);
+                        } else {
+                            Teak.Instance.ReportCanvasPurchase(result.RawResult);
+
+                            StartCoroutine(Coroutine.Do(() => {
+                                Debug.Log("[TestDriver] Consuming " + result.ResultDictionary["purchase_token"]);
+                                FB.API(
+                                    result.ResultDictionary["purchase_token"] + "/consume",
+                                    HttpMethod.POST,
+                                    (IGraphResult graphResult) => {
+                                        if(!string.IsNullOrEmpty(graphResult.Error)) {
+                                            Debug.LogError(graphResult.Error);
+                                        } else {
+                                            Debug.Log(graphResult.RawResult);
+                                        }
+                                    }
+                                );
+                            }));
+                        }
+                    }
+                );
+            });
+        }
+#elif USE_PRIME31
         {
             Button button = this.CreateButton("Test Purchase");
             button.onClick.AddListener(() => {
@@ -262,7 +300,6 @@ public partial class TestDriver : MonoBehaviour
             });
         }
 #elif UNITY_PURCHASING && (UNITY_FACEBOOK || !UNITY_WEBGL)
-        // Purchase
         {
             Button button = this.CreateButton("Test Purchase");
             button.onClick.AddListener(() => {
@@ -308,7 +345,7 @@ public partial class TestDriver : MonoBehaviour
                 FacebookDelegate<ILoginResult>  handler = (ILoginResult result) => {
                     SetupUI();
 
-                    Debug.Log("[TestDriver] Token: " + AccessToken.CurrentAccessToken.TokenString);
+                    Debug.Log("[TestDriver] Token: " + Facebook.Unity.AccessToken.CurrentAccessToken.TokenString);
                 };
 #if UNITY_IOS
                 // The Null is nonce
