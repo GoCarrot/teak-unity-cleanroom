@@ -389,8 +389,12 @@ namespace :package do
       unity '-importPackage', 'Teak.unitypackage'
     end
 
-    Rake::Task['prime31:import'].invoke if use_prime31?
-    Rake::Task['unity_iap:import'].invoke if use_unityiap?
+    if use_prime31?
+      Rake::Task['prime31:import'].invoke
+    elsif use_unityiap?
+      Rake::Task['unity_iap:import'].invoke
+    end
+
     Rake::Task['facebook:import'].invoke
   end
 end
