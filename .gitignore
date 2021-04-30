@@ -53,6 +53,7 @@ Assets/StreamingAssets/google-services-desktop.json*
 
 # Play Services Resolver
 Assets/Plugins/Android/FirebaseApp.androidlib*
+Assets/PlayServicesResolver*
 
 Assets/Plugins/Android/androidx.*
 Assets/Plugins/Android/com.facebook.android.*
