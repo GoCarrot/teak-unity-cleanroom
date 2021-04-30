@@ -622,7 +622,7 @@ end
 
 namespace :test do
   task :ios do
-    # osascript -e 'tell application "Messages" to send "https://teak-dev.playw.it/h/i-0sMjn-F" to buddy "teak.devices@gmail.com"'
+    # osascript -e 'tell application "Messages" to send "https://teak-dev.freechips.link/h/i-0sMjn-F" to buddy "teak.devices@gmail.com"'
   end
 
   task :webgl do
