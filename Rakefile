@@ -87,12 +87,22 @@ def ci?
   ENV.fetch('CI', false).to_s == 'true'
 end
 
-def use_prime31?
-  ENV.fetch('USE_PRIME31', false).to_s == 'true'
+def purchasing_plugin
+  if ENV.fetch('USE_PRIME31', false).to_s == 'true'
+    :prime_31
+  elsif ENV.fetch('USE_UNITY_IAP', true).to_s == 'true'
+    :unity_purchasing
+  else
+    nil
+  end
 end
 
-def use_unityiap?
-  ENV.fetch('USE_UNITY_IAP', true).to_s == 'true'
+def use_prime31?
+  purchasing_plugin == :prime_31
+end
+
+def use_unity_iap?
+  purchasing_plugin == :unity_purchasing
 end
 
 def android_il2cpp?
@@ -101,6 +111,16 @@ end
 
 def prod?
   BUILD_TYPE.to_s == 'prod'
+end
+
+def unity_version
+  if UNITY_HOME.include? '2018'
+    2018
+  elsif UNITY_HOME.include? '2019'
+    2019
+  elsif UNITY_HOME.include? '2020'
+    2020
+  end
 end
 
 #
@@ -135,13 +155,12 @@ end
 # Helper methods
 #
 def unity(*args, quit: true, nographics: true)
-  if UNITY_HOME.include? '2018'
-    FileUtils.cp 'Packages/2018.manifest.json', 'Packages/manifest.json'
-  elsif UNITY_HOME.include? '2019'
-    FileUtils.cp 'Packages/2019.manifest.json', 'Packages/manifest.json'
-  else
-    FileUtils.cp 'Packages/2020.manifest.json', 'Packages/manifest.json'
-  end
+  manifest_parameters = {
+    use_unity_purchasing: purchasing_plugin == :unity_purchasing
+  }
+  template = File.read(File.join(PROJECT_PATH, 'Templates', 'manifest.json.template'))
+  File.write(File.join(PROJECT_PATH, 'Packages', 'manifest.json'),
+    Mustache.render(template, manifest_parameters))
 
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
 
@@ -216,7 +235,7 @@ end
 task :warnings_as_errors do
   UNITY_COMPILERS.each do |compiler|
     File.open("Assets/#{compiler}.rsp", 'w') do |f|
-      f.puts '-warnaserror+'
+      # f.puts '-warnaserror+'
     end
   end
 end
@@ -268,43 +287,6 @@ namespace :prime31 do
   task :encrypt, [:path] do |_, args|
     prime31_path = args[:path] || '../IAPAndroid_3.9.unitypackage'
     `openssl enc -md MD5 -aes-256-cbc -in #{prime31_path} -out kms/encrypted_prime31_plugin.data -k #{KMS_KEY}`
-  end
-end
-
-namespace :unity_iap do
-  task :import do
-    without_teak_available do
-      unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityIAP.unitypackage'
-      FileUtils.remove_dir('Assets/Plugins/UnityPurchasing/script/Demo')
-      File.delete('Assets/Plugins/UnityPurchasing/script/Demo.meta')
-      File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/IAP*'])
-      File.delete(*Dir['Assets/Plugins/UnityPurchasing/Editor/IAPButtonEditor*'])
-      File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/PurchasingCheck*'])
-      File.delete(*Dir['Assets/Plugins/UnityPurchasing/script/CodelessIAPStoreListener*'])
-
-      # Assets/Plugins/UnityPurchasing/Editor/UnityIAPInstaller.cs(496,53):
-      #   warning CS0618: `UnityEditor.PlayerSettings.cloudProjectId' is obsolete:
-      #  `cloudProjectId is deprecated, use CloudProjectSettings.projectId instead'
-      if UNITY_HOME.include? '2018'
-        files_to_fix = ['Assets/Plugins/UnityPurchasing/Editor/UnityIAPInstaller.cs']
-
-        files_to_fix.each do |file_name|
-          fixed_text = File.read(file_name).gsub(/PlayerSettings\.cloudProjectId/, 'CloudProjectSettings.projectId')
-          File.open(file_name, 'w') { |file| file.puts fixed_text }
-        end
-      end
-
-      # unity '-importPackage', 'Assets/Plugins/UnityPurchasing/UnityChannel.unitypackage'
-
-      # Assets/Plugins/UnityChannel/XiaomiSupport/Editor/AppStoreSettingsEditor.cs(36,18):
-      #  error CS0649: Field 'AppStoreSettingsEditor.ReqStruct.currentStep' is never assigned to,
-      #  and will always have its default value null
-      if Dir.exist? 'Assets/Plugins/UnityChannel/XiaomiSupport'
-        file_name = 'Assets/Plugins/UnityChannel/XiaomiSupport/Editor/AppStoreSettingsEditor.cs'
-        fixed_text = File.read(file_name).gsub(/public string currentStep;/, "#pragma warning disable\npublic string currentStep;\n#pragma warning restore")
-        File.open(file_name, 'w') { |file| file.puts fixed_text }
-      end
-    end
   end
 end
 
@@ -389,10 +371,8 @@ namespace :package do
       unity '-importPackage', 'Teak.unitypackage'
     end
 
-    if use_prime31?
+    if purchasing_plugin == :prime_31
       Rake::Task['prime31:import'].invoke
-    elsif use_unityiap?
-      Rake::Task['unity_iap:import'].invoke
     end
 
     Rake::Task['facebook:import'].invoke
@@ -444,11 +424,11 @@ namespace :build do
     additional_args.concat(['--debug']) unless prod?
 
     build_amazon = args[:amazon?] ? args[:amazon?].to_s == 'true' : false
-    build_il2cpp = android_il2cpp? || use_prime31?
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
-    additional_args.concat(['--il2cpp']) if build_il2cpp
+    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap?
+    additional_args.concat(['--il2cpp']) if android_il2cpp?
 
     print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', Args: additional_args
 

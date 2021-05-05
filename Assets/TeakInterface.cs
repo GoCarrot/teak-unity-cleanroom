@@ -66,8 +66,8 @@ public class TeakInterface : MonoBehaviour {
 
         // Add Prime31 event listeners
 #if USE_PRIME31 && UNITY_ANDROID
-        Prime31.GoogleIABManager.purchaseFailedEvent += Teak.Instance.prime31PurchaseFailed;
-        Prime31.GoogleIABManager.purchaseSucceededEvent += Teak.Instance.prime31PurchaseSucceded;
+        Prime31.GoogleIABManager.purchaseFailedEvent += Teak.Instance.Prime31PurchaseFailed;
+        Prime31.GoogleIABManager.purchaseSucceededEvent += Teak.Instance.Prime31PurchaseSucceded;
 #endif
     }
 
