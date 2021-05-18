@@ -529,12 +529,10 @@ public partial class TestDriver : MonoBehaviour
 
     public void OnPurchaseFailed(UnityEngine.Purchasing.Product item, PurchaseFailureReason r) {
         Debug.Log("[TestDriver-UnityIAP] OnPurchaseFailed: " + r);
-        Teak.Instance.UnityPurchaseFailed(r);
     }
 
     public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs e) {
         Debug.Log("[TestDriver-UnityIAP] ProcessPurchase: " + e.purchasedProduct.definition.id);
-        Teak.Instance.UnityPurchaseSucceeded(e);
         return PurchaseProcessingResult.Complete;
     }
 #endif // USE_UNITY_IAP && (UNITY_FACEBOOK || !UNITY_WEBGL)
