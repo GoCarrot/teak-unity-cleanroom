@@ -37,7 +37,7 @@ desc 'Build Unity package'
 task :default
 
 UNITY_COMPILERS = %i[gmsc smcs smcs mcs csc].freeze
-UNITY_HOME = ENV.fetch('UNITY_HOME', Dir.glob('/Applications/Unity*').first)
+UNITY_HOME = ENV.fetch('UNITY_HOME', Dir.glob('/Applications/Unity*').reject{ |f| f[%r{Unity Hub}] }.first)
 RVM_VARS = %w[GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH].freeze
 PROJECT_PATH = Rake.application.original_dir
 BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
