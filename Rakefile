@@ -127,7 +127,13 @@ end
 # Template parameters
 #
 def template_parameters
-  teak_version = File.read(File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')).match(/return "(.*)"/).captures[0]
+  teak_version_file = File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')
+  unless File.file?(teak_version_file)
+    base = Dir.glob('Library/PackageCache/io.teak.unity.sdk*').first
+    teak_version_file = File.join(base, 'Runtime', 'TeakVersion.cs')
+  end
+
+  teak_version = File.read(teak_version_file).match(/return "(.*)"/).captures[0]
   TEAK_CREDENTIALS[BUILD_TYPE].merge(
     app_name: "#{BUILD_TYPE.capitalize} #{teak_version}",
     target_api: TARGET_API
