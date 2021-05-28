@@ -291,6 +291,7 @@ GEM
       unf_ext
     unf_ext (0.0.7.7)
     unicode-display_width (2.0.0)
+    unitypackage (0.1.0)
     webrick (1.7.0)
     word_wrap (1.0.0)
     xcodeproj (1.19.0)
@@ -319,6 +320,7 @@ DEPENDENCIES
   rake
   rubocop
   terminal-notifier
+  unitypackage
   xcodeproj
   xcpretty
 

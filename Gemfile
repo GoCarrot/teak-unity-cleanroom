@@ -9,6 +9,7 @@ gem 'mustache'
 gem 'rake'
 gem 'rubocop'
 gem 'terminal-notifier'
+gem 'unitypackage'
 gem 'xcodeproj'
 gem 'xcpretty'
 
