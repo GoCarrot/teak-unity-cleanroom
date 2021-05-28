@@ -123,6 +123,10 @@ def unity_version
   end
 end
 
+def using_unitypackage?
+  File.file?(File.join(PROJECT_PATH, 'Teak.unitypackage'))
+end
+
 #
 # Template parameters
 #
@@ -162,7 +166,8 @@ end
 #
 def unity(*args, quit: true, nographics: true)
   manifest_parameters = {
-    use_unity_purchasing: purchasing_plugin == :unity_purchasing
+    use_unity_purchasing: purchasing_plugin == :unity_purchasing,
+    use_teak_upm: !using_unitypackage?
   }
   template = File.read(File.join(PROJECT_PATH, 'Templates', 'manifest.json.template'))
   File.write(File.join(PROJECT_PATH, 'Packages', 'manifest.json'),
@@ -332,6 +337,10 @@ namespace :facebook do
 end
 
 namespace :package do
+  task upm: [:clean] do
+    #empty
+  end
+
   task download: [:clean] do
     fastlane 'sdk'
   end
@@ -375,7 +384,7 @@ namespace :package do
   task :import do
     without_teak_available do
       unity '-importPackage', 'Teak.unitypackage'
-    end
+    end if using_unitypackage?
 
     if purchasing_plugin == :prime_31
       Rake::Task['prime31:import'].invoke

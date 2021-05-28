@@ -1,5 +1,8 @@
 {
   "dependencies": {
+{{#use_teak_upm}}
+    "io.teak.unity.sdk": "https://github.com/GoCarrot/upm-package-teak.git#4.0.0-preview.0",
+{{/use_teak_upm}}
     "com.google.firebase.messaging": "7.1.0",
     "com.unity.collab-proxy": "1.3.9",
     "com.unity.ide.rider": "2.0.7",

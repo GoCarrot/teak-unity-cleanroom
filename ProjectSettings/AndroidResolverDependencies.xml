@@ -1,8 +1,8 @@
 <dependencies>
   <packages>
     <package>androidx.core:core:1.0.+</package>
-    <package>androidx.work:work-runtime:2.5.0</package>
-    <package>com.android.installreferrer:installreferrer:1+</package>
+    <package>androidx.work:work-runtime:2.5.+</package>
+    <package>com.android.installreferrer:installreferrer:2.2+</package>
     <package>com.android.support:appcompat-v7:25.3.1</package>
     <package>com.android.support:cardview-v7:25.3.1</package>
     <package>com.android.support:customtabs:25.3.1</package>
@@ -19,8 +19,8 @@
     <package>com.google.firebase:firebase-analytics:18.0.2</package>
     <package>com.google.firebase:firebase-app-unity:7.1.0</package>
     <package>com.google.firebase:firebase-common:19.5.0</package>
-    <package>com.google.firebase:firebase-messaging:21.0.0</package>
     <package>com.google.firebase:firebase-messaging:21.0.1</package>
+    <package>com.google.firebase:firebase-messaging:21+</package>
     <package>com.google.firebase:firebase-messaging-unity:7.1.0</package>
     <package>com.parse.bolts:bolts-android:1.4.0</package>
     <package>org.greenrobot:eventbus:3.2.0</package>
@@ -70,7 +70,7 @@
     <file>Assets/Plugins/Android/androidx.versionedparcelable.versionedparcelable-1.1.0.aar</file>
     <file>Assets/Plugins/Android/androidx.viewpager.viewpager-1.0.0.aar</file>
     <file>Assets/Plugins/Android/androidx.work.work-runtime-2.5.0.aar</file>
-    <file>Assets/Plugins/Android/com.android.installreferrer.installreferrer-1.1.2.aar</file>
+    <file>Assets/Plugins/Android/com.android.installreferrer.installreferrer-2.2.aar</file>
     <file>Assets/Plugins/Android/com.facebook.android.facebook-applinks-9.1.1.aar</file>
     <file>Assets/Plugins/Android/com.facebook.android.facebook-common-9.1.1.aar</file>
     <file>Assets/Plugins/Android/com.facebook.android.facebook-core-9.1.1.aar</file>
@@ -81,7 +81,7 @@
     <file>Assets/Plugins/Android/com.google.android.datatransport.transport-backend-cct-2.3.3.aar</file>
     <file>Assets/Plugins/Android/com.google.android.datatransport.transport-runtime-2.2.5.aar</file>
     <file>Assets/Plugins/Android/com.google.android.gms.play-services-ads-identifier-17.0.0.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-base-17.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-base-16.1.0.aar</file>
     <file>Assets/Plugins/Android/com.google.android.gms.play-services-basement-17.0.0.aar</file>
     <file>Assets/Plugins/Android/com.google.android.gms.play-services-cloud-messaging-16.0.0.aar</file>
     <file>Assets/Plugins/Android/com.google.android.gms.play-services-measurement-18.0.2.aar</file>
@@ -100,12 +100,12 @@
     <file>Assets/Plugins/Android/com.google.firebase.firebase-datatransport-17.0.10.aar</file>
     <file>Assets/Plugins/Android/com.google.firebase.firebase-encoders-16.1.0.jar</file>
     <file>Assets/Plugins/Android/com.google.firebase.firebase-encoders-json-17.1.0.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-iid-21.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-iid-interop-17.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-iid-21.1.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-iid-interop-17.1.0.aar</file>
     <file>Assets/Plugins/Android/com.google.firebase.firebase-installations-16.3.5.aar</file>
     <file>Assets/Plugins/Android/com.google.firebase.firebase-installations-interop-16.0.1.aar</file>
     <file>Assets/Plugins/Android/com.google.firebase.firebase-measurement-connector-18.0.0.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-messaging-21.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-messaging-21.1.0.aar</file>
     <file>Assets/Plugins/Android/com.google.firebase.firebase-messaging-unity-7.1.0.aar</file>
     <file>Assets/Plugins/Android/com.google.guava.listenablefuture-1.0.jar</file>
     <file>Assets/Plugins/Android/com.google.zxing.core-3.3.3.jar</file>
