@@ -56,27 +56,6 @@ public partial class TestDriver : MonoBehaviour {
 #endif
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-                // Make sure that these methods don't get obfuscated
-                TestBuilder.Build("Android Plugin Purchase Methods Exposed", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        bool success = true;
-                        AndroidJavaClass teak = new AndroidJavaClass("io.teak.sdk.Teak");
-
-                        IntPtr pluginPurchaseSucceeded = AndroidJNI.GetStaticMethodID(
-                            teak.GetRawClass(),
-                            "pluginPurchaseSucceeded",
-                            "(Ljava/lang/String;Ljava/lang/String;)V");
-                        success &= pluginPurchaseSucceeded != IntPtr.Zero;
-
-                        IntPtr pluginPurchaseFailed = AndroidJNI.GetStaticMethodID(
-                            teak.GetRawClass(),
-                            "pluginPurchaseFailed",
-                            "(ILjava/lang/String;)V");
-                        success &= pluginPurchaseFailed != IntPtr.Zero;
-
-                        state(success ? Test.TestState.Passed : Test.TestState.Failed);
-                    }),
-
                 // For 2.1.1, test to make certain that io_teak_enable_caching is definitely
                 // removed and disabled (even if the XML persists)
                 TestBuilder.Build("Android io_teak_enable_caching is disabled", this)
