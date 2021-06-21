@@ -46,6 +46,7 @@ TEAK_CREDENTIALS = {
   'dev' => {
     package_name: 'io.teak.app.unity.dev',
     facebook_app_id: '613659812345256', # Test app 274159874171598
+    facebook_client_token: '6a570e61cb8df8da11e55729f6b9163c',
     teak_app_id: '613659812345256',
     teak_api_key: '41ff00cfd4cb85702e265aa3d5ab7858',
     teak_gcm_sender_id: '12126273415',
@@ -59,6 +60,7 @@ TEAK_CREDENTIALS = {
   'prod' => {
     package_name: 'io.teak.app.unity.prod',
     facebook_app_id: '1136371193060244',
+    facebook_client_token: '000249829bec9aaf3a26bba738a7efa5',
     teak_app_id: '1136371193060244',
     teak_api_key: '1f3850f794b9093864a0778009744d03',
     teak_gcm_sender_id: '12126273415',

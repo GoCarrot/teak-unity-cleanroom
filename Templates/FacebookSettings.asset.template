@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectedAppIndex: 0
   clientTokens:
-  - 
+  - {{facebook_client_token}}
   appIds:
   - {{facebook_app_id}}
   appLabels:
