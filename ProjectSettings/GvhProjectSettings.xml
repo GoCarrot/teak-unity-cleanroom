@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <projectSettings>
   <projectSetting name="com.google.firebaseAnalyticsEnabled" value="False" />
   <projectSetting name="com.google.unity.oss.play_services_resolverAnalyticsEnabled" value="False" />
