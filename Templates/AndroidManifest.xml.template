@@ -15,6 +15,10 @@
       <meta-data android:name="io.teak.sdk.initialize" android:value="true"/>
     </activity>
 
+    <!-- Because everything about Android is horrible... -->
+    <service android:name="com.google.firebase.messaging.cpp.ListenerService"
+             tools:node="remove" />
+
     <!-- hax -->
     <meta-data android:name="io_teak_developer_version" android:value="teakasdf"/>
 
