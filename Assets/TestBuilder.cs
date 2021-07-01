@@ -145,10 +145,10 @@ class TestBuilder {
         };
     }
 
-    private Action<TeakNotification, Action<Test.TestState>> ValidateNotification(string creativeId) {
+    private Action<TeakNotification, Action<Test.TestState>> ValidateNotification(string creativeName) {
         return (TeakNotification notification, Action<Test.TestState> state) => {
             bool notificationValid = true;
-            notificationValid &= creativeId.Equals(notification.CreativeId, System.StringComparison.Ordinal);
+            notificationValid &= creativeName.Equals(notification.CreativeName, System.StringComparison.Ordinal);
 #if TEAK_3_2_OR_NEWER
 #   if UNITY_IOS
             notificationValid &= "ios_push".Equals(notification.ChannelName, System.StringComparison.Ordinal);
