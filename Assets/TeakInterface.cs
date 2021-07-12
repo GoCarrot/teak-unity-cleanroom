@@ -62,7 +62,7 @@ public class TeakInterface : MonoBehaviour {
 #endif
 
         // IdentifyUser starts the things
-        Teak.Instance.IdentifyUser(this.TeakUserId);
+        Teak.Instance.IdentifyUser(this.TeakUserId, "team@teak.io");
 
         // Add Prime31 event listeners
 #if USE_PRIME31 && UNITY_ANDROID
