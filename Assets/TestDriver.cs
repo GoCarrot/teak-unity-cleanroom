@@ -12,6 +12,9 @@ using System.Reflection;
 
 #if !TEAK_NOT_AVAILABLE
 using MiniJSON.Teak;
+#endif
+
+#if UNITY_FACEBOOK
 using Facebook.Unity;
 #endif
 
@@ -87,6 +90,7 @@ public partial class TestDriver : MonoBehaviour
 
     void Awake() {
 #if !TEAK_NOT_AVAILABLE
+#if UNITY_FACEBOOK
         if (!FB.IsInitialized) {
             FB.Init(() => {
                 if (FB.IsInitialized) {
@@ -102,6 +106,7 @@ public partial class TestDriver : MonoBehaviour
             FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"});
 #endif
         }
+#endif // UNITY_FACEBOOK
 
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
             this.LaunchedFromDeepLinkPath = parameters["__incoming_url"] as string;
@@ -331,6 +336,7 @@ public partial class TestDriver : MonoBehaviour
         }
 #endif
 
+#if UNITY_FACEBOOK
         // Facebook Login/Logout
         if (FB.IsLoggedIn) {
             Button button = this.CreateButton("Facebook Logout");
@@ -355,6 +361,7 @@ public partial class TestDriver : MonoBehaviour
 #endif
             });
         }
+#endif // UNITY_FACEBOOK
 
 #endif // TEAK_NOT_AVAILABLE
 

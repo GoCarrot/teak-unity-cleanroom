@@ -129,6 +129,10 @@ def using_unitypackage?
   File.file?(File.join(PROJECT_PATH, 'Teak.unitypackage'))
 end
 
+def use_facebook?
+  ENV.fetch('USE_FACEBOOK', true).to_s == 'true'
+end
+
 #
 # Template parameters
 #
@@ -169,7 +173,8 @@ end
 def unity(*args, quit: true, nographics: true)
   manifest_parameters = {
     use_unity_purchasing: purchasing_plugin == :unity_purchasing,
-    use_teak_upm: !using_unitypackage?
+    use_teak_upm: !using_unitypackage?,
+    use_facebook: use_facebook?
   }
   template = File.read(File.join(PROJECT_PATH, 'Templates', 'manifest.json.template'))
   File.write(File.join(PROJECT_PATH, 'Packages', 'manifest.json'),
@@ -388,11 +393,8 @@ namespace :package do
       unity '-importPackage', 'Teak.unitypackage'
     end if using_unitypackage?
 
-    if purchasing_plugin == :prime_31
-      Rake::Task['prime31:import'].invoke
-    end
-
-    Rake::Task['facebook:import'].invoke
+    Rake::Task['prime31:import'].invoke if purchasing_plugin == :prime_31
+    Rake::Task['facebook:import'].invoke if use_facebook?
   end
 end
 
@@ -400,20 +402,26 @@ namespace :config do
   task all: %i[id settings apple_team_id]
 
   task :id do
-    unity '-executeMethod', 'BuildPlayer.SetBundleId', PACKAGE_NAME
+    without_teak_available do
+      unity '-executeMethod', 'BuildPlayer.SetBundleId', PACKAGE_NAME
+    end
   end
 
   task :apple_team_id do
-    unity '-executeMethod', 'BuildPlayer.SetAppleTeamId', '7FLZTACJ82' # TODO: Pull from Fastlane
+    without_teak_available do
+      unity '-executeMethod', 'BuildPlayer.SetAppleTeamId', '7FLZTACJ82' # TODO: Pull from Fastlane
+    end
   end
 
   task :settings do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'TeakSettings.asset.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Resources', 'TeakSettings.asset'), Mustache.render(template, template_parameters))
 
-    mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
-    template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
-    File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
+    if use_facebook?
+      mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
+      template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
+      File.write(File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources', 'FacebookSettings.asset'), Mustache.render(template, template_parameters))
+    end
   end
 end
 
