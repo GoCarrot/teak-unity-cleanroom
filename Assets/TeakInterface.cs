@@ -61,8 +61,23 @@ public class TeakInterface : MonoBehaviour {
         }
 #endif
 
+#if TEAK_4_1_OR_NEWER
         // IdentifyUser starts the things
+        Teak.UserConfiguration userConfiguration = new Teak.UserConfiguration {
+            Email = "team@teak.io",
+            FacebookId = "12345",
+            OptOutFacebook = false,
+            OptOutPushKey = false,
+            OptOutIdfa = true
+        };
+
+        Teak.Instance.IdentifyUser(this.TeakUserId, userConfiguration);
+
+        // Just ensure this works
+        Teak.Instance.RefreshPushTokenIfAuthorized();
+#else
         Teak.Instance.IdentifyUser(this.TeakUserId, "team@teak.io");
+#endif
 
         // Add Prime31 event listeners
 #if USE_PRIME31 && UNITY_ANDROID
