@@ -52,6 +52,9 @@ public class TeakInterface : MonoBehaviour {
 #if TEAK_3_4_OR_NEWER
         Teak.Instance.OnLaunchedFromLink += OnLaunchedFromLink;
 #endif
+#if TEAK_4_1_OR_NEWER
+        Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
+#endif
 
 #if TEAK_2_0_OR_NEWER
         // Print out notification state
@@ -98,6 +101,10 @@ public class TeakInterface : MonoBehaviour {
 
     void OnLaunchedFromLink(Dictionary<string, object> json) {
         Debug.Log("[Teak Unity Cleanroom] OnLaunchedFromLink: " + Json.Serialize(json));
+    }
+
+    void OnPostLaunchSummary(Dictionary<string, object> json) {
+        Debug.Log("[Teak Unity Cleanroom] OnPostLaunchSummary: " + Json.Serialize(json));
     }
 
     // To use this callback example, simply register it during Start() like so:
