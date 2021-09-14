@@ -480,6 +480,8 @@ namespace :build do
   task ios: ['ios:all']
 
   task webgl: [:warnings_as_errors] do
+    raise "Need to build using Unity 2020" unless UNITY_HOME =~ /202\d/
+
     begin
       tmpdir = Dir.mktmpdir
       FileUtils.mv 'Assets/Plugins/UnityPurchasing', "#{tmpdir}/UnityPurchasing", force: true
