@@ -103,9 +103,11 @@ public class TeakInterface : MonoBehaviour {
         Debug.Log("[Teak Unity Cleanroom] OnLaunchedFromLink: " + Json.Serialize(json));
     }
 
-    void OnPostLaunchSummary(Dictionary<string, object> json) {
-        Debug.Log("[Teak Unity Cleanroom] OnPostLaunchSummary: " + Json.Serialize(json));
+#if TEAK_4_1_OR_NEWER
+    void OnPostLaunchSummary(TeakPostLaunchSummary postLaunchSummary) {
+        Debug.Log("[Teak Unity Cleanroom] OnPostLaunchSummary: " + postLaunchSummary.ToString());
     }
+#endif
 
     // To use this callback example, simply register it during Start() like so:
     //     Teak.Instance.OnReward += OnReward;
