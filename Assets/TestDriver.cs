@@ -397,8 +397,8 @@ public partial class TestDriver : MonoBehaviour
 
     ///// Test Helpers
     public void OnTestBuilderTestDone() {
-        this.AdvanceTests();
         StartCoroutine(Coroutine.DoDuringFixedUpdate(() => {
+            this.AdvanceTests();
             this.SetupUI();
         }));
     }
