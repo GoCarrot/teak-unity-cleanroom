@@ -148,7 +148,12 @@ class TestBuilder {
     private Action<TeakNotification, Action<Test.TestState>> ValidateNotification(string creativeName) {
         return (TeakNotification notification, Action<Test.TestState> state) => {
             bool notificationValid = true;
+#if TEAK_4_0_OR_NEWER
             notificationValid &= creativeName.Equals(notification.CreativeName, System.StringComparison.Ordinal);
+#else
+            notificationValid &= creativeName.Equals(notification.CreativeId, System.StringComparison.Ordinal);
+#endif
+
 #if TEAK_3_2_OR_NEWER
 #   if UNITY_IOS
             notificationValid &= "ios_push".Equals(notification.ChannelName, System.StringComparison.Ordinal);
