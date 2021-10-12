@@ -11,6 +11,7 @@ public partial class TestDriver : MonoBehaviour {
         get {
             return new List<Test> {
 #if !TEAK_NOT_AVAILABLE
+
 #if TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Reward Link", this)
                     .ExpectDeepLink()
@@ -43,6 +44,15 @@ public partial class TestDriver : MonoBehaviour {
                     ,
 
 #endif // TEAK_2_2_OR_NEWER
+
+#if TEAK_4_2_OR_NEWER
+                TestBuilder.Build("Handle Deep Link Path", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        state(Teak.Instance.HandleDeepLinkPath("/test/asdf") ?
+                            Test.TestState.Passed : Test.TestState.Failed);
+                    })
+                    .ExpectDeepLink(),
+#endif
 
 #if UNITY_IOS
                 TestBuilder.Build("Push Notification Permission", this)
