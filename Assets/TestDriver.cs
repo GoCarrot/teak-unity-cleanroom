@@ -160,6 +160,9 @@ public partial class TestDriver : MonoBehaviour
 #if TEAK_3_2_OR_NEWER
     Teak.Instance.OnCallbackError += OnCallbackError;
 #endif
+#if TEAK_4_2_OR_NEWER
+    Teak.Instance.OnUserData += OnUserData;
+#endif
 #endif // TEAK_NOT_AVAILABLE
     }
 
@@ -224,6 +227,12 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 #endif // TEAK_3_2_OR_NEWER
+
+#if TEAK_4_2_OR_NEWER
+    void OnUserData(Teak.UserData userData) {
+        Debug.Log("[OnUserData]: " + userData.ToString());
+    }
+#endif
 #endif // TEAK_NOT_AVAILABLE
 
     private void SetupUI() {
@@ -263,7 +272,7 @@ public partial class TestDriver : MonoBehaviour
         }
 
         // Purchase testing
-#if UNITY_WEBGL
+#if false && UNITY_WEBGL
         {
             Button button = this.CreateButton("Test Purchase");
             button.onClick.AddListener(() => {

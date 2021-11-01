@@ -526,7 +526,7 @@ namespace :ios do
     unity '-buildTarget', 'iOS', '-executeMethod', 'BuildPlayer.iOS', *additional_args
 
     cd 'Unity-iPhone', verbose: false do
-      sh 'pod install'
+      sh 'pod install' if File.file?('Podfile')
     end
   end
 
