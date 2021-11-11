@@ -170,8 +170,9 @@ public class BuildPlayer
         EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
 
         // #defines
+        string[] defines = null;
         if (parsedArgs.ContainsKey("define")) {
-            string[] defines = parsedArgs["define"] as string[];
+            defines = parsedArgs["define"] as string[];
             if (defines == null) {
                 defines = new string[] { parsedArgs["define"] as string };
             }
@@ -188,6 +189,13 @@ public class BuildPlayer
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
         } else {
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.Mono2x);
+        }
+
+        // UnityIAP. This changes Assets/Resources/BillingMode.json
+        if (defines != null && Array.Exists(defines, element => element == "AMAZON")) {
+            UnityEditor.Purchasing.UnityPurchasingEditor.TargetAndroidStore(UnityEngine.Purchasing.AndroidStore.AmazonAppStore);
+        } else {
+            UnityEditor.Purchasing.UnityPurchasingEditor.TargetAndroidStore(UnityEngine.Purchasing.AndroidStore.NotSpecified);
         }
 
         PlayerSettings.Android.androidIsGame = true;
