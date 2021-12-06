@@ -176,7 +176,7 @@ def unity(*args, quit: true, nographics: true)
     use_teak_upm: !using_unitypackage?,
     use_facebook: use_facebook?
   }
-  template = File.read(File.join(PROJECT_PATH, 'Templates', 'manifest.json.template'))
+  template = File.read(File.join(PROJECT_PATH, 'Templates', unity_version == 2018 ? 'manifest.json.template2018' : 'manifest.json.template'))
   File.write(File.join(PROJECT_PATH, 'Packages', 'manifest.json'),
     Mustache.render(template, manifest_parameters))
 

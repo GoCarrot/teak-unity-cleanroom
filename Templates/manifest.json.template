@@ -5,7 +5,7 @@
 {{/use_teak_upm}}
     "com.google.firebase.messaging": "7.2.0",
 {{#use_unity_purchasing}}
-    "com.unity.purchasing": "3.1.0",
+    "com.unity.purchasing": "3.2.3",
 {{/use_unity_purchasing}}
     "com.unity.timeline": "1.4.6",
     "com.unity.ugui": "1.0.0",

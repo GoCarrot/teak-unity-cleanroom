@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿#define USE_UNITY_IAP
+
+using UnityEngine;
 using UnityEngine.UI;
 
 #if USE_UNITY_IAP && (UNITY_FACEBOOK || !UNITY_WEBGL)
