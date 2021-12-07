@@ -103,7 +103,7 @@ class TestBuilder {
         return this;
     }
 
-#if !TEAK_NOT_AVAILABLE && TEAK_2_2_OR_NEWER
+#if !TEAK_NOT_AVAILABLE
     public TestBuilder ExpectLogEvent(Action<TeakLogEvent, Action<Test.TestState>> action) {
         test.OnLogEvent = action;
         return this;
@@ -148,19 +148,14 @@ class TestBuilder {
     private Action<TeakNotification, Action<Test.TestState>> ValidateNotification(string creativeName) {
         return (TeakNotification notification, Action<Test.TestState> state) => {
             bool notificationValid = true;
-#if TEAK_4_0_OR_NEWER
-            notificationValid &= creativeName.Equals(notification.CreativeName, System.StringComparison.Ordinal);
-#else
-            notificationValid &= creativeName.Equals(notification.CreativeId, System.StringComparison.Ordinal);
-#endif
 
-#if TEAK_3_2_OR_NEWER
-#   if UNITY_IOS
+            notificationValid &= creativeName.Equals(notification.CreativeName, System.StringComparison.Ordinal);
+
+#if UNITY_IOS
             notificationValid &= "ios_push".Equals(notification.ChannelName, System.StringComparison.Ordinal);
-#   elif UNITY_ANDROID
+#elif UNITY_ANDROID
             notificationValid &= "android_push".Equals(notification.ChannelName, System.StringComparison.Ordinal);
-#   endif
-#endif // TEAK_3_2_OR_NEWER
+#endif
             state(notificationValid ? Test.TestState.Passed : Test.TestState.Failed);
         };
     }

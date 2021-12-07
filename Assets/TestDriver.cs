@@ -118,12 +118,10 @@ public partial class TestDriver : MonoBehaviour
                 this.testEnumerator.Current.DeepLink(parameters);
             }
 
-#if TEAK_3_2_OR_NEWER
             // Throw a test exception
             if (!this.DeepLinkTestExceptionThrown) {
                 throw new ArgumentException("Test exception");
             }
-#endif
         });
 
         this.SetupStorePlugin();
@@ -155,15 +153,12 @@ public partial class TestDriver : MonoBehaviour
 #if !TEAK_NOT_AVAILABLE
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
-#if TEAK_2_2_OR_NEWER
         Teak.Instance.OnLogEvent += OnLogEvent;
         Teak.Instance.OnForegroundNotification += OnForegroundNotification;
-#endif
-#if TEAK_3_2_OR_NEWER
-    Teak.Instance.OnCallbackError += OnCallbackError;
-#endif
+        Teak.Instance.OnCallbackError += OnCallbackError;
+
 #if TEAK_4_2_OR_NEWER
-    Teak.Instance.OnUserData += OnUserData;
+        Teak.Instance.OnUserData += OnUserData;
 #endif
 #endif // TEAK_NOT_AVAILABLE
     }
@@ -201,7 +196,7 @@ public partial class TestDriver : MonoBehaviour
             this.testEnumerator.Current.Reward(reward);
         }
     }
-#if TEAK_2_2_OR_NEWER
+
     void OnLogEvent(Dictionary<string, object> logEvent) {
         TeakLogEvent teakLogEvent = new TeakLogEvent(logEvent);
         if (this.testEnumerator != null) {
@@ -216,9 +211,7 @@ public partial class TestDriver : MonoBehaviour
             this.LaunchedFromDeepLinkPath = teakLogEvent.EventData["url"] as string;
         }
     }
-#endif // TEAK_2_2_OR_NEWER
 
-#if TEAK_3_2_OR_NEWER
     bool DeepLinkTestExceptionThrown { get; set; }
     void OnCallbackError(string callback, Exception exception, Dictionary<string, object> data) {
         if (!this.DeepLinkTestExceptionThrown) {
@@ -228,7 +221,6 @@ public partial class TestDriver : MonoBehaviour
 #   endif
         }
     }
-#endif // TEAK_3_2_OR_NEWER
 
 #if TEAK_4_2_OR_NEWER
     void OnUserData(Teak.UserData userData) {
@@ -500,10 +492,8 @@ public partial class TestDriver : MonoBehaviour
             { this.testPurchaseSku, AppleAppStore.Name }
         });
 
-#if TEAK_2_0_OR_NEWER
         Debug.Log("[TestDriver] Initializing UnityPurchasing...");
         UnityPurchasing.Initialize(this, builder);
-#endif // #TEAK_2_0_OR_NEWER
 
 #endif // USE_PRIME31
 #endif // !TEAK_NOT_AVAILABLE

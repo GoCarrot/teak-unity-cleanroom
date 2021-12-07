@@ -46,23 +46,18 @@ public class TeakInterface : MonoBehaviour {
         // Assign Teak Callbacks
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
         Teak.Instance.OnReward += OnReward;
-#if TEAK_2_2_OR_NEWER
         Teak.Instance.OnLogEvent += OnLogEvent;
-#endif
-#if TEAK_3_4_OR_NEWER
         Teak.Instance.OnLaunchedFromLink += OnLaunchedFromLink;
-#endif
+
 #if TEAK_4_1_OR_NEWER
         Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
 #endif
 
-#if TEAK_2_0_OR_NEWER
         // Print out notification state
         Debug.Log("[Teak Unity Cleanroom] Notification State: " + Teak.Instance.PushNotificationState);
         if (Teak.Instance.PushNotificationState == Teak.NotificationState.Disabled) {
             Debug.Log("Notifications are disabled!");
         }
-#endif
 
 #if TEAK_4_1_OR_NEWER
         // IdentifyUser starts the things
@@ -156,11 +151,9 @@ public class TeakInterface : MonoBehaviour {
         }
     }
 
-#if TEAK_2_2_OR_NEWER
     void OnLogEvent(Dictionary<string, object> logData) {
         // Debug.Log(new TeakLogEvent(logData));
     }
-#endif
 #endregion
 
     public IEnumerator GetUserJson(Action<Dictionary<string, object>> action) {

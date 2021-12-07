@@ -12,11 +12,10 @@ public partial class TestDriver : MonoBehaviour {
             return new List<Test> {
 #if !TEAK_NOT_AVAILABLE
 
-#if TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Reward Link", this)
                     .ExpectDeepLink()
                     .ExpectReward()
-#   if !UNITY_WEBGL
+#if !UNITY_WEBGL
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
                         // Make sure it has app_version and app_version_name (Android only)
                         if ("request.send".Equals(logEvent.EventType) &&
@@ -35,15 +34,10 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Pending);
                         }
                     })
-#   endif // UNITY_WEBGL
-#   if TEAK_3_2_OR_NEWER
+#endif // !UNITY_WEBGL
                     .BeforeFinished((Action<Test.TestState> state) => {
                         state(this.DeepLinkTestExceptionThrown ? Test.TestState.Passed : Test.TestState.Failed);
-                    })
-#   endif // TEAK_3_2_OR_NEWER
-                    ,
-
-#endif // TEAK_2_2_OR_NEWER
+                    }),
 
 #if TEAK_4_2_OR_NEWER
                 TestBuilder.Build("Handle Deep Link Path", this)
@@ -76,7 +70,7 @@ public partial class TestDriver : MonoBehaviour {
                     }),
 #endif
 
-#if TEAK_2_2_OR_NEWER && !UNITY_WEBGL
+#if !UNITY_WEBGL
                 TestBuilder.Build("Notification with Emoji", this)
                     .WhenStarted((Action<Test.TestState> state) => {
 
@@ -93,11 +87,7 @@ public partial class TestDriver : MonoBehaviour {
 
 #   if UNITY_IOS
                         // On iOS there should be no errors
-#       if TEAK_3_1_OR_NEWER
                         if ("notification.foreground".Equals(logEvent.EventType) || "notification.received".Equals(logEvent.EventType)) {
-#       else
-                        if ("notification.received".Equals(logEvent.EventType) || "notification.received".Equals(logEvent.EventType)) {
-#       endif // TEAK_3_1_OR_NEWER
                             state(Test.TestState.Passed);
                             return;
                         }
@@ -114,10 +104,7 @@ public partial class TestDriver : MonoBehaviour {
 #   endif // UNITY_IOS
                         state(Test.TestState.Pending);
                     }),
-#else // TEAK_2_2_OR_NEWER && !UNITY_WEBGL
-                TestBuilder.Build("Simple Notification", this)
-                    .ScheduleNotification("test_none"),
-#endif // TEAK_2_2_OR_NEWER && !UNITY_WEBGL
+#endif // !UNITY_WEBGL
 
                 TestBuilder.Build("Cancel Notification", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -171,7 +158,6 @@ public partial class TestDriver : MonoBehaviour {
                         }));
                     }),
 
-#if TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Notification with Non-Teak Deep Link (backgrounded)", this)
                     .OnlyIOS()
                     .ScheduleBackgroundNotification("test_nonteak_deeplink")
@@ -182,9 +168,7 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Pending);
                         }
                     }),
-#endif // TEAK_2_2_OR_NEWER
 
-#if TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Store Current Deep Link Path", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -197,9 +181,7 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Passed);
                         }));
                     }),
-#endif // TEAK_2_2_OR_NEWER
 
-#if TEAK_2_3_OR_NEWER
                 TestBuilder.Build("Re-Identify User Providing Email", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -225,9 +207,7 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Pending);
                         }
                     }),
-#endif // TEAK_2_3_OR_NEWER
 
-#if TEAK_2_2_OR_NEWER
                 // This should be the last test in the list, just to keep it easy
                 TestBuilder.Build("Re-Identify User with New User Id", this)
                     .ExcludeWebGL()
@@ -253,9 +233,7 @@ public partial class TestDriver : MonoBehaviour {
                     .WhenFinished(() => {
                         Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
                     }),
-#endif // TEAK_2_2_OR_NEWER
 
-#if TEAK_2_2_OR_NEWER
                 TestBuilder.Build("Ensure re-identifying the user didn't re-run deep links", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -268,9 +246,7 @@ public partial class TestDriver : MonoBehaviour {
                             }
                         }));
                     }),
-#endif // TEAK_2_2_OR_NEWER
 
-#if TEAK_3_2_OR_NEWER
                 TestBuilder.Build("Logout", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -285,8 +261,6 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Pending);
                         }
                     })
-#endif // TEAK_3_2_OR_NEWER
-
 #endif // !TEAK_NOT_AVAILABLE
             };
         }
