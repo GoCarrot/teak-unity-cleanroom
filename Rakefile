@@ -229,6 +229,7 @@ def print_build_msg(platform, args = nil)
   build_msg = <<~BUILD_MSG
     #{'-' * 80}
     Building #{PACKAGE_NAME} - #{platform} - #{BUILD_TYPE.capitalize}
+    Unity Location: #{UNITY_HOME}
     Teak SDK: #{`cat TEAK_VERSION`}#{"\n" + args.map { |k, v| "#{k}: #{v}" }.join(', ') if args}
     #{'-' * 80}
   BUILD_MSG
