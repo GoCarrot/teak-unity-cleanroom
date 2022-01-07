@@ -193,9 +193,9 @@ public class BuildPlayer
 
         // UnityIAP. This changes Assets/Resources/BillingMode.json
         if (defines != null && Array.Exists(defines, element => element == "AMAZON")) {
-            UnityEditor.Purchasing.UnityPurchasingEditor.TargetAndroidStore(UnityEngine.Purchasing.AndroidStore.AmazonAppStore);
+            UnityEditor.Purchasing.UnityPurchasingEditor.TargetAndroidStore(UnityEngine.Purchasing.AppStore.AmazonAppStore);
         } else {
-            UnityEditor.Purchasing.UnityPurchasingEditor.TargetAndroidStore(UnityEngine.Purchasing.AndroidStore.NotSpecified);
+            UnityEditor.Purchasing.UnityPurchasingEditor.TargetAndroidStore(UnityEngine.Purchasing.AppStore.GooglePlay);
         }
 
         PlayerSettings.Android.androidIsGame = true;
