@@ -208,7 +208,7 @@ public class BuildPlayer
         DoBuildPlayer(buildPlayerOptions);
     }
 
-#if !TEAK_NOT_AVAILABLE
+#if !TEAK_NOT_AVAILABLE && UNITY_IOS
     [PostProcessBuild(100)]
     public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
         if (target != BuildTarget.iOS) return;
@@ -293,7 +293,7 @@ public class BuildPlayer
         return buildOptions;
     }
 
-#if !TEAK_NOT_AVAILABLE
+#if !TEAK_NOT_AVAILABLE && UNITY_IOS
     public static void AddURLSchemeToPlist(PlistDocument plist, string urlSchemeToAdd) {
         // Get/create array of URL types
         PlistElementArray urlTypesArray = null;
@@ -335,5 +335,5 @@ public class BuildPlayer
             urlSchemesArray.Add(urlSchemeToAdd);
         }
     }
-#endif // #if !TEAK_NOT_AVAILABLE
+#endif // #if !TEAK_NOT_AVAILABLE && UNITY_IOS
 }
