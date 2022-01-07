@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:amazon="http://schemas.amazon.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="com.unity3d.player" android:installLocation="preferExternal" android:versionCode="1" android:versionName="1.0">
   <supports-screens android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" android:xlargeScreens="true" android:anyDensity="true" />
   <application android:theme="@android:style/Theme.NoTitleBar.Fullscreen" android:debuggable="true">
-    <activity android:name="com.unity3d.player.UnityPlayerActivity" android:label="{{app_name}} API {{target_api}}">
+    <activity android:name="com.unity3d.player.UnityPlayerActivity" android:label="{{app_name}} API {{target_api}}" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
@@ -26,7 +26,7 @@
     <meta-data android:name="io_teak_log_trace" android:value="true" />
 
     <!-- Amazon IAP -->
-    <receiver android:name = "com.amazon.device.iap.ResponseReceiver" >
+    <receiver android:name = "com.amazon.device.iap.ResponseReceiver" android:exported="true">
       <intent-filter>
         <action android:name = "com.amazon.inapp.purchasing.NOTIFY"
                 android:permission = "com.amazon.inapp.purchasing.Permission.NOTIFY" />
