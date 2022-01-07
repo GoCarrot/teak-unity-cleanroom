@@ -151,7 +151,7 @@ public class BuildPlayer
             Debug.Log("[teak-unity-cleanroom] Setting Target API Level to " + targetApiVersion);
             PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)targetApiVersion;
         } else {
-            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
+            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel30;
         }
 
         // Signing Key
