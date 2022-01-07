@@ -73,7 +73,8 @@ class TestBuilder {
         // TODO: rewardItem
 #if !TEAK_NOT_AVAILABLE
         test.OnReward = (TeakReward reward, Action<Test.TestState> state) => {
-            state(string.IsNullOrEmpty(reward.RewardId) ? Test.TestState.Failed : Test.TestState.Passed);
+            state(string.IsNullOrEmpty(reward.RewardId) || test.OnRewardCalls > 0 ? Test.TestState.Failed : Test.TestState.Passed);
+            test.OnRewardCalls++;
         };
 #endif
         return this;
