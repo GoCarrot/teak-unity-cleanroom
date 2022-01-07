@@ -14,6 +14,11 @@ using MiniJSON.Teak;
 public class TeakInterface : MonoBehaviour {
     public string TeakUserId { get; private set; }
 
+    // Can filter logs for "Launch Matrix" and just see these events, without stack trace
+    void LogLaunchMatrixEvent(string logMessage) {
+        UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[✅] Event: {0}", logMessage);
+    }
+
     // Suppress the "is never used and will always have its default value" warning
 #pragma warning disable
     public event Action<string> OnPushTokenChanged;
@@ -28,6 +33,10 @@ public class TeakInterface : MonoBehaviour {
         // Make sure your calls to Teak.Instance.RegisterRoute are in Awake()
         Teak.Instance.RegisterRoute("/store/:sku", "Store", "Open the store to an SKU", (Dictionary<string, object> parameters) => {
             Debug.Log("[Teak Unity Cleanroom] Got store deep link: " + Json.Serialize(parameters));
+        });
+
+        Teak.Instance.RegisterRoute("/slots/:sku", "Testing", "Used for launch matrix testing", (Dictionary<string, object> parameters) => {
+            LogLaunchMatrixEvent("Deep Link");
         });
     }
 
@@ -92,15 +101,20 @@ public class TeakInterface : MonoBehaviour {
 #region Teak
     void OnLaunchedFromNotification(TeakNotification notification) {
         Debug.Log("[Teak Unity Cleanroom] OnLaunchedFromNotification: " + notification.ToString());
+        LogLaunchMatrixEvent("Notification");
     }
 
     void OnLaunchedFromLink(Dictionary<string, object> json) {
         Debug.Log("[Teak Unity Cleanroom] OnLaunchedFromLink: " + Json.Serialize(json));
+        LogLaunchMatrixEvent("Link Launch");
     }
 
 #if TEAK_4_1_OR_NEWER
     void OnPostLaunchSummary(TeakPostLaunchSummary postLaunchSummary) {
         Debug.Log("[Teak Unity Cleanroom] OnPostLaunchSummary: " + postLaunchSummary.ToString());
+
+        // PostLaunchSummary should always happen last, so this will separate out tests
+        LogLaunchMatrixEvent("-----");
     }
 #endif
 
@@ -109,6 +123,7 @@ public class TeakInterface : MonoBehaviour {
     // You can register as many listeners to an event as you like.
     void OnReward(TeakReward reward) {
         Debug.Log("[Teak Unity Cleanroom] OnReward: " + reward.ToString());
+        LogLaunchMatrixEvent("Reward");
 
         switch (reward.Status) {
             case TeakReward.RewardStatus.GrantReward: {
