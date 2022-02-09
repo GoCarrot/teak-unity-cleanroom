@@ -52,12 +52,41 @@ public partial class TestDriver : MonoBehaviour {
                 TestBuilder.Build("Push Notification Permission", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         if (this.pushToken == null) {
-                            UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
+                            // UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
+                            Teak.Instance.RegisterForNotifications();
                         }
                         state(Test.TestState.Passed);
-                    })
-                    .ExpectPushToken(),
+                    }),
+                    // .ExpectPushToken(),
 #endif
+
+                // Re-identify the user, providing email. This was an NSNull crash
+                // in the 4.1.x family
+                TestBuilder.Build("Re-Identify User Providing Email", this)
+                    .ExcludeWebGL()
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.testContext["userEmail"] = "pat@teak.io";
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("request.send".Equals(logEvent.EventType) &&
+                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json")) {
+                            Debug.Log(logEvent);
+                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
+
+                            if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
+                                payload.ContainsKey("email") &&
+                                (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
+                                ((bool)payload["do_not_track_event"])) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    }),
 
 #if UNITY_ANDROID && !UNITY_EDITOR
                 // For 2.1.1, test to make certain that io_teak_enable_caching is definitely
@@ -180,32 +209,6 @@ public partial class TestDriver : MonoBehaviour {
                             this.globalContext["lastDeepLink"] = this.LaunchedFromDeepLinkPath;
                             state(Test.TestState.Passed);
                         }));
-                    }),
-
-                TestBuilder.Build("Re-Identify User Providing Email", this)
-                    .ExcludeWebGL()
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        this.testContext["userEmail"] = "bogus@teak.io";
-                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
-                        state(Test.TestState.Passed);
-                    })
-                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        if ("request.send".Equals(logEvent.EventType) &&
-                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json")) {
-                            Debug.Log(logEvent);
-                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
-
-                            if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
-                                payload.ContainsKey("email") &&
-                                (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
-                                ((bool)payload["do_not_track_event"])) {
-                                state(Test.TestState.Passed);
-                            } else {
-                                state(Test.TestState.Failed);
-                            }
-                        } else {
-                            state(Test.TestState.Pending);
-                        }
                     }),
 
                 // This should be the last test in the list, just to keep it easy

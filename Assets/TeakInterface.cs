@@ -68,22 +68,17 @@ public class TeakInterface : MonoBehaviour {
             Debug.Log("Notifications are disabled!");
         }
 
+        // Do *not* provide email address in the first identify user call
+        // the tests will re-identify providing email shortly into the test suite
 #if TEAK_4_1_OR_NEWER
-        // IdentifyUser starts the things
-        Teak.UserConfiguration userConfiguration = new Teak.UserConfiguration {
-            Email = "team@teak.io",
-            FacebookId = "12345",
-            OptOutFacebook = false,
-            OptOutPushKey = false,
-            OptOutIdfa = true
-        };
+        Teak.UserConfiguration userConfiguration = new Teak.UserConfiguration {};
 
         Teak.Instance.IdentifyUser(this.TeakUserId, userConfiguration);
 
         // Just ensure this works
         Teak.Instance.RefreshPushTokenIfAuthorized();
 #else
-        Teak.Instance.IdentifyUser(this.TeakUserId, "team@teak.io");
+        Teak.Instance.IdentifyUser(this.TeakUserId);
 #endif
 
         // Add Prime31 event listeners
@@ -215,113 +210,6 @@ public class TeakInterface : MonoBehaviour {
         }
     }
 #endif
-/*
-    void OnGUI()
-    {
-        GUILayout.BeginArea(new Rect(10, 10, Screen.width - 20, Screen.height - 20));
-
-        GUILayout.Label(teakSdkVersion, statusStyle[0]);
-        GUILayout.Label(teakUserId, statusStyle[0]);
-        GUILayout.Label(teakDeepLinkLaunch, statusStyle[0]);
-
-        GUILayout.Label(Application.identifier, statusStyle[0]);
-#if UNITY_IOS
-
-        if(pushTokenString != null)
-        {
-            GUILayout.Label("Push Token: " + pushTokenString);
-        }
-        else
-        {
-            if(GUILayout.Button("Request Push Permissions", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
-            {
-                UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
-            }
-        }
-#endif
-
-        if(GUILayout.Button("User Profile Test", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx / 1.5f) }))
-        {
-            Teak.Instance.SetNumericAttribute("coins", (double) Random.Range(0.0f, 1000000.0f));
-            Teak.Instance.SetStringAttribute("last_slot", RandomNonConfusingCharacterString(10));
-        }
-
-        if(!Teak.Instance.AreNotificationsEnabled())
-        {
-            if(GUILayout.Button("Open Settings App", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx / 1.5f) }))
-            {
-                Teak.Instance.OpenSettingsAppToThisAppsSettings();
-            }
-        }
-
-        foreach(Test test in testList)
-        {
-            if(test.Status > 0)
-            {
-                GUILayout.Label(test.Name, statusStyle[test.Status]);
-            }
-        }
-
-        if(teakScheduledNotification == null)
-        {
-            if(testEnumerator != null)
-            {
-                Test currentTest = testEnumerator.Current;
-                if(GUILayout.Button(currentTest.Name, new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
-                {
-                    StartCoroutine(TeakNotification.ScheduleNotification(currentTest.CreativeId, currentTest.Name, 5, (TeakNotification.Reply reply) => {
-                        teakScheduledNotification = reply.Notifications[0].ScheduleId;
-
-                        if (reply.Notifications[0].ScheduleId == null)
-                        {
-                            errorText = "ScheduleId was null";
-                        }
-
-                        if(reply.Status == TeakNotification.Reply.ReplyStatus.Ok && !currentTest.NoAutoBackground)
-                        {
-                            BackgroundApp();
-                        }
-                    }));
-                }
-            }
-        }
-        else
-        {
-            if(GUILayout.Button("Cancel Test: " + teakScheduledNotification, new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
-            {
-                StartCoroutine(TeakNotification.CancelScheduledNotification(teakScheduledNotification, (TeakNotification.Reply reply) => {
-                    if (reply.Notifications[0].ScheduleId == null)
-                    {
-                        errorText = "ScheduleId was null";
-                    }
-
-                    teakScheduledNotification = null;
-                }));
-            }
-        }
-
-        // if(GUILayout.Button("Cancel All Notifications", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
-        // {
-        //     StartCoroutine(TeakNotification.CancelAllScheduledNotifications((TeakNotification.Reply reply) => {
-        //         errorText = reply.Notifications == null ? reply.Status.ToString() : reply.Notifications.ToString();
-        //     }));
-        // }
-
-        if(GUILayout.Button("Long Distance Notify", new GUILayoutOption[] { GUILayout.Height(buttonHeightInPx) }))
-        {
-            StartCoroutine(TeakNotification.ScheduleNotification("test_none Local", 5, new string[] {"unity-sm-g920t"}, (TeakNotification.Reply reply) => {
-                errorText = reply.Notifications == null ? reply.Status.ToString() : reply.Notifications.ToString();
-            }));
-        }
-
-        if(errorText != null)
-        {
-            GUILayout.Label(errorText, statusStyle[2]);
-        }
-
-        GUILayout.EndArea();
-    }
-*/
 
     public void TestExceptionReporting()
     {
