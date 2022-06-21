@@ -133,19 +133,22 @@ def use_facebook?
   ENV.fetch('USE_FACEBOOK', true).to_s == 'true'
 end
 
+def teak_sdk_version
+  teak_version_file = File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')
+  unless File.file?(teak_version_file)
+    base = Dir.glob('Library/PackageCache/io.teak.unity.sdk*').first || '../teak-unity/temp-upm-build'
+    teak_version_file = File.join(base, 'Runtime', 'TeakVersion.cs')
+  end
+
+  File.read(teak_version_file).match(/return "(.*)"/).captures[0]
+end
+
 #
 # Template parameters
 #
 def template_parameters
-  teak_version_file = File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')
-  unless File.file?(teak_version_file)
-    base = Dir.glob('Library/PackageCache/io.teak.unity.sdk*').first
-    teak_version_file = File.join(base, 'Runtime', 'TeakVersion.cs')
-  end
-
-  teak_version = File.read(teak_version_file).match(/return "(.*)"/).captures[0]
   TEAK_CREDENTIALS[BUILD_TYPE].merge(
-    app_name: "#{BUILD_TYPE.capitalize} #{teak_version}",
+    app_name: "#{BUILD_TYPE.capitalize} #{teak_sdk_version}",
     target_api: TARGET_API
   )
 end
@@ -230,7 +233,7 @@ def print_build_msg(platform, args = nil)
     #{'-' * 80}
     Building #{PACKAGE_NAME} - #{platform} - #{BUILD_TYPE.capitalize}
     Unity Location: #{UNITY_HOME}
-    Teak SDK: #{`cat TEAK_VERSION`}#{"\n" + args.map { |k, v| "#{k}: #{v}" }.join(', ') if args}
+    Teak SDK: #{teak_sdk_version}#{"\n" + args.map { |k, v| "#{k}: #{v}" }.join(', ') if args}
     #{'-' * 80}
   BUILD_MSG
   puts build_msg.cyan
