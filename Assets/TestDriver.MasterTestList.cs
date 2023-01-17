@@ -216,7 +216,7 @@ public partial class TestDriver : MonoBehaviour {
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.testContext["updatedUserId"] = "re-identify-test-" + this.teakInterface.TeakUserId;
-                        Teak.Instance.IdentifyUser(this.testContext["updatedUserId"] as string);
+                        Teak.Instance.IdentifyUser(this.testContext["updatedUserId"] as string, null, null);
                         state(Test.TestState.Passed);
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
@@ -234,7 +234,7 @@ public partial class TestDriver : MonoBehaviour {
                         }
                     })
                     .WhenFinished(() => {
-                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId);
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, null, null);
                     }),
 
                 TestBuilder.Build("Ensure re-identifying the user didn't re-run deep links", this)
