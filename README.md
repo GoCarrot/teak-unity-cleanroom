@@ -3,6 +3,9 @@
 
 Will find the best version of Unity it can, download the latest Teak SDK, configure a development build, then build the Android app and install it on any connected device.
 
+## AWS Credentials ##
+If AWS credentials are managed by `aws-vault` then use `aws-vault exec <user> -- <rake command>`
+
 ## package ##
 Package is one of:
 
