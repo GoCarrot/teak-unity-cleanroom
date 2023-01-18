@@ -224,7 +224,7 @@ public partial class TestDriver : MonoBehaviour
 
 #if TEAK_4_2_OR_NEWER
     void OnUserData(Teak.UserData userData) {
-        Debug.Log("[OnUserData]: " + userData.ToString());
+        Debug.Log("[OnUserData]: " + Json.Serialize(userData.ToDictionary()));
     }
 #endif
 #endif // TEAK_NOT_AVAILABLE
