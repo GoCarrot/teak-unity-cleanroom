@@ -53,8 +53,6 @@ Assets/StreamingAssets/google-services-desktop.json*
 
 # Play Services Resolver
 Assets/Plugins/Android/FirebaseApp.androidlib*
-Assets/PlayServicesResolver*
-
 Assets/Plugins/Android/androidx.*
 Assets/Plugins/Android/com.facebook.android.*
 Assets/Plugins/Android/com.google.android.*
@@ -67,6 +65,7 @@ Assets/Plugins/Android/com.google.zxing.core*
 Assets/Plugins/Android/com.parse.bolts.*
 Assets/Plugins/Android/javax.inject.javax.inject*
 Assets/Plugins/Android/com.google.guava.listenablefuture-*
+Assets/Plugins/Android/com.google.errorprone.error_prone_annotations-*
 
 # Prime31
 Assets/Editor/Prime31*

@@ -334,8 +334,17 @@ namespace :facebook do
         unity '-importPackage', "#{tmpdir}/#{sdk_name}/FacebookSDK/#{sdk_name}.unitypackage"
       end
     ensure
-      FileUtils.remove_dir('Assets/FacebookSDK/Examples')
-      File.delete('Assets/FacebookSDK/Examples.meta')
+      [
+        'Assets/ExternalDependencyManager',
+        'Assets/FacebookSDK/Examples',
+        'Assets/PlayServicesResolver'
+      ].each do |dir_to_rm|
+        next unless Dir.exist? dir_to_rm
+
+        FileUtils.remove_dir(dir_to_rm)
+        File.delete("#{dir_to_rm}.meta")
+      end
+
       case facebook_sdk_version
       when '7.9.4'
         File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-v4-*'])
