@@ -337,6 +337,14 @@ public partial class TestDriver : MonoBehaviour
                 Utils.ClearAllNotifications();
             });
         }
+
+        // Android 13 RegisterForNotifications
+        {
+            Button button = this.CreateButton("Teak.RegisterForNotifications");
+            button.onClick.AddListener(() => {
+                Teak.Instance.RegisterForNotifications();
+            });
+        }
 #endif
 
 #if UNITY_FACEBOOK
