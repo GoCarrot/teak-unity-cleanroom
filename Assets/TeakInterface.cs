@@ -78,7 +78,7 @@ public class TeakInterface : MonoBehaviour {
         // Just ensure this works
         Teak.Instance.RefreshPushTokenIfAuthorized();
 #else
-        Teak.Instance.IdentifyUser(this.TeakUserId);
+        Teak.Instance.IdentifyUser(this.TeakUserId, null, null);
 #endif
 
         // Add Prime31 event listeners
