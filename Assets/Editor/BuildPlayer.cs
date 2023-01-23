@@ -132,7 +132,12 @@ public class BuildPlayer
         buildPlayerOptions.scenes = BuildPlayer.scenes;
         buildPlayerOptions.locationPathName = buildPath;
         buildPlayerOptions.target = BuildTarget.WebGL;
-        if (isDevelopmentBuild) buildPlayerOptions.options = BuildOptions.Development;
+        if (isDevelopmentBuild) {
+            buildPlayerOptions.options = BuildOptions.Development;
+            PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.FullWithStacktrace;
+        } else {
+            PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.None;
+        }
         DoBuildPlayer(buildPlayerOptions);
     }
 
