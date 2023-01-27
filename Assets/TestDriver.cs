@@ -92,24 +92,6 @@ public partial class TestDriver : MonoBehaviour
 
     void Awake() {
 #if !TEAK_NOT_AVAILABLE
-#if UNITY_FACEBOOK
-        if (!FB.IsInitialized) {
-            FB.Init(() => {
-                if (FB.IsInitialized) {
-                    FB.ActivateApp();
-#if UNITY_WEBGL
-                    FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"});
-#endif
-                }
-            });
-        } else {
-            FB.ActivateApp();
-#if UNITY_WEBGL
-            FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"});
-#endif
-        }
-#endif // UNITY_FACEBOOK
-
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
             this.LaunchedFromDeepLinkPath = parameters["__incoming_url"] as string;
             Debug.Log(this.LaunchedFromDeepLinkPath);

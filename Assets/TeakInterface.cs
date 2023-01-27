@@ -11,6 +11,10 @@ using System.Runtime.InteropServices;
 using MiniJSON.Teak;
 #endif
 
+#if UNITY_FACEBOOK
+using Facebook.Unity;
+#endif
+
 public class TeakInterface : MonoBehaviour {
     public string TeakUserId { get; private set; }
 
@@ -38,19 +42,47 @@ public class TeakInterface : MonoBehaviour {
         Teak.Instance.RegisterRoute("/slots/:sku", "Testing", "Used for launch matrix testing", (Dictionary<string, object> parameters) => {
             LogLaunchMatrixEvent("Deep Link");
         });
+
+#if UNITY_FACEBOOK
+        if (!FB.IsInitialized) {
+            FB.Init(() => {
+                if (FB.IsInitialized) {
+                    FB.ActivateApp();
+#if UNITY_WEBGL
+                    FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"}, (ILoginResult result) => {
+                        if (FB.IsLoggedIn) {
+                            this.TeakUserId = "unity-webgl-" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId;
+                        } else {
+                            this.TeakUserId = "unity-webgl-not-logged-in";
+                        }
+                    });
+#endif
+                }
+            });
+        } else {
+            FB.ActivateApp();
+#if UNITY_WEBGL
+            FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"}, (ILoginResult result) => {
+                if (FB.IsLoggedIn) {
+                    this.TeakUserId = "unity-webgl-" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId;
+                } else {
+                    this.TeakUserId = "unity-webgl-not-logged-in";
+                }
+            });
+#endif
+        }
+#endif // UNITY_FACEBOOK
+
+#if UNITY_EDITOR
+        this.TeakUserId = "unity-editor";
+#elif !UNITY_WEBGL
+        Dictionary<string, object> deviceConfiguration = Teak.Instance.GetDeviceConfiguration();
+        this.TeakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
+#endif
     }
 
     void Start() {
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Start");
-
-#if UNITY_EDITOR
-        this.TeakUserId = "unity-editor";
-#elif UNITY_WEBGL
-        this.TeakUserId = "unity-webgl-" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId;
-#else
-        Dictionary<string, object> deviceConfiguration = Teak.Instance.GetDeviceConfiguration();
-        this.TeakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
-#endif
 
         // Assign Teak Callbacks
         Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
