@@ -232,6 +232,21 @@ public class BuildPlayer
         AddURLSchemeToPlist(plist, "nonteak");
 
         File.WriteAllText(plistPath, plist.WriteToString());
+
+        // Disable Bitcode
+        string projectPath = pathToBuiltProject + "/Unity-iPhone.xcodeproj/project.pbxproj";
+
+        PBXProject pbxProject = new PBXProject();
+        pbxProject.ReadFromFile(projectPath);
+
+        string targetGuid = pbxProject.GetUnityMainTargetGuid();
+        pbxProject.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
+
+        targetGuid = pbxProject.TargetGuidByName(PBXProject.GetUnityTestTargetName());
+        pbxProject.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
+
+        targetGuid = pbxProject.GetUnityFrameworkTargetGuid();
+        pbxProject.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
     }
 #endif
 
