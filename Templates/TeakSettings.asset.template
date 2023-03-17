@@ -19,3 +19,4 @@ MonoBehaviour:
   mFirebaseApiKey: {{teak_firebase_api_key}}
   mFirebaseProjectId: {{teak_firebase_project_id}}
   mJustShutUpIKnowWhatImDoing: 0
+  mEnableSDK5Behaviors: 1
