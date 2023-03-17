@@ -49,11 +49,10 @@ public class TeakInterface : MonoBehaviour {
                 if (FB.IsInitialized) {
                     FB.ActivateApp();
 #if UNITY_WEBGL
+                    this.TeakUserId = "unity-webgl-not-logged-in";
                     FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"}, (ILoginResult result) => {
                         if (FB.IsLoggedIn) {
                             this.TeakUserId = "unity-webgl-" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId;
-                        } else {
-                            this.TeakUserId = "unity-webgl-not-logged-in";
                         }
                     });
 #endif
@@ -62,11 +61,11 @@ public class TeakInterface : MonoBehaviour {
         } else {
             FB.ActivateApp();
 #if UNITY_WEBGL
+            this.TeakUserId = "unity-webgl-not-logged-in";
+
             FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"}, (ILoginResult result) => {
                 if (FB.IsLoggedIn) {
                     this.TeakUserId = "unity-webgl-" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId;
-                } else {
-                    this.TeakUserId = "unity-webgl-not-logged-in";
                 }
             });
 #endif
