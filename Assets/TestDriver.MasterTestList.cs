@@ -99,6 +99,23 @@ public partial class TestDriver : MonoBehaviour {
                     }),
 #endif
 
+#if TEAK_4_2_OR_NEWER
+                TestBuilder.Build("Set Channel (Platform Push) to OptOut", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.PlatformPush, Teak.Channel.State.OptOut, (reply) => {
+                            state(reply.State == Teak.Channel.State.OptOut ? Test.TestState.Passed : Test.TestState.Failed);
+                        }));
+                    }),
+
+                TestBuilder.Build("Set Channel (Platform Push) to Available", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.PlatformPush, Teak.Channel.State.Available, (reply) => {
+                            state(reply.State == Teak.Channel.State.OptIn || reply.State == Teak.Channel.State.Available ?
+                                      Test.TestState.Passed : Test.TestState.Failed);
+                        }));
+                    }),
+#endif
+
 #if !UNITY_WEBGL
                 TestBuilder.Build("Notification with Emoji", this)
                     .WhenStarted((Action<Test.TestState> state) => {
