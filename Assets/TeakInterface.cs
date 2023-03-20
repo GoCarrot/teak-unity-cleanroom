@@ -49,7 +49,6 @@ public class TeakInterface : MonoBehaviour {
                 if (FB.IsInitialized) {
                     FB.ActivateApp();
 #if UNITY_WEBGL
-                    this.TeakUserId = "unity-webgl-not-logged-in";
                     FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"}, (ILoginResult result) => {
                         if (FB.IsLoggedIn) {
                             this.TeakUserId = "unity-webgl-" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId;
@@ -61,8 +60,6 @@ public class TeakInterface : MonoBehaviour {
         } else {
             FB.ActivateApp();
 #if UNITY_WEBGL
-            this.TeakUserId = "unity-webgl-not-logged-in";
-
             FB.LogInWithReadPermissions(new List<string>(){"public_profile", "email"}, (ILoginResult result) => {
                 if (FB.IsLoggedIn) {
                     this.TeakUserId = "unity-webgl-" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId;
@@ -97,6 +94,11 @@ public class TeakInterface : MonoBehaviour {
         Debug.Log("[Teak Unity Cleanroom] Notification State: " + Teak.Instance.PushNotificationState);
         if (Teak.Instance.PushNotificationState == Teak.NotificationState.Disabled) {
             Debug.Log("Notifications are disabled!");
+        }
+
+        // Default so we don't have empty user id
+        if (string.IsNullOrEmpty(this.TeakUserId)) {
+            this.TeakUserId = "unity-not-logged-in";
         }
 
         // Do *not* provide email address in the first identify user call

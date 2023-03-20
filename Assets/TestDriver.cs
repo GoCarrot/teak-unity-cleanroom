@@ -427,6 +427,7 @@ public partial class TestDriver : MonoBehaviour
     }
 
     private void ResetTests() {
+        Debug.Log("[Test Driver] Resetting tests...");
         this.testList = this.MasterTestList.FindAll(e => !e.ExcludedPlatforms.Contains(Application.platform));
         this.testEnumerator = null;
         this.AdvanceTests();
