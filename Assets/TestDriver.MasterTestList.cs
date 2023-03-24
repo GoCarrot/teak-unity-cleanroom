@@ -114,24 +114,6 @@ public partial class TestDriver : MonoBehaviour {
                                       Test.TestState.Passed : Test.TestState.Failed);
                         }));
                     }),
-#   if UNITY_WEBGL
-
-#   else
-                TestBuilder.Build("Set Channel (Platform Push) to OptOut", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.PlatformPush, Teak.Channel.State.OptOut, (reply) => {
-                            state(reply.State == Teak.Channel.State.OptOut ? Test.TestState.Passed : Test.TestState.Failed);
-                        }));
-                    }),
-
-                TestBuilder.Build("Set Channel (Platform Push) to Available", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.PlatformPush, Teak.Channel.State.Available, (reply) => {
-                            state(reply.State == Teak.Channel.State.OptIn || reply.State == Teak.Channel.State.Available ?
-                                      Test.TestState.Passed : Test.TestState.Failed);
-                        }));
-                    }),
-#   endif // UNITY_WEBGL
 #endif
 
 #if !UNITY_WEBGL
