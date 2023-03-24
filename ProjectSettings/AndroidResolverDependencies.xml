@@ -24,7 +24,7 @@
     <package>com.google.firebase:firebase-messaging:23.1.1</package>
     <package>com.google.firebase:firebase-messaging-unity:10.3.0</package>
     <package>com.parse.bolts:bolts-android:1.4.0</package>
-    <package>org.greenrobot:eventbus:3.2.0</package>
+    <package>org.greenrobot:eventbus:3.3.1</package>
   </packages>
   <files>
     <file>Assets/Plugins/Android/androidx.activity.activity-1.0.0.aar</file>
@@ -118,7 +118,8 @@
     <file>Assets/Plugins/Android/com.parse.bolts.bolts-applinks-1.4.0.jar</file>
     <file>Assets/Plugins/Android/com.parse.bolts.bolts-tasks-1.4.0.jar</file>
     <file>Assets/Plugins/Android/javax.inject.javax.inject-1.jar</file>
-    <file>Assets/Plugins/Android/org.greenrobot.eventbus-3.2.0.jar</file>
+    <file>Assets/Plugins/Android/org.greenrobot.eventbus-3.3.1.aar</file>
+    <file>Assets/Plugins/Android/org.greenrobot.eventbus-java-3.3.1.jar</file>
     <file>Assets/Plugins/Android/org.jetbrains.annotations-13.0.jar</file>
     <file>Assets/Plugins/Android/org.jetbrains.kotlin.kotlin-stdlib-1.5.10.jar</file>
     <file>Assets/Plugins/Android/org.jetbrains.kotlin.kotlin-stdlib-common-1.5.10.jar</file>
