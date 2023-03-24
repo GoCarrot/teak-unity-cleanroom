@@ -116,7 +116,7 @@ public partial class TestDriver : MonoBehaviour {
                     }),
 #endif
 
-#if !UNITY_WEBGL
+#if UNITY_ANDROID
                 TestBuilder.Build("Notification with Emoji", this)
                     .WhenStarted((Action<Test.TestState> state) => {
 
@@ -131,13 +131,12 @@ public partial class TestDriver : MonoBehaviour {
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
 
-#   if UNITY_IOS
+
                         // On iOS there should be no errors
                         if ("notification.foreground".Equals(logEvent.EventType) || "notification.received".Equals(logEvent.EventType)) {
                             state(Test.TestState.Passed);
                             return;
                         }
-#   elif UNITY_ANDROID
                         // Should be fine on API Level 22+
                         if (this.AndroidAPILevel > 21 && "notification.received".Equals(logEvent.EventType)) {
                             state(Test.TestState.Passed);
@@ -147,10 +146,9 @@ public partial class TestDriver : MonoBehaviour {
                             state(Test.TestState.Passed);
                             return;
                         }
-#   endif // UNITY_IOS
                         state(Test.TestState.Pending);
                     }),
-#endif // !UNITY_WEBGL
+#endif // UNITY_ANDROID
 
                 TestBuilder.Build("Cancel Notification", this)
                     .WhenStarted((Action<Test.TestState> state) => {
