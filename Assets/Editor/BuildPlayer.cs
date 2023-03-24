@@ -247,6 +247,8 @@ public class BuildPlayer
 
         targetGuid = pbxProject.GetUnityFrameworkTargetGuid();
         pbxProject.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");
+
+        pbxProject.WriteToFile(projectPath);
     }
 #endif
 
