@@ -1,12 +1,45 @@
-using UnityEngine;
+// using UnityEngine;
 
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
+using System.Text.RegularExpressions;
 
-public partial class TestDriver : MonoBehaviour {
+using TeakCleanroomExtensions;
+
+public partial class TestDriver : UnityEngine.MonoBehaviour {
+    public static bool ShouldBeAbleToOpenNotificationSettings {
+        get {
+            Regex rx = new Regex("(iOS|Android OS) (\\d+)\\.?(\\d+)?\\.?(\\d+)?",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            MatchCollection matches = rx.Matches(UnityEngine.SystemInfo.operatingSystem);
+
+            foreach (Match match in matches) {
+                GroupCollection groups = match.Groups;
+                string os = groups[1].Value;
+                int major, minor = 0, patch = 0;
+                Int32.TryParse(groups[2].Value, out major);
+                Int32.TryParse(groups[3].Value, out minor);
+                Int32.TryParse(groups[4].Value, out patch);
+
+                Debug.Log("OS: {0}, version {1}.{2}.{3}", os, major, minor, patch);
+
+                bool shouldOpen = false;
+                if (os == "iOS" && (major > 15 || (major == 15 && minor >= 4))) {
+                    shouldOpen = true;
+                } else if (os == "Android OS" && major >= 8) {
+                    shouldOpen = true;
+                }
+
+                return shouldOpen;
+            }
+
+            return false;
+        }
+    }
+
     List<Test> MasterTestList {
         get {
             return new List<Test> {
@@ -46,6 +79,12 @@ public partial class TestDriver : MonoBehaviour {
                             Test.TestState.Passed : Test.TestState.Failed);
                     })
                     .ExpectDeepLink(),
+
+                TestBuilder.Build("CanOpenNotificationSettings", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        state(Teak.Instance.CanOpenNotificationSettings == ShouldBeAbleToOpenNotificationSettings ?
+                            Test.TestState.Passed : Test.TestState.Failed);
+                    }),
 #endif
 
 #if UNITY_IOS
@@ -93,8 +132,8 @@ public partial class TestDriver : MonoBehaviour {
                 // removed and disabled (even if the XML persists)
                 TestBuilder.Build("Android io_teak_enable_caching is disabled", this)
                     .WhenStarted((Action<Test.TestState> state) => {
-                        AndroidJavaClass httpResponseCache = new AndroidJavaClass("android.net.http.HttpResponseCache");
-                        AndroidJavaObject installedCache = httpResponseCache.CallStatic<AndroidJavaObject>("getInstalled");
+                        UnityEngine.AndroidJavaClass httpResponseCache = new UnityEngine.AndroidJavaClass("android.net.http.HttpResponseCache");
+                        UnityEngine.AndroidJavaObject installedCache = httpResponseCache.CallStatic<UnityEngine.AndroidJavaObject>("getInstalled");
                         state(installedCache == null ? Test.TestState.Passed : Test.TestState.Failed);
                     }),
 #endif
