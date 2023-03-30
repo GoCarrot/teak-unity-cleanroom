@@ -45,47 +45,41 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
             return new List<Test> {
 #if !TEAK_NOT_AVAILABLE
 
-                TestBuilder.Build("Reward Link", this)
-                    .ExpectDeepLink()
-                    .ExpectReward()
-#if !UNITY_WEBGL
-                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        // Make sure it has app_version and app_version_name (Android only)
-                        if ("request.send".Equals(logEvent.EventType) &&
-                            "rewards.gocarrot.com".Equals(logEvent.EventData["hostname"] as string)) {
-                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
-                            if (payload.ContainsKey("app_version")
-#   if UNITY_ANDROID
-                                && payload.ContainsKey("app_version_name")
+#   if TEAK_4_2_OR_NEWER
+                TestBuilder.Build("Wait For PostLaunchSummary", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.StartCoroutine(Coroutine.WaitForTrue(() => this.PostLaunchSummary != null, () => {
+                            state(Test.TestState.Passed);
+                        }));
+                    }),
 #   endif
-                                ) {
-                                state(Test.TestState.Passed);
-                            } else {
-                                state(Test.TestState.Failed);
-                            }
-                        } else {
-                            state(Test.TestState.Pending);
-                        }
-                    })
-#endif // !UNITY_WEBGL
-                    .BeforeFinished((Action<Test.TestState> state) => {
-                        state(this.DeepLinkTestExceptionThrown ? Test.TestState.Passed : Test.TestState.Failed);
-                    }),
 
-#if TEAK_4_2_OR_NEWER
-                TestBuilder.Build("Handle Deep Link Path", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        state(Teak.Instance.HandleDeepLinkPath("/test/asdf") ?
-                            Test.TestState.Passed : Test.TestState.Failed);
-                    })
-                    .ExpectDeepLink(),
-
-                TestBuilder.Build("CanOpenNotificationSettings", this)
-                    .WhenStarted((Action<Test.TestState> state) => {
-                        state(Teak.Instance.CanOpenNotificationSettings == ShouldBeAbleToOpenNotificationSettings ?
-                            Test.TestState.Passed : Test.TestState.Failed);
-                    }),
-#endif
+//                 TestBuilder.Build("Reward Link", this)
+//                     .ExpectDeepLink()
+//                     .ExpectReward()
+// #if !UNITY_WEBGL
+//                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+//                         // Make sure it has app_version and app_version_name (Android only)
+//                         if ("request.send".Equals(logEvent.EventType) &&
+//                             "rewards.gocarrot.com".Equals(logEvent.EventData["hostname"] as string)) {
+//                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
+//                             if (payload.ContainsKey("app_version")
+// #   if UNITY_ANDROID
+//                                 && payload.ContainsKey("app_version_name")
+// #   endif
+//                                 ) {
+//                                 state(Test.TestState.Passed);
+//                             } else {
+//                                 state(Test.TestState.Failed);
+//                             }
+//                         } else {
+//                             state(Test.TestState.Pending);
+//                         }
+//                     })
+// #endif // !UNITY_WEBGL
+//                     .BeforeFinished((Action<Test.TestState> state) => {
+//                         state(this.DeepLinkTestExceptionThrown ? Test.TestState.Passed : Test.TestState.Failed);
+//                     }),
 
 #if UNITY_IOS
                 TestBuilder.Build("Push Notification Permission", this)

@@ -24,4 +24,11 @@ class Coroutine {
         yield return new WaitForFixedUpdate();
         action();
     }
+
+    public static IEnumerator WaitForTrue(Func<bool> predicate, Action action) {
+        do {
+            yield return new WaitForEndOfFrame();
+        } while (!predicate());
+        action();
+    }
 }

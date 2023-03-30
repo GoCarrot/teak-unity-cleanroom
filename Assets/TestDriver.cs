@@ -90,6 +90,12 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 
+#if !TEAK_NOT_AVAILABLE
+    TeakPostLaunchSummary PostLaunchSummary {
+        get; set;
+    }
+#endif
+
     void Awake() {
 #if !TEAK_NOT_AVAILABLE
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
@@ -141,6 +147,7 @@ public partial class TestDriver : MonoBehaviour
 
 #if TEAK_4_2_OR_NEWER
         Teak.Instance.OnUserData += OnUserData;
+        Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
 #endif
 #endif // TEAK_NOT_AVAILABLE
     }
@@ -204,11 +211,15 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 
-#if TEAK_4_2_OR_NEWER
+#   if TEAK_4_2_OR_NEWER
     void OnUserData(Teak.UserData userData) {
         Debug.Log("[OnUserData]: " + Json.Serialize(userData.ToDictionary()));
     }
-#endif
+
+    void OnPostLaunchSummary(TeakPostLaunchSummary postLaunchSummary) {
+        this.PostLaunchSummary = postLaunchSummary;
+    }
+#   endif
 #endif // TEAK_NOT_AVAILABLE
 
     private void SetupUI() {
