@@ -9,6 +9,18 @@
     <canvas id="unity-canvas" style="width: {{utopen}} WIDTH {{utclose}}px; height: {{utopen}} HEIGHT {{utclose}}px; background: {{utopen}} BACKGROUND_FILENAME ? 'url(\'Build/' + BACKGROUND_FILENAME.replace(/'/g, '%27') + '\') center / cover' : BACKGROUND_COLOR {{utclose}}"></canvas>
     <script src="Build/{{utopen}} LOADER_FILENAME {{utclose}}"></script>
     <script>
+      const canvas = document.querySelector('#unity-canvas');
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+
+      window.addEventListener('load', resizePage, false);
+      window.addEventListener('resize', resizePage, false);
+
+      function resizePage() {
+          canvas.style.width = window.innerWidth + 'px';
+          canvas.style.height = window.innerHeight + 'px';
+      }
+
       createUnityInstance(document.querySelector("#unity-canvas"), {
         dataUrl: "Build/{{utopen}} DATA_FILENAME {{utclose}}",
         frameworkUrl: "Build/{{utopen}} FRAMEWORK_FILENAME {{utclose}}",
