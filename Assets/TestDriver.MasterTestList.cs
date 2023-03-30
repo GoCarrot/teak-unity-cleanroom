@@ -133,6 +133,19 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 #endif
 
 #if TEAK_4_2_OR_NEWER
+                TestBuilder.Build("Handle Deep Link Path", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        state(Teak.Instance.HandleDeepLinkPath("/test/asdf") ?
+                            Test.TestState.Passed : Test.TestState.Failed);
+                    })
+                    .ExpectDeepLink(),
+
+                TestBuilder.Build("CanOpenNotificationSettings", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        state(Teak.Instance.CanOpenNotificationSettings == ShouldBeAbleToOpenNotificationSettings ?
+                            Test.TestState.Passed : Test.TestState.Failed);
+                    }),
+
                 TestBuilder.Build("Set Channel (Email) to OptOut", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.Email, Teak.Channel.State.OptOut, (reply) => {
@@ -143,6 +156,21 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Set Channel (Email) to OptIn", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.Email, Teak.Channel.State.Available, (reply) => {
+                            state(reply.State == Teak.Channel.State.OptIn || reply.State == Teak.Channel.State.Available ?
+                                      Test.TestState.Passed : Test.TestState.Failed);
+                        }));
+                    }),
+
+                TestBuilder.Build("Set Channel (Platform Push) to OptOut", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.PlatformPush, Teak.Channel.State.OptOut, (reply) => {
+                            state(reply.State == Teak.Channel.State.OptOut ? Test.TestState.Passed : Test.TestState.Failed);
+                        }));
+                    }),
+
+                TestBuilder.Build("Set Channel (Platform Push) to OptIn", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.PlatformPush, Teak.Channel.State.Available, (reply) => {
                             state(reply.State == Teak.Channel.State.OptIn || reply.State == Teak.Channel.State.Available ?
                                       Test.TestState.Passed : Test.TestState.Failed);
                         }));
