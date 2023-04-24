@@ -84,11 +84,10 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 #if UNITY_IOS
                 TestBuilder.Build("Push Notification Permission", this)
                     .WhenStarted((Action<Test.TestState> state) => {
-                        if (this.pushToken == null) {
-                            // UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert |  UnityEngine.iOS.NotificationType.Badge |  UnityEngine.iOS.NotificationType.Sound);
-                            Teak.Instance.RegisterForNotifications();
-                        }
-                        state(Test.TestState.Passed);
+                        StartCoroutine(Teak.Instance.RegisterForNotifications(granted => {
+                            Debug.Log("NOTIFICAITON CALLBACK: " + granted);
+                            state(granted ? Test.TestState.Passed : Test.TestState.Failed);
+                        }));
                     }),
                     // .ExpectPushToken(),
 #endif

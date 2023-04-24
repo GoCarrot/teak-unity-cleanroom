@@ -335,7 +335,9 @@ public partial class TestDriver : MonoBehaviour
         {
             Button button = this.CreateButton("Teak.RegisterForNotifications");
             button.onClick.AddListener(() => {
-                Teak.Instance.RegisterForNotifications();
+                StartCoroutine(Teak.Instance.RegisterForNotifications(granted => {
+                    Debug.Log("NOTIFICAITON CALLBACK: " + granted);
+                }));
             });
         }
 #endif
