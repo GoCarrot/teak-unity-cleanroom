@@ -81,15 +81,13 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 //                         state(this.DeepLinkTestExceptionThrown ? Test.TestState.Passed : Test.TestState.Failed);
 //                     }),
 
-#if UNITY_IOS
+#if UNITY_IOS// || UNITY_ANDROID
                 TestBuilder.Build("Push Notification Permission", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.RegisterForNotifications(granted => {
-                            Debug.Log("NOTIFICAITON CALLBACK: " + granted);
                             state(granted ? Test.TestState.Passed : Test.TestState.Failed);
                         }));
                     }),
-                    // .ExpectPushToken(),
 #endif
 
                 // Re-identify the user, providing email. This was an NSNull crash
