@@ -188,6 +188,7 @@ def unity(*args, quit: true, nographics: true)
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
   log_file = "#{PROJECT_PATH}/unity.#{Rake.application.current_task.name.sub(':', '-')}.log"
   begin
+    ENV['JAVA_HOME'] = "#{UNITY_HOME}/PlaybackEngines/AndroidPlayer/OpenJDK"
     sh "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity -logFile #{log_file}#{quit ? ' -quit' : ''}#{nographics ? ' -nographics' : ''} -batchmode -projectPath #{PROJECT_PATH} #{escaped_args}", verbose: false
   rescue RuntimeError => _e
     hax_parse_log(log_file)
