@@ -211,15 +211,24 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 
-#   if TEAK_4_2_OR_NEWER
+#if TEAK_4_2_OR_NEWER
     void OnUserData(Teak.UserData userData) {
+        if (this.testEnumerator != null) {
+            this.testEnumerator.Current.UserData(userData);
+        }
         Debug.Log("[OnUserData]: " + Json.Serialize(userData.ToDictionary()));
     }
+# endif
+
+#if TEAK_4_1_OR_NEWER
 
     void OnPostLaunchSummary(TeakPostLaunchSummary postLaunchSummary) {
         this.PostLaunchSummary = postLaunchSummary;
+        if(this.testEnumerator != null) {
+            this.testEnumerator.Current.PostLaunchSummary(postLaunchSummary);
+        }
     }
-#   endif
+#endif
 #endif // TEAK_NOT_AVAILABLE
 
     private void SetupUI() {

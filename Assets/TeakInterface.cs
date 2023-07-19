@@ -90,6 +90,10 @@ public class TeakInterface : MonoBehaviour {
         Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
 #endif
 
+#if TEAK_4_3_OR_NEWER
+        Teak.Instance.OnConfigurationData += OnConfigurationData;
+#endif
+
         // Print out notification state
         Debug.Log("[Teak Unity Cleanroom] Notification State: " + Teak.Instance.PushNotificationState);
         if (Teak.Instance.PushNotificationState == Teak.NotificationState.Disabled) {
@@ -143,6 +147,20 @@ public class TeakInterface : MonoBehaviour {
 
         // PostLaunchSummary should always happen last, so this will separate out tests
         LogLaunchMatrixEvent("-----");
+    }
+#endif
+
+#if TEAK_4_3_OR_NEWER
+    void OnConfigurationData(Teak.ConfigurationData configurationData) {
+        Debug.Log("[Teak Unity Cleanroom] OnConfigurationData: " + configurationData.ToString());
+        foreach(Teak.Channel.Category category in configurationData.ChannelCategories) {
+            Debug.Log("[Teak Unity Cleanroom] Channel Category: "+ category.ToString());
+        }
+
+        foreach(Teak.Channel.Category category in Teak.Channel.Categories) {
+            Debug.Log("[Teak Unity Cleanroom] Channel Category From Property: "+ category.ToString());
+        }
+        LogLaunchMatrixEvent("Configuration Data");
     }
 #endif
 

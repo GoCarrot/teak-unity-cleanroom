@@ -111,6 +111,25 @@ class TestBuilder {
     }
 #endif
 
+#if TEAK_4_1_OR_NEWER
+    public TestBuilder ExpectPostLaunchSummary(Action<object, Action<Test.TestState>> action) {
+        test.OnPostLaunchSummary = action;
+        return this;
+    }
+#else
+    public TestBuilder ExpectPostLaunchSummary(Action<object, Action<Test.TestState>> action) {
+        return this;
+    }
+#endif
+
+
+    public TestBuilder ExpectUserData(Action<object, Action<Test.TestState>> action) {
+#if TEAK_4_2_OR_NEWER
+        test.OnUserData = action;
+#endif
+        return this;
+    }
+
     public TestBuilder BeforeFinished(Action<Action<Test.TestState>> action) {
         test.OnComplete = action;
         return this;

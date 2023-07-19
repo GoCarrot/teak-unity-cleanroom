@@ -81,7 +81,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 //                         state(this.DeepLinkTestExceptionThrown ? Test.TestState.Passed : Test.TestState.Failed);
 //                     }),
 
-#if UNITY_IOS// || UNITY_ANDROID
+#if UNITY_IOS || UNITY_ANDROID
                 TestBuilder.Build("Push Notification Permission", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.RegisterForNotifications(granted => {
@@ -95,7 +95,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Re-Identify User Providing Email", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
-                        this.testContext["userEmail"] = "pat@teak.io";
+                        this.testContext["userEmail"] = "ops@teak.io";
                         Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
                         state(Test.TestState.Passed);
                     })
@@ -116,6 +116,23 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         } else {
                             state(Test.TestState.Pending);
                         }
+                    })
+                    .ExpectUserData((object obj, Action<Test.TestState> state) => {
+#if TEAK_4_2_OR_NEWER
+                        Teak.UserData userData = obj as Teak.UserData;
+                        if(
+                            (userData.EmailStatus.State == Teak.Channel.State.Available || userData.EmailStatus.State == Teak.Channel.State.OptIn)
+                            && userData.PushStatus.State == Teak.Channel.State.OptIn
+#if TEAK_4_3_OR_NEWER
+                            && userData.EmailStatus["teak"] == Teak.Channel.State.OptIn
+                            && userData.PushStatus["teak"] == Teak.Channel.State.OptIn
+#endif // TEAK_4_3_OR_NEWER
+                        ) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Failed);
+                        }
+#endif
                     }),
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -172,14 +189,39 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                                       Test.TestState.Passed : Test.TestState.Failed);
                         }));
                     }),
+
+                TestBuilder.Build("Delete Email", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        Teak.Instance.DeleteEmail();
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("request.reply".Equals(logEvent.EventType) &&
+                            ((logEvent.EventData["endpoint"] as string).EndsWith("/me/email.json") || (logEvent.EventData["endpoint"] as string).EndsWith("/me/email"))) {
+                            Debug.Log(logEvent);
+                            state(Test.TestState.Passed);
+                         } else {
+                            state(Test.TestState.Pending);
+                        }
+                    }),
+
+                TestBuilder.Build("Set Channel (Email) to OptOut No Email", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.Email, Teak.Channel.State.OptOut, (reply) => {
+                            Debug.Log(reply);
+                            Debug.Log(reply.Error);
+                            Debug.Log(reply.Json["error"] as string);
+                            state(reply.Error ? Test.TestState.Passed : Test.TestState.Failed);
+                        }));
+                    }),
 #endif
 
-#if UNITY_ANDROID
+#if !UNITY_WEBGL
                 TestBuilder.Build("Notification with Emoji", this)
                     .WhenStarted((Action<Test.TestState> state) => {
 
                         // Have to use "WhenStarted" because ScheduleNotification will wait for a received log event
-                        this.StartCoroutine(TeakNotification.ScheduleNotification("test_emoji_log_exception", "test_emoji_log_exception", 10, (TeakNotification.Reply reply) => {
+                        this.StartCoroutine(TeakNotification.ScheduleNotification("test_emoji_log_exception", "test_emoji_log_exception", 0, (TeakNotification.Reply reply) => {
                             if (reply.Status == TeakNotification.Reply.ReplyStatus.Ok) {
                                 state(Test.TestState.Passed);
                             } else {
@@ -188,13 +230,13 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }));
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-
-
+#if UNITY_IOS
                         // On iOS there should be no errors
                         if ("notification.foreground".Equals(logEvent.EventType) || "notification.received".Equals(logEvent.EventType)) {
                             state(Test.TestState.Passed);
                             return;
                         }
+#else // UNITY_IOS
                         // Should be fine on API Level 22+
                         if (this.AndroidAPILevel > 21 && "notification.received".Equals(logEvent.EventType)) {
                             state(Test.TestState.Passed);
@@ -204,9 +246,10 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                             state(Test.TestState.Passed);
                             return;
                         }
+#endif
                         state(Test.TestState.Pending);
                     }),
-#endif // UNITY_ANDROID
+#endif // !UNITY_WEBGL
 
                 TestBuilder.Build("Cancel Notification", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -244,6 +287,17 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }));
                     }),
 
+                TestBuilder.Build("Report errors for invalid scheduling", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.StartCoroutine(Teak.Notification.Schedule("test_never_ever_create_this_notification", 5, null, (Teak.Notification.Reply reply) => {
+                            if (!reply.Error || !reply.Errors["identifier"][0].Contains("dashboard")) {
+                                state(Test.TestState.Failed);
+                            } else {
+                                state(Test.TestState.Passed);
+                            }
+                        }));
+                    }),
+
                 TestBuilder.Build("Numeric Attributes (15+ seconds)", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         double randomDouble = UnityEngine.Random.value;
@@ -261,15 +315,79 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                     }),
 
                 TestBuilder.Build("Notification with Non-Teak Deep Link (backgrounded)", this)
+#if !TEAK_4_1_OR_NEWER
                     .OnlyIOS()
+#else
+                    .ExcludeWebGL()
+#endif
                     .ScheduleBackgroundNotification("test_nonteak_deeplink")
+#if UNITY_IOS
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
                         if ("test.delegate".Equals(logEvent.EventType)) {
                             state(Test.TestState.Passed);
                         } else {
                             state(Test.TestState.Pending);
                         }
+                    })
+#endif
+                    .ExpectPostLaunchSummary((object obj, Action<Test.TestState> state) => {
+#if TEAK_4_1_OR_NEWER
+                        TeakPostLaunchSummary summary = obj as TeakPostLaunchSummary;
+                        if(summary.LaunchLink.StartsWith("nonteak://") && summary.ScheduleName.Contains("test_nonteak_deeplink")) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Failed);
+                        }
+#endif
                     }),
+
+#if TEAK_4_3_OR_NEWER && !UNITY_WEBGL
+                    TestBuilder.Build("Session Stop on Backgrounding", this)
+                        .WhenStarted((Action<Test.TestState> state) => {
+                            this.globalContext["templatedString"] = Utils.RandomNonConfusingCharacterString(20);
+                            this.StartCoroutine(Teak.Notification.Schedule("test_incentivized_templated", 5, new Dictionary<string, object> { {"templatedString", this.globalContext["templatedString"] } }, (Teak.Notification.Reply reply) => {
+                                if (!reply.Error) {
+                                    Utils.BackgroundApp();
+                                    state(Test.TestState.Passed);
+                                } else {
+                                    state(Test.TestState.Failed);
+                                }
+                            }));
+                        })
+                        .ExpectPostLaunchSummary((object obj, Action<Test.TestState> state) => {
+#if TEAK_4_1_OR_NEWER
+                            TeakPostLaunchSummary summary = obj as TeakPostLaunchSummary;
+                            if((summary.DeepLink as string).EndsWith(this.globalContext["templatedString"] as string)) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+#endif
+                        })
+                        .ExpectReward()
+                        .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                            if ("request.send".Equals(logEvent.EventType) &&
+                            (logEvent.EventData["endpoint"] as string).EndsWith("/session_stop")) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Pending);
+                            }
+                        }),
+
+                    TestBuilder.Build("Session Resume on Returning", this)
+                        .WhenStarted((Action<Test.TestState> state) => {
+                            Utils.BackgroundApp();
+                            state(Test.TestState.Passed);
+                        })
+                        .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                            if ("request.send".Equals(logEvent.EventType) &&
+                            (logEvent.EventData["endpoint"] as string).EndsWith("/session_resume")) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Pending);
+                            }
+                        }),
+#endif
 
                 TestBuilder.Build("Store Current Deep Link Path", this)
                     .ExcludeWebGL()

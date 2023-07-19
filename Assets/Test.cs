@@ -22,7 +22,7 @@ class Test {
 
     // State, this could probably be done better
     private TestState began, reward, deepLink, launchedFromNotification, foregroundNotification,
-        logEvent, pushTokenChanged;
+        logEvent, pushTokenChanged, postLaunchSummary, userData;
 
     /// <summary>
     /// This takes all the test states and puts them into an array, then returns it.
@@ -36,7 +36,9 @@ class Test {
                 this.launchedFromNotification,
                 this.foregroundNotification,
                 this.logEvent,
-                this.pushTokenChanged
+                this.pushTokenChanged,
+                this.postLaunchSummary,
+                this.userData
             };
         }
     }
@@ -48,6 +50,12 @@ class Test {
     public Action<TeakNotification, Action<TestState>> OnLaunchedFromNotification { get; set; }
     public Action<TeakNotification, Action<TestState>> OnForegroundNotification { get; set; }
     public Action<TeakLogEvent, Action<TestState>> OnLogEvent { get; set; }
+#if TEAK_4_1_OR_NEWER
+    public Action<TeakPostLaunchSummary, Action<TestState>> OnPostLaunchSummary { get; set; }
+#endif // TEAK_4_1_OR_NEWER
+#if TEAK_4_2_OR_NEWER
+    public Action<Teak.UserData, Action<TestState>> OnUserData {get; set; }
+#endif // TEAK_4_2_OR_NEWER
 #endif
 
     // Test Lifecycle
@@ -66,6 +74,17 @@ class Test {
         this.reward = (this.OnReward == null ? TestState.Passed : TestState.Pending);
         this.deepLink = (this.OnDeepLink == null ? TestState.Passed : TestState.Pending);
         this.launchedFromNotification = (this.OnLaunchedFromNotification == null ? TestState.Passed : TestState.Pending);
+#if TEAK_4_1_OR_NEWER
+        this.postLaunchSummary = (this.OnPostLaunchSummary == null ? TestState.Passed : TestState.Pending);
+#else
+        this.postLaunchSummary = TestState.Passed;
+#endif // TEAK_4_1_OR_NEWER
+
+#if TEAK_4_2_OR_NEWER
+        this.userData = (this.OnUserData == null ? TestState.Passed : TestState.Pending);
+#else
+        this.userData = TestState.Passed;
+#endif // TEAK_4_2_OR_NEWER
 
 #if UNITY_WEBGL
         this.foregroundNotification = TestState.Passed;
@@ -166,6 +185,23 @@ class Test {
             this.logEvent = this.logEvent == TestState.Pending ? state : this.logEvent;
         });
     }
+
+#if TEAK_4_1_OR_NEWER
+    public void PostLaunchSummary(TeakPostLaunchSummary postLaunchSummary) {
+        this.EvaluatePredicate(this.OnPostLaunchSummary, postLaunchSummary, (TestState state) => {
+            this.postLaunchSummary = state;
+        });
+    }
+#endif // TEAK_4_1_OR_NEWER
+
+#if TEAK_4_2_OR_NEWER
+    public void UserData(Teak.UserData userData) {
+        this.EvaluatePredicate(this.OnUserData, userData, (TestState state) => {
+            this.userData = state;
+        });
+    }
+#endif // TEAK_4_2_OR_NEWER
+
 #endif
 
     public void PushTokenChanged(string pushToken) {
