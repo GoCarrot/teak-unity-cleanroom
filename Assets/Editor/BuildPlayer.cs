@@ -11,8 +11,6 @@ using UnityEditor.iOS.Xcode.Extensions;
 
 using UnityEditor.Build.Reporting;
 
-using GooglePlayServices;
-
 public class BuildPlayer
 {
     static string[] scenes = { "Assets/MainScene.unity" };
@@ -70,22 +68,39 @@ public class BuildPlayer
             EditorApplication.Exit(1);
         }
 
+        Debug.Log("[teak-unity-cleanroom] Initializing Play Services Resolver");
+
+        Google.VersionHandler.UpdateCompleteMethods = new [] {
+            ":BuildPlayer:ReallyResolveDependencies"
+        };
+
+        Google.VersionHandler.UpdateNow();
+    }
+
+    public static void ReallyResolveDependencies()
+    {
         EditorPrefs.SetString("AndroidSdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_HOME"));
         EditorPrefs.SetString("AndroidNdkRoot", System.Environment.GetEnvironmentVariable("ANDROID_NDK_HOME"));
 
         Debug.Log("[teak-unity-cleanroom] Resolving dependencies with Play Services Resolver");
+        Action<bool> resolutionCompleteWithResult = (success) => {
+            if (!success) {
+                Debug.Log("[teak-unity-cleanroom] FAILED to resolve dependencies");
+                EditorApplication.Exit(1);
+            } else {
+                Debug.Log("[teak-unity-cleanroom] Resolved dependencies");
+                EditorApplication.Exit(0);
+            }
+        };
 
-        PlayServicesResolver.Resolve(
-            resolutionCompleteWithResult: (success) => {
-                if (!success) {
-                    Debug.Log("[teak-unity-cleanroom] FAILED to resolve dependencies");
-                    EditorApplication.Exit(1);
-                } else {
-                    Debug.Log("[teak-unity-cleanroom] Resolved dependencies");
-                    EditorApplication.Exit(0);
-                }
-            },
-            forceResolution: false);
+        Google.VersionHandler.InvokeStaticMethod(
+            Google.VersionHandler.FindClass("Google.JarResolver",
+                                            "GooglePlayServices.PlayServicesResolver"),
+            "Resolve", args: null,
+            namedArgs: new System.Collections.Generic.Dictionary<string, object> {
+                { "resolutionCompleteWithResult", resolutionCompleteWithResult },
+                { "forceResolution", false }
+        });
     }
 
     static void DoBuildPlayer(BuildPlayerOptions buildPlayerOptions) {

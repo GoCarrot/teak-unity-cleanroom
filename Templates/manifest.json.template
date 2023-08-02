@@ -6,7 +6,6 @@
 {{#use_teak_upmxxx}}
     "io.teak.unity.sdk": "https://github.com/GoCarrot/upm-package-teak.git#4.1.14",
 {{/use_teak_upmxxx}}
-    "com.google.external-dependency-manager": "file:../GooglePackages/com.google.external-dependency-manager-1.2.175.tgz",
 {{#use_unity_purchasing}}
     "com.unity.purchasing": "4.1.2",
 {{/use_unity_purchasing}}

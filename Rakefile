@@ -357,6 +357,22 @@ namespace :facebook do
   end
 end
 
+namespace :firebase do
+  task :import do
+    without_teak_available do
+      unity '-ignorecompilererrors', '-importPackage', "#{PROJECT_PATH}/GooglePackages/FirebaseMessaging.unitypackage"
+    end
+  end
+end
+
+namespace :teak do
+  task :import do
+    without_teak_available do
+      unity '-importPackage', 'Teak.unitypackage'
+    end if using_unitypackage?
+  end
+end
+
 namespace :package do
   task upm: [:clean] do
     #empty
@@ -403,10 +419,8 @@ namespace :package do
   end
 
   task :import do
-    without_teak_available do
-      unity '-importPackage', 'Teak.unitypackage'
-    end if using_unitypackage?
-
+    Rake::Task['firebase:import'].invoke
+    Rake::Task['teak:import'].invoke
     Rake::Task['prime31:import'].invoke if purchasing_plugin == :prime_31
     Rake::Task['facebook:import'].invoke if use_facebook?
   end
