@@ -236,7 +236,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                             state(Test.TestState.Passed);
                             return;
                         }
-#else // UNITY_IOS
+#elif UNITY_ANDROID // UNITY_IOS
                         // Should be fine on API Level 22+
                         if (this.AndroidAPILevel > 21 && "notification.received".Equals(logEvent.EventType)) {
                             state(Test.TestState.Passed);
