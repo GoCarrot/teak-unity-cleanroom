@@ -419,7 +419,13 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 
                     TestBuilder.Build("Session Resume on Returning", this)
                         .WhenStarted((Action<Test.TestState> state) => {
-                            Utils.BackgroundApp();
+                            if(Teak.Instance.CanOpenNotificationSettings) {
+                                Teak.Instance.OpenNotificationSettings();
+                            } else if (Teak.Instance.CanOpenSettingsAppToThisAppsSettings) {
+                                Teak.Instance.OpenSettingsAppToThisAppsSettings();
+                            } else {
+                                Utils.BackgroundApp();
+                            }
                             state(Test.TestState.Passed);
                         })
                         .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
