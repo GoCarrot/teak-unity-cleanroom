@@ -101,7 +101,8 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
                         if ("request.send".Equals(logEvent.EventType) &&
-                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json")) {
+                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json") &&
+                            ((logEvent.EventData["payload"] as Dictionary<string, object>)["email"] != null)) {
                             Debug.Log(logEvent);
                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
 
