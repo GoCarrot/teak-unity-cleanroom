@@ -175,6 +175,35 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }));
                     }),
 
+#if TEAK_4_3_OR_NEWER
+                TestBuilder.Build("Set Category State (Email) to OptOut", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetCategoryState(Teak.Channel.Type.Email, "teak", Teak.Channel.State.OptOut, (reply) => {
+                            state(!reply.Error && reply.State == Teak.Channel.State.OptOut && reply.Channel == Teak.Channel.Type.Email && reply.Category == "teak" ?
+                                Test.TestState.Passed : Test.TestState.Failed);
+                        }));
+                    }),
+
+                TestBuilder.Build("Set Category State (Email) to OptIn", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetCategoryState(Teak.Channel.Type.Email, "teak", Teak.Channel.State.OptIn, (reply) => {
+                            state(!reply.Error && reply.State == Teak.Channel.State.OptIn && reply.Channel == Teak.Channel.Type.Email && reply.Category == "teak" ?
+                                Test.TestState.Passed : Test.TestState.Failed);
+                        }));
+                    }),
+
+                TestBuilder.Build("Set Does Not Exist Category State (Email) to OptOut", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetCategoryState(Teak.Channel.Type.Email, "never never exist", Teak.Channel.State.OptOut, (reply) => {
+                            if(reply.Error && reply.Errors["category"][0].Contains("Unknown category")) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        }));
+                    }),
+#endif // TEAK_4_3_OR_NEWER
+
                 TestBuilder.Build("Set Channel (Platform Push) to OptOut", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.PlatformPush, Teak.Channel.State.OptOut, (reply) => {
