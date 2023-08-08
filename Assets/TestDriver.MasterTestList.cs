@@ -237,13 +237,27 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Set Channel (Email) to OptOut No Email", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.Email, Teak.Channel.State.OptOut, (reply) => {
-                            Debug.Log(reply);
-                            Debug.Log(reply.Error);
-                            Debug.Log(reply.Json["error"] as string);
-                            state(reply.Error ? Test.TestState.Passed : Test.TestState.Failed);
+                            if(reply.Error && reply.Errors["email"][0].Contains("not reachable")) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
                         }));
                     }),
-#endif
+
+#if TEAK_4_3_OR_NEWER
+                TestBuilder.Build("Set Category State (Email) to OptOut No Email", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        StartCoroutine(Teak.Instance.SetCategoryState(Teak.Channel.Type.Email, "teak", Teak.Channel.State.OptOut, (reply) => {
+                            if(reply.Error && reply.Errors["email"][0].Contains("not reachable")) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+                        }));
+                    }),
+#endif // TEAK_4_3_OR_NEWER
+#endif // TEAK_4_2_OR_NEWER
 
 #if !UNITY_WEBGL
                 TestBuilder.Build("Notification with Emoji", this)
