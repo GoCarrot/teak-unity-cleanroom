@@ -12,7 +12,7 @@ using TeakCleanroomExtensions;
 public partial class TestDriver : UnityEngine.MonoBehaviour {
     public static bool ShouldBeAbleToOpenNotificationSettings {
         get {
-            Regex rx = new Regex("(iOS|Android OS) (\\d+)\\.?(\\d+)?\\.?(\\d+)?",
+            Regex rx = new Regex("(iOS|iPadOS||Android OS) (\\d+)\\.?(\\d+)?\\.?(\\d+)?",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
             MatchCollection matches = rx.Matches(UnityEngine.SystemInfo.operatingSystem);
 
@@ -27,7 +27,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 Debug.Log("OS: {0}, version {1}.{2}.{3}", os, major, minor, patch);
 
                 bool shouldOpen = false;
-                if (os == "iOS" && (major > 15 || (major == 15 && minor >= 4))) {
+                if ((os == "iOS" || os == "iPadOS") && (major > 15 || (major == 15 && minor >= 4))) {
                     shouldOpen = true;
                 } else if (os == "Android OS" && major >= 8) {
                     shouldOpen = true;
