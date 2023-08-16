@@ -38,6 +38,20 @@ public class TeakInterface : MonoBehaviour {
             LogLaunchMatrixEvent("Deep Link");
         });
 
+        // Assign Teak Callbacks
+        Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
+        Teak.Instance.OnReward += OnReward;
+        Teak.Instance.OnLogEvent += OnLogEvent;
+        Teak.Instance.OnLaunchedFromLink += OnLaunchedFromLink;
+
+#if TEAK_4_1_OR_NEWER
+        Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
+#endif
+
+#if TEAK_4_3_OR_NEWER
+        Teak.Instance.OnConfigurationData += OnConfigurationData;
+#endif
+
 #if UNITY_FACEBOOK
         if (!FB.IsInitialized) {
             FB.Init(() => {
@@ -70,34 +84,20 @@ public class TeakInterface : MonoBehaviour {
         Dictionary<string, object> deviceConfiguration = Teak.Instance.GetDeviceConfiguration();
         this.TeakUserId = "unity-" + (deviceConfiguration["deviceModel"] as string).ToLower();
 #endif
+        // Default so we don't have empty user id
+        if (string.IsNullOrEmpty(this.TeakUserId)) {
+            this.TeakUserId = "unity-not-logged-in";
+        }
+
     }
 
     void Start() {
         Debug.Log("[Teak Unity Cleanroom] Lifecycle: Start");
 
-        // Assign Teak Callbacks
-        Teak.Instance.OnLaunchedFromNotification += OnLaunchedFromNotification;
-        Teak.Instance.OnReward += OnReward;
-        Teak.Instance.OnLogEvent += OnLogEvent;
-        Teak.Instance.OnLaunchedFromLink += OnLaunchedFromLink;
-
-#if TEAK_4_1_OR_NEWER
-        Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
-#endif
-
-#if TEAK_4_3_OR_NEWER
-        Teak.Instance.OnConfigurationData += OnConfigurationData;
-#endif
-
         // Print out notification state
         Debug.Log("[Teak Unity Cleanroom] Notification State: " + Teak.Instance.PushNotificationState);
         if (Teak.Instance.PushNotificationState == Teak.NotificationState.Disabled) {
             Debug.Log("Notifications are disabled!");
-        }
-
-        // Default so we don't have empty user id
-        if (string.IsNullOrEmpty(this.TeakUserId)) {
-            this.TeakUserId = "unity-not-logged-in";
         }
 
         // Do *not* provide email address in the first identify user call
