@@ -102,7 +102,9 @@ public class TeakInterface : MonoBehaviour {
 
         // Do *not* provide email address in the first identify user call
         // the tests will re-identify providing email shortly into the test suite
-#if TEAK_4_1_OR_NEWER
+#if TEAK_4_2_OR_NEWER
+
+#elif TEAK_4_1_OR_NEWER
         Teak.UserConfiguration userConfiguration = new Teak.UserConfiguration {};
 
         Teak.Instance.IdentifyUser(this.TeakUserId, userConfiguration);

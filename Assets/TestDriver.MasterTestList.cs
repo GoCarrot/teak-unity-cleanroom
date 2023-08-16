@@ -48,9 +48,11 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 #   if TEAK_4_2_OR_NEWER
                 TestBuilder.Build("Wait For PostLaunchSummary", this)
                     .WhenStarted((Action<Test.TestState> state) => {
-                        this.StartCoroutine(Coroutine.WaitForTrue(() => this.PostLaunchSummary != null, () => {
-                            state(Test.TestState.Passed);
-                        }));
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, new Teak.UserConfiguration {});
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectUserData((object obj, Action<Test.TestState> state) => {
+                        state(Test.TestState.Passed);
                     }),
 #   endif
 
