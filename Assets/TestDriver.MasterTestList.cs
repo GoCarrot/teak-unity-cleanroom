@@ -95,7 +95,6 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 // Re-identify the user, providing email. This was an NSNull crash
                 // in the 4.1.x family
                 TestBuilder.Build("Re-Identify User Providing Email", this)
-                    .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.testContext["userEmail"] = "ops@teak.io";
                         Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
@@ -107,16 +106,94 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                             ((logEvent.EventData["payload"] as Dictionary<string, object>)["email"] != null)) {
                             Debug.Log(logEvent);
                             Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
+                            Debug.Log(this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) ? "Api Key match" : "Api Key mismatch");
+                            Debug.Log(payload.ContainsKey("email") ? "Email present" : "Email absent");
+                            Debug.Log((this.testContext["userEmail"] as string).Equals(payload["email"] as string) ? "Email match" : "Email mismatch");
+                            Debug.Log((bool)payload["do_not_track_event"] ? "do not track" : "tracked");
+
 
                             if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
                                 payload.ContainsKey("email") &&
                                 (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
                                 ((bool)payload["do_not_track_event"])) {
+                                Debug.Log("Re-Identify Passed");
                                 state(Test.TestState.Passed);
                             } else {
+                                Debug.Log("Re-Identify Failed");
                                 state(Test.TestState.Failed);
                             }
                         } else {
+                            Debug.Log("Re-Identify Pending");
+                            state(Test.TestState.Pending);
+                        }
+                    })
+                    .ExpectUserData((object obj, Action<Test.TestState> state) => {
+#if TEAK_4_2_OR_NEWER
+                        Teak.UserData userData = obj as Teak.UserData;
+                        Debug.Log(userData.EmailStatus.State);
+                        if(
+                            (userData.EmailStatus.State == Teak.Channel.State.Available || userData.EmailStatus.State == Teak.Channel.State.OptIn)
+                            && userData.PushStatus.State == Teak.Channel.State.OptIn
+#if TEAK_4_3_OR_NEWER
+                            && userData.EmailStatus["teak"] == Teak.Channel.State.OptIn
+                            && userData.PushStatus["teak"] == Teak.Channel.State.OptIn
+#endif // TEAK_4_3_OR_NEWER
+                        ) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Failed);
+                        }
+#endif
+                    }),
+
+                TestBuilder.Build("Delete Email", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        Teak.Instance.DeleteEmail();
+                        StartCoroutine(Coroutine.DoAfterSeconds(0.1f,() => {
+                            state(Test.TestState.Passed);
+                        }));
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("request.reply".Equals(logEvent.EventType) &&
+                            ((logEvent.EventData["endpoint"] as string).EndsWith("/me/email.json") || (logEvent.EventData["endpoint"] as string).EndsWith("/me/email"))) {
+                            Debug.Log(logEvent);
+                            state(Test.TestState.Passed);
+                         } else {
+                            state(Test.TestState.Pending);
+                        }
+                    }),
+
+                // Verify that we can set the same player email address after a deleteEmail call.
+                TestBuilder.Build("Re-Identify User Providing Email Take 2", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.testContext["userEmail"] = "ops@teak.io";
+                        Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("request.send".Equals(logEvent.EventType) &&
+                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json") &&
+                            ((logEvent.EventData["payload"] as Dictionary<string, object>)["email"] != null)) {
+                            Debug.Log(logEvent);
+                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
+                            Debug.Log(this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) ? "Api Key match" : "Api Key mismatch");
+                            Debug.Log(payload.ContainsKey("email") ? "Email present" : "Email absent");
+                            Debug.Log((this.testContext["userEmail"] as string).Equals(payload["email"] as string) ? "Email match" : "Email mismatch");
+                            Debug.Log((bool)payload["do_not_track_event"] ? "do not track" : "tracked");
+
+
+                            if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
+                                payload.ContainsKey("email") &&
+                                (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
+                                ((bool)payload["do_not_track_event"])) {
+                                Debug.Log("Re-Identify Passed");
+                                state(Test.TestState.Passed);
+                            } else {
+                                Debug.Log("Re-Identify Failed");
+                                state(Test.TestState.Failed);
+                            }
+                        } else {
+                            Debug.Log("Re-Identify Pending");
                             state(Test.TestState.Pending);
                         }
                     })
