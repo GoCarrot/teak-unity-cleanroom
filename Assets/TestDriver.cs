@@ -528,6 +528,10 @@ public partial class TestDriver : MonoBehaviour
         Debug.Log("[TestDriver-UnityIAP] OnInitializeFailed: " + error);
     }
 
+    public void OnInitializeFailed(InitializationFailureReason error, String message) {
+        Debug.Log("[TestDriver-UnityIAP] OnInitializeFailed: " + error);
+    }
+
     public void OnPurchaseFailed(UnityEngine.Purchasing.Product item, PurchaseFailureReason r) {
         Debug.Log("[TestDriver-UnityIAP] OnPurchaseFailed: " + r);
     }
