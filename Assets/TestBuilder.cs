@@ -100,7 +100,7 @@ class TestBuilder {
     }
 #endif
 
-#if TEAK_4_1_OR_NEWER
+#if TEAK_4_1_OR_NEWER && !TEAK_NOT_AVAILABLE
     public TestBuilder ExpectPostLaunchSummary(Action<object, Action<Test.TestState>> action) {
         test.OnPostLaunchSummary = action;
         return this;
@@ -113,7 +113,7 @@ class TestBuilder {
 
 
     public TestBuilder ExpectUserData(Action<object, Action<Test.TestState>> action) {
-#if TEAK_4_2_OR_NEWER
+#if TEAK_4_2_OR_NEWER && !TEAK_NOT_AVAILABLE
         test.OnUserData = action;
 #endif
         return this;
