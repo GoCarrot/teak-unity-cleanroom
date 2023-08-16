@@ -302,7 +302,9 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Delete Email", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         Teak.Instance.DeleteEmail();
-                        state(Test.TestState.Passed);
+                        StartCoroutine(Coroutine.DoAfterSeconds(0.1f,() => {
+                            state(Test.TestState.Passed);
+                        }));
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
                         if ("request.reply".Equals(logEvent.EventType) &&
