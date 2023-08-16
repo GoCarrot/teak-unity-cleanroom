@@ -98,6 +98,7 @@ public partial class TestDriver : MonoBehaviour
 
     void Awake() {
 #if !TEAK_NOT_AVAILABLE
+        Debug.Log("[Teak Unity Cleanroom] TestDriver Lifecycle: Awake");
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
             this.LaunchedFromDeepLinkPath = parameters["__incoming_url"] as string;
             Debug.Log(this.LaunchedFromDeepLinkPath);
@@ -117,6 +118,7 @@ public partial class TestDriver : MonoBehaviour
     }
 
     void Start() {
+        Debug.Log("[Teak Unity Cleanroom] TestDriver Lifecycle: Start");
         // Don't turn off the screen while running the test suite
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
