@@ -470,8 +470,8 @@ namespace :build do
     FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
 
-    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'assets'))
-    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'assets', 'api_key.txt'), TEAK_CREDENTIALS[BUILD_TYPE][:adm_key])
+    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets'))
+    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets', 'api_key.txt'), TEAK_CREDENTIALS[BUILD_TYPE][:adm_key])
 
     additional_args = []
     additional_args.concat(['--debug']) unless prod?
