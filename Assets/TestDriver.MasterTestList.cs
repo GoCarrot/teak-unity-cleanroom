@@ -14,6 +14,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
         get {
             Regex rx = new Regex("(iOS|iPadOS||Android OS) (\\d+)\\.?(\\d+)?\\.?(\\d+)?",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            Debug.Log("Reported OS Version: " + UnityEngine.SystemInfo.operatingSystem);
             MatchCollection matches = rx.Matches(UnityEngine.SystemInfo.operatingSystem);
 
             foreach (Match match in matches) {
@@ -404,6 +405,11 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                                     if (cancelReply.Notifications != null) {
                                         canceledIds = cancelReply.Notifications.Select(e => e.ScheduleId).ToList();
                                     }
+                                    Debug.Log("Cancel All Notifications");
+                                    Debug.Log(scheduledId);
+                                    foreach(string id in canceledIds) {
+                                        Debug.Log(id);
+                                    }
                                     state(canceledIds.Contains(scheduledId) ? Test.TestState.Passed : Test.TestState.Failed);
                                 }));
                             } else {
@@ -415,6 +421,8 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Report errors for invalid scheduling", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.StartCoroutine(Teak.Notification.Schedule("test_never_ever_create_this_notification", 5, null, (Teak.Notification.Reply reply) => {
+                            Debug.Log("Response for Report errors fro invalid scheduling received");
+                            Debug.Log(reply);
                             if (!reply.Error || !reply.Errors["identifier"][0].Contains("dashboard")) {
                                 state(Test.TestState.Failed);
                             } else {
