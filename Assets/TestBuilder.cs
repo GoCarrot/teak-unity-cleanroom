@@ -93,17 +93,6 @@ class TestBuilder {
         return this;
     }
 
-    public TestBuilder ExpectPushToken() {
-#if UNITY_IOS
-        if (UnityEngine.iOS.NotificationServices.deviceToken == null) {
-            test.OnPushTokenChanged = (string pushToken, Action<Test.TestState> state) => {
-                state(Test.TestState.Passed);
-            };
-        }
-#endif
-        return this;
-    }
-
 #if !TEAK_NOT_AVAILABLE
     public TestBuilder ExpectLogEvent(Action<TeakLogEvent, Action<Test.TestState>> action) {
         test.OnLogEvent = action;

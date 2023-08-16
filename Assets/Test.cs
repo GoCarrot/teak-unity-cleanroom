@@ -22,7 +22,7 @@ class Test {
 
     // State, this could probably be done better
     private TestState began, reward, deepLink, launchedFromNotification, foregroundNotification,
-        logEvent, pushTokenChanged, postLaunchSummary, userData;
+        logEvent, postLaunchSummary, userData;
 
     /// <summary>
     /// This takes all the test states and puts them into an array, then returns it.
@@ -36,7 +36,6 @@ class Test {
                 this.launchedFromNotification,
                 this.foregroundNotification,
                 this.logEvent,
-                this.pushTokenChanged,
                 this.postLaunchSummary,
                 this.userData
             };
@@ -62,7 +61,6 @@ class Test {
     public Action<Action<TestState>> OnBegin { get; set; }
     public Action<Action<TestState>> OnComplete { get; set; }
     public Action OnResult { get; set; }
-    public Action<string, Action<TestState>> OnPushTokenChanged { get; set; }
 
     /////
     // Test lifecycle
@@ -94,7 +92,6 @@ class Test {
         this.logEvent = (this.OnLogEvent == null ? TestState.Passed : TestState.Pending);
 #endif // UNITY_WEBGL
 #endif // !TEAK_NOT_AVAILABLE
-        this.pushTokenChanged = (this.OnPushTokenChanged == null ? TestState.Passed : TestState.Pending);
     }
 
     public void Begin() {
@@ -203,10 +200,4 @@ class Test {
 #endif // TEAK_4_2_OR_NEWER
 
 #endif
-
-    public void PushTokenChanged(string pushToken) {
-        this.EvaluatePredicate(this.OnPushTokenChanged, pushToken, (TestState state) => {
-            this.pushTokenChanged = state;
-        });
-    }
 }

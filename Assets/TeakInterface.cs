@@ -23,11 +23,6 @@ public class TeakInterface : MonoBehaviour {
         UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[✅] Event: {0}", logMessage);
     }
 
-    // Suppress the "is never used and will always have its default value" warning
-#pragma warning disable
-    public event Action<string> OnPushTokenChanged;
-#pragma warning restore
-
 #if !TEAK_NOT_AVAILABLE
 #region Unity
     void Awake() {
@@ -243,24 +238,6 @@ public class TeakInterface : MonoBehaviour {
             action(json);
         }
     }
-
-#if UNITY_IOS
-    string pushTokenString = null;
-    void FixedUpdate() {
-        if (this.pushTokenString == null) {
-            byte[] token = UnityEngine.iOS.NotificationServices.deviceToken;
-            if (token != null) {
-                // Teak will take care of storing this automatically
-                this.pushTokenString = System.BitConverter.ToString(token).Replace("-", "").ToLower();
-
-                // Inform the TestDriver
-                if (this.OnPushTokenChanged != null) {
-                    this.OnPushTokenChanged(this.pushTokenString);
-                }
-            }
-        }
-    }
-#endif
 
     public void TestExceptionReporting()
     {

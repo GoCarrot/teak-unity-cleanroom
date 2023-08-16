@@ -121,7 +121,6 @@ public partial class TestDriver : MonoBehaviour
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
         this.teakInterface = GetComponent<TeakInterface>();
-        this.teakInterface.OnPushTokenChanged += OnPushTokenChanged;
 
         this.ResetTests();
 
@@ -155,15 +154,6 @@ public partial class TestDriver : MonoBehaviour
     void OnValidate() {
         if (this.testColor.Length != 2) {
             Array.Resize(ref this.testColor, 2);
-        }
-    }
-
-    void OnPushTokenChanged(string pushToken) {
-#if UNITY_IOS
-        this.pushToken = pushToken;
-#endif
-        if (this.testEnumerator != null) {
-            this.testEnumerator.Current.PushTokenChanged(pushToken);
         }
     }
 
