@@ -87,6 +87,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 #if UNITY_IOS || UNITY_ANDROID
                 TestBuilder.Build("Push Notification Permission", this)
                     .WhenStarted((Action<Test.TestState> state) => {
+                        Teak.Instance.RegisterForProvisionalNotifications();
                         StartCoroutine(Teak.Instance.RegisterForNotifications(granted => {
                             state(granted ? Test.TestState.Passed : Test.TestState.Failed);
                         }));
