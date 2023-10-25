@@ -1,4 +1,4 @@
-﻿#define USE_UNITY_IAP
+#define USE_UNITY_IAP
 
 using UnityEngine;
 using UnityEngine.UI;
