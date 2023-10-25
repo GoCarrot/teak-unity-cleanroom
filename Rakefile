@@ -315,7 +315,7 @@ end
 
 namespace :facebook do
   task :import do
-    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', '11.0.0')
+    facebook_sdk_version = ENV.fetch('FACEBOOK_SDK_VERSION', '16.0.1')
     zip_name = if facebook_sdk_version
                  "facebook-unity-sdk-#{facebook_sdk_version}"
                else
@@ -335,22 +335,22 @@ namespace :facebook do
         unity '-importPackage', "#{tmpdir}/#{sdk_name}/FacebookSDK/#{sdk_name}.unitypackage"
       end
     ensure
-      [
-        'Assets/ExternalDependencyManager',
-        'Assets/FacebookSDK/Examples',
-        'Assets/PlayServicesResolver'
-      ].each do |dir_to_rm|
-        next unless Dir.exist? dir_to_rm
+      # [
+      #   'Assets/ExternalDependencyManager',
+      #   'Assets/FacebookSDK/Examples',
+      #   'Assets/PlayServicesResolver'
+      # ].each do |dir_to_rm|
+      #   next unless Dir.exist? dir_to_rm
 
-        FileUtils.remove_dir(dir_to_rm)
-        File.delete("#{dir_to_rm}.meta")
-      end
+      #   FileUtils.remove_dir(dir_to_rm)
+      #   File.delete("#{dir_to_rm}.meta")
+      # end
 
-      case facebook_sdk_version
-      when '7.9.4'
-        File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-v4-*'])
-        File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
-      end
+      # case facebook_sdk_version
+      # when '7.9.4'
+      #   File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-v4-*'])
+      #   File.delete(*Dir['Assets/FacebookSDK/Plugins/Android/libs/support-annotations-*'])
+      # end
 
       FileUtils.remove_entry tmpdir
     end
@@ -498,7 +498,7 @@ namespace :build do
 
     with_kms_decrypt SIGNING_KEY do
       unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
-      # sh "keytool -list -v -alias alias_name -storepass pointless -keystore #{File.join(PROJECT_PATH, SIGNING_KEY)}"
+      sh "keytool -list -v -alias alias_name -storepass pointless -keystore #{File.join(PROJECT_PATH, SIGNING_KEY)}"
     end
   end
 
