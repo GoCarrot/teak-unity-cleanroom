@@ -375,7 +375,16 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }
 #endif
                         state(Test.TestState.Pending);
-                    }),
+                    }).ExpectPostLaunchSummary((object obj, Action<Test.TestState> state) => {
+#if TEAK_4_1_OR_NEWER
+                        TeakPostLaunchSummary summary = obj as TeakPostLaunchSummary;
+                        if(summary.ScheduleName.Contains("test_emoji_log_exception")) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Failed);
+                        }
+#endif
+                    }).ExpectReward(),
 #endif // !UNITY_WEBGL
 
                 TestBuilder.Build("Cancel Notification", this)
