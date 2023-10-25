@@ -209,6 +209,12 @@ public partial class TestDriver : MonoBehaviour
             this.testEnumerator.Current.UserData(userData);
         }
         Debug.Log("[OnUserData]: " + Json.Serialize(userData.ToDictionary()));
+        Debug.Log("Player's push channel state is: " + userData.PushStatus.StateName);
+        Debug.Log("Player's email channel state is: " + userData.EmailStatus.StateName);
+        foreach(Teak.Channel.Category category in Teak.Channel.Categories) {
+            Debug.Log("Player is " + (userData.PushStatus[category.Id] == Teak.Channel.State.OptIn ? "opted-in to" : " opted-out of") + category.Name + " for push.");
+            Debug.Log("Player is " + (userData.EmailStatus[category.Id] == Teak.Channel.State.OptIn ? "opted-in to" : "opted-out of") + category.Name + " for email.");
+        }
     }
 # endif
 

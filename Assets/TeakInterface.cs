@@ -139,8 +139,21 @@ public class TeakInterface : MonoBehaviour {
     }
 
 #if TEAK_4_1_OR_NEWER
-    void OnPostLaunchSummary(TeakPostLaunchSummary postLaunchSummary) {
-        Debug.Log("[Teak Unity Cleanroom] OnPostLaunchSummary: " + postLaunchSummary.ToString());
+    void OnPostLaunchSummary(TeakPostLaunchSummary launchSummary) {
+        Debug.Log("[Teak Unity Cleanroom] OnPostLaunchSummary: " + launchSummary.ToString());
+
+        if (launchSummary.ChannelName == null) {
+            Debug.Log("Launch not attributed by Teak");
+            return;
+        }
+
+        Debug.Log("Launch attributed to " + launchSummary.ChannelName);
+        Debug.Log("Launch came from click on " + launchSummary.CreativeName);
+        Debug.Log("Launch was " + (launchSummary.RewardId == null ? "not" : "") + " rewarded");
+
+        if (launchSummary.DeepLink != null) {
+            Debug.Log("Launch requested to link to " + launchSummary.DeepLink);
+        }
 
         // PostLaunchSummary should always happen last, so this will separate out tests
         LogLaunchMatrixEvent("-----");
