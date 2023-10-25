@@ -1,11 +1,8 @@
 {
   "dependencies": {
 {{#use_teak_upm}}
-    "io.teak.unity.sdk": "file:/Users/pat/Code/teak-unity/temp-upm-build",
+    "io.teak.unity.sdk": "https://github.com/GoCarrot/upm-package-teak.git#4.3",
 {{/use_teak_upm}}
-{{#use_teak_upmxxx}}
-    "io.teak.unity.sdk": "https://github.com/GoCarrot/upm-package-teak.git#4.1.14",
-{{/use_teak_upmxxx}}
 {{#use_unity_purchasing}}
     "com.unity.purchasing": "4.1.2",
 {{/use_unity_purchasing}}
