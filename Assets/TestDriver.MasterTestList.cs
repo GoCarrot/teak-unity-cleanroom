@@ -517,6 +517,30 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                             }
                         }),
 
+                    TestBuilder.Build("Notification Send on Backgrounding", this)
+                        .WhenStarted((Action<Test.TestState> state) => {
+                            Utils.BackgroundApp();
+                            state(Test.TestState.Passed);
+                        })
+                        .WhenBackgrounded((Action<Test.TestState> state) => {
+                            this.globalContext["templatedString"] = Utils.RandomNonConfusingCharacterString(20);
+                            this.StartCoroutine(Teak.Notification.Schedule("test_incentivized_templated", 5, new Dictionary<string, object> { {"templatedString", this.globalContext["templatedString"] } }, (Teak.Notification.Reply reply) => {
+
+                            }));
+                            state(Test.TestState.Passed);
+                        })
+                        .ExpectPostLaunchSummary((object obj, Action<Test.TestState> state) => {
+#if TEAK_4_1_OR_NEWER
+                            TeakPostLaunchSummary summary = obj as TeakPostLaunchSummary;
+                            if((summary.DeepLink as string).EndsWith(this.globalContext["templatedString"] as string)) {
+                                state(Test.TestState.Passed);
+                            } else {
+                                state(Test.TestState.Failed);
+                            }
+#endif
+                        })
+                        .ExpectReward(),
+
                     TestBuilder.Build("Session Resume on Returning", this)
                         .WhenStarted((Action<Test.TestState> state) => {
                             if(Teak.Instance.CanOpenNotificationSettings) {
