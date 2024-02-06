@@ -159,6 +159,12 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 
+    void OnApplicationPause(bool isPaused) {
+        if(isPaused && this.testEnumerator != null) {
+            this.testEnumerator.Current.Background();
+        }
+    }
+
 #if !TEAK_NOT_AVAILABLE
     void OnLaunchedFromNotification(TeakNotification notification) {
         if (this.testEnumerator != null) {

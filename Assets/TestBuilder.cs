@@ -49,6 +49,11 @@ class TestBuilder {
         return this;
     }
 
+    public TestBuilder WhenBackgrounded(Action<Action<Test.TestState>> action) {
+        test.OnBackground = action;
+        return this;
+    }
+
     public TestBuilder ScheduleNotification(string creativeId) {
 #if !TEAK_NOT_AVAILABLE
         test.OnBegin = this.ScheduleNotification(creativeId, false);

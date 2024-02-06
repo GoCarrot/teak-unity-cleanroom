@@ -21,7 +21,7 @@ class Test {
     public int OnRewardCalls { get; set; }
 
     // State, this could probably be done better
-    private TestState began, reward, deepLink, launchedFromNotification, foregroundNotification,
+    private TestState began, background, reward, deepLink, launchedFromNotification, foregroundNotification,
         logEvent, postLaunchSummary, userData;
 
     /// <summary>
@@ -31,6 +31,7 @@ class Test {
         get {
             return new TestState[] {
                 this.began,
+                this.background,
                 this.reward,
                 this.deepLink,
                 this.launchedFromNotification,
@@ -60,6 +61,7 @@ class Test {
     // Test Lifecycle
     public Action<Action<TestState>> OnBegin { get; set; }
     public Action<Action<TestState>> OnComplete { get; set; }
+    public Action<Action<TestState>> OnBackground { get; set; }
     public Action OnResult { get; set; }
 
     /////
@@ -68,6 +70,7 @@ class Test {
         this.Status = TestState.Pending;
 
         this.began = TestState.Pending;
+        this.background = this.OnBackground == null ? TestState.Passed : TestState.Pending;
 #if !TEAK_NOT_AVAILABLE
         this.reward = (this.OnReward == null ? TestState.Passed : TestState.Pending);
         this.deepLink = (this.OnDeepLink == null ? TestState.Passed : TestState.Pending);
@@ -99,6 +102,12 @@ class Test {
         this.Status = TestState.Running;
         this.EvaluatePredicate(this.OnBegin, (TestState state) => {
             this.began = state;
+        });
+    }
+
+    public void Background() {
+        this.EvaluatePredicate(this.OnBackground, (TestState state) => {
+            this.background = state;
         });
     }
 
