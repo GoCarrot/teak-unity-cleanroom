@@ -324,18 +324,18 @@ PLATFORMS
 DEPENDENCIES
   awesome_print
   aws-sdk-s3
-  cocoapods
-  fastlane
+  cocoapods (~> 1.12)
+  fastlane (~> 2.213)
   fastlane-plugin-teak
-  headdesk
-  httparty
-  mustache
+  headdesk (~> 0.17)
+  httparty (~> 0.21)
+  mustache (~> 1.1)
   rake
-  rubocop
-  terminal-notifier
-  unitypackage
-  xcodeproj
-  xcpretty
+  rubocop (~> 1.54)
+  terminal-notifier (~> 2.0)
+  unitypackage (~> 0.1)
+  xcodeproj (~> 1.22)
+  xcpretty (~> 0.3)
 
 BUNDLED WITH
    2.1.4
