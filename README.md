@@ -6,7 +6,7 @@ Will find the best version of Unity it can, download the latest Teak SDK, config
 
 ## Unity Version ##
 
-The `UNITY_HOME` environment variable sets which Unity editor will be used for building, e.g. `UNITY_HOME=/Applications/Unity/Hub/Editor/2023.1.8f1`
+The `UNITY_HOME` environment variable sets which Unity editor will be used for building, e.g. `UNITY_HOME=/Applications/Unity/Hub/Editor/2020.3.47f1`
 
 ## AWS Credentials ##
 
