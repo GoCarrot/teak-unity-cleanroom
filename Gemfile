@@ -1,4 +1,6 @@
-source 'https://rubygems.org' # frozen_string_literal: true
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
 gem 'awesome_print'
 gem 'aws-sdk-s3'
 gem 'cocoapods', '~> 1.12'
