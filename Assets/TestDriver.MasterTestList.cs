@@ -569,18 +569,20 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 //
                 // Verifying the breadcrumbs actually land on the report is a manual Sentry-dashboard
                 // step (see C-840) -- nothing in game code can read the outbound Raven payload.
-                // On Android the same exception also surfaces as an observable "exception" log event,
-                // which we assert below to give the trigger teeth. iOS reports straight to Raven via
-                // the teak_catch_report macro (no log event), so iOS is trigger-only -- and since the
-                // harness has no per-test timeout, an ExpectLogEvent that never matched would hang the
-                // whole suite, so the asymmetry is required, not optional.
+                //
+                // Both platforms emit an observable "exception" log event we assert on for teeth:
+                // Android log.exception() and iOS reportWithHelper: (the caught-exception path, since
+                // C-843) both ship event_type "exception" with type = the exception name -- which is
+                // "ReportTestException" on both (getSimpleName() / NSException.name), so the assert
+                // keys identically with no per-platform split. Heads up: the harness has no per-test
+                // timeout, so if that event never arrives this test HANGS rather than fails -- the
+                // on-device event-arrival check is the load-bearing ship-time QA gate (C-840).
                 TestBuilder.Build("Trigger SDK Exception (Sentry breadcrumbs)", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.teakInterface.TestExceptionReporting();
                         state(Test.TestState.Passed);
                     })
-#if UNITY_ANDROID
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
                         if ("exception".Equals(logEvent.EventType) &&
                             logEvent.EventData != null &&
@@ -590,9 +592,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         } else {
                             state(Test.TestState.Pending);
                         }
-                    })
-#endif
-                    ,
+                    }),
 
                 TestBuilder.Build("Store Current Deep Link Path", this)
                     .ExcludeWebGL()
