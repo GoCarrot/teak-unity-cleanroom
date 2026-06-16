@@ -133,11 +133,13 @@ def use_facebook?
   ENV.fetch('USE_FACEBOOK', true).to_s == 'true'
 end
 
+AMAZON_APPSTORE_SDK_VERSION = '3.0.9'
+
 def use_appstore_sdk?
   ENV.fetch('USE_APPSTORE_SDK', false).to_s == 'true'
 end
 
-# Writes AdditionalDependencies.xml with amazon-appstore-sdk:3.0.9 for the duration of the
+# Writes AdditionalDependencies.xml with amazon-appstore-sdk for the duration of the
 # build:amazon invocation, then restores both it and AndroidResolverDependencies.xml in ensure.
 # The Unity IAP AmazonAppStore.aar is moved aside separately in task :android's body.
 def with_appstore_sdk
@@ -149,8 +151,8 @@ def with_appstore_sdk
   File.write(additional_deps_path, <<~XML)
     <dependencies>
       <androidPackages>
-        <!-- C-834 QA: Appstore SDK 3.0.9 bundles PurchasingListener+PurchasingService without IS_SANDBOX_MODE -->
-        <androidPackage spec="com.amazon.device:amazon-appstore-sdk:3.0.9" />
+        <!-- C-834 QA: Appstore SDK bundles PurchasingListener+PurchasingService without IS_SANDBOX_MODE -->
+        <androidPackage spec="com.amazon.device:amazon-appstore-sdk:#{AMAZON_APPSTORE_SDK_VERSION}" />
       </androidPackages>
     </dependencies>
   XML
@@ -512,7 +514,7 @@ namespace :build do
     additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
     additional_args.concat(['--il2cpp']) if android_il2cpp?
 
-    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', AppstoreSDK: (build_amazon && use_appstore_sdk? ? '3.0.9' : 'off'), Args: additional_args
+    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', AppstoreSDK: (build_amazon && use_appstore_sdk? ? AMAZON_APPSTORE_SDK_VERSION : 'off'), Args: additional_args
 
     # This appeared when using Facebook SDK 7.17.2
     # When the file is deleted, it appears again during the build process
