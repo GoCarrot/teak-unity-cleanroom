@@ -254,6 +254,11 @@ public class TeakInterface : MonoBehaviour {
         }
     }
 
+#if UNITY_IOS && !UNITY_EDITOR
+    [DllImport("__Internal")]
+    private static extern void TeakReportTestException();
+#endif
+
     public void TestExceptionReporting()
     {
 #if UNITY_EDITOR
@@ -261,6 +266,7 @@ public class TeakInterface : MonoBehaviour {
         AndroidJavaClass teakUnity = new AndroidJavaClass("io.teak.sdk.wrapper.unity.TeakUnity");
         teakUnity.CallStatic("testExceptionReporting");
 #elif UNITY_IOS
+        TeakReportTestException();
 #endif
     }
 #endif // TEAK_NOT_AVAILABLE

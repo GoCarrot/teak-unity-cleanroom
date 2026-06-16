@@ -562,6 +562,38 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }),
 #endif
 
+                // Intentionally trigger an SDK-internal exception so the native SDK catches it
+                // via its own handler and reports it to Sentry/Raven with the run's accumulated
+                // breadcrumbs attached. Placed late so plenty of breadcrumbs exist by now, which
+                // is what makes the resulting Sentry report a meaningful end-to-end check.
+                //
+                // Verifying the breadcrumbs actually land on the report is a manual Sentry-dashboard
+                // step (see C-840) -- nothing in game code can read the outbound Raven payload.
+                // On Android the same exception also surfaces as an observable "exception" log event,
+                // which we assert below to give the trigger teeth. iOS reports straight to Raven via
+                // the teak_catch_report macro (no log event), so iOS is trigger-only -- and since the
+                // harness has no per-test timeout, an ExpectLogEvent that never matched would hang the
+                // whole suite, so the asymmetry is required, not optional.
+                TestBuilder.Build("Trigger SDK Exception (Sentry breadcrumbs)", this)
+                    .ExcludeWebGL()
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.teakInterface.TestExceptionReporting();
+                        state(Test.TestState.Passed);
+                    })
+#if UNITY_ANDROID
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("exception".Equals(logEvent.EventType) &&
+                            logEvent.EventData != null &&
+                            logEvent.EventData.ContainsKey("type") &&
+                            "ReportTestException".Equals(logEvent.EventData["type"] as string)) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    })
+#endif
+                    ,
+
                 TestBuilder.Build("Store Current Deep Link Path", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
