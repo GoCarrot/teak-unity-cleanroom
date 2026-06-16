@@ -530,9 +530,11 @@ namespace :build do
     # populates Library/PackageCache, so the AAR exists here. The Appstore SDK (added via
     # AdditionalDependencies.xml by the with_appstore_sdk wrapper in task :amazon) provides
     # PurchasingListener, keeping Teak's Amazon store active.
-    unity_iap_aar = build_amazon && use_appstore_sdk? &&
-                    Dir.glob(File.join(PROJECT_PATH, 'Library/PackageCache/com.unity.purchasing@*/Plugins/UnityPurchasing/Android/AmazonAppStore.aar')).first
-    if unity_iap_aar
+    unity_iap_aar = nil
+    if build_amazon && use_appstore_sdk?
+      unity_iap_aar = Dir.glob(File.join(PROJECT_PATH, 'Library/PackageCache/com.unity.purchasing@*/Plugins/UnityPurchasing/Android/AmazonAppStore.aar')).first
+      raise "USE_APPSTORE_SDK=true but AmazonAppStore.aar not found under Library/PackageCache/com.unity.purchasing@* — cannot guarantee the C-834 regression config; aborting." unless unity_iap_aar
+
       FileUtils.mv(unity_iap_aar, "#{unity_iap_aar}.disabled")
       FileUtils.mv("#{unity_iap_aar}.meta", "#{unity_iap_aar}.meta.disabled") if File.exist?("#{unity_iap_aar}.meta")
     end
