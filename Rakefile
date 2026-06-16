@@ -133,6 +133,34 @@ def use_facebook?
   ENV.fetch('USE_FACEBOOK', true).to_s == 'true'
 end
 
+def use_appstore_sdk?
+  ENV.fetch('USE_APPSTORE_SDK', false).to_s == 'true'
+end
+
+# Writes AdditionalDependencies.xml with amazon-appstore-sdk:3.0.9 for the duration of the
+# build:amazon invocation, then restores both it and AndroidResolverDependencies.xml in ensure.
+# The Unity IAP AmazonAppStore.aar is moved aside separately in task :android's body.
+def with_appstore_sdk
+  additional_deps_path = File.join(PROJECT_PATH, 'Assets', 'Editor', 'AdditionalDependencies.xml')
+  resolver_deps_path = File.join(PROJECT_PATH, 'ProjectSettings', 'AndroidResolverDependencies.xml')
+  original_deps = File.read(additional_deps_path)
+  original_resolver = File.read(resolver_deps_path)
+
+  File.write(additional_deps_path, <<~XML)
+    <dependencies>
+      <androidPackages>
+        <!-- C-834 QA: Appstore SDK 3.0.9 bundles PurchasingListener+PurchasingService without IS_SANDBOX_MODE -->
+        <androidPackage spec="com.amazon.device:amazon-appstore-sdk:3.0.9" />
+      </androidPackages>
+    </dependencies>
+  XML
+
+  yield
+ensure
+  File.write(additional_deps_path, original_deps)
+  File.write(resolver_deps_path, original_resolver)
+end
+
 def teak_sdk_version
   teak_version_file = File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')
   unless File.file?(teak_version_file)
@@ -484,7 +512,7 @@ namespace :build do
     additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
     additional_args.concat(['--il2cpp']) if android_il2cpp?
 
-    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', Args: additional_args
+    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', AppstoreSDK: (build_amazon && use_appstore_sdk? ? '3.0.9' : 'off'), Args: additional_args
 
     # This appeared when using Facebook SDK 7.17.2
     # When the file is deleted, it appears again during the build process
@@ -496,14 +524,38 @@ namespace :build do
       end
     end
 
-    with_kms_decrypt SIGNING_KEY do
-      unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
-      sh "keytool -list -v -alias alias_name -storepass pointless -keystore #{File.join(PROJECT_PATH, SIGNING_KEY)}"
+    # When USE_APPSTORE_SDK=true, move Unity IAP's AmazonAppStore.aar aside so its bundled
+    # in-app-purchasing-2.0.76.jar (which defines IS_SANDBOX_MODE) is absent from the APK.
+    # android:dependencies (a prerequisite) has already run Unity's ResolveDependencies, which
+    # populates Library/PackageCache, so the AAR exists here. The Appstore SDK (added via
+    # AdditionalDependencies.xml by the with_appstore_sdk wrapper in task :amazon) provides
+    # PurchasingListener, keeping Teak's Amazon store active.
+    unity_iap_aar = build_amazon && use_appstore_sdk? &&
+                    Dir.glob(File.join(PROJECT_PATH, 'Library/PackageCache/com.unity.purchasing@*/Plugins/UnityPurchasing/Android/AmazonAppStore.aar')).first
+    if unity_iap_aar
+      FileUtils.mv(unity_iap_aar, "#{unity_iap_aar}.disabled")
+      FileUtils.mv("#{unity_iap_aar}.meta", "#{unity_iap_aar}.meta.disabled") if File.exist?("#{unity_iap_aar}.meta")
+    end
+
+    begin
+      with_kms_decrypt SIGNING_KEY do
+        unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
+        sh "keytool -list -v -alias alias_name -storepass pointless -keystore #{File.join(PROJECT_PATH, SIGNING_KEY)}"
+      end
+    ensure
+      if unity_iap_aar
+        FileUtils.mv("#{unity_iap_aar}.disabled", unity_iap_aar) if File.exist?("#{unity_iap_aar}.disabled")
+        FileUtils.mv("#{unity_iap_aar}.meta.disabled", "#{unity_iap_aar}.meta") if File.exist?("#{unity_iap_aar}.meta.disabled")
+      end
     end
   end
 
   task :amazon do
-    Rake::Task['build:android'].invoke('true')
+    if use_appstore_sdk?
+      with_appstore_sdk { Rake::Task['build:android'].invoke('true') }
+    else
+      Rake::Task['build:android'].invoke('true')
+    end
   end
 
   task ios: ['ios:all']
