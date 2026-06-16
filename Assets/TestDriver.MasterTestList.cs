@@ -562,6 +562,38 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }),
 #endif
 
+                // Intentionally trigger an SDK-internal exception so the native SDK catches it
+                // via its own handler and reports it to Sentry/Raven with the run's accumulated
+                // breadcrumbs attached. Placed late so plenty of breadcrumbs exist by now, which
+                // is what makes the resulting Sentry report a meaningful end-to-end check.
+                //
+                // Verifying the breadcrumbs actually land on the report is a manual Sentry-dashboard
+                // step (see C-840) -- nothing in game code can read the outbound Raven payload.
+                //
+                // Both platforms emit an observable "exception" log event we assert on for teeth:
+                // Android log.exception() and iOS reportWithHelper: (the caught-exception path, since
+                // C-843) both ship event_type "exception" with type = the exception name -- which is
+                // "ReportTestException" on both (getSimpleName() / NSException.name), so the assert
+                // keys identically with no per-platform split. Heads up: the harness has no per-test
+                // timeout, so if that event never arrives this test HANGS rather than fails -- the
+                // on-device event-arrival check is the load-bearing ship-time QA gate (C-840).
+                TestBuilder.Build("Trigger SDK Exception (Sentry breadcrumbs)", this)
+                    .ExcludeWebGL()
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.teakInterface.TestExceptionReporting();
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        if ("exception".Equals(logEvent.EventType) &&
+                            logEvent.EventData != null &&
+                            logEvent.EventData.ContainsKey("type") &&
+                            "ReportTestException".Equals(logEvent.EventData["type"] as string)) {
+                            state(Test.TestState.Passed);
+                        } else {
+                            state(Test.TestState.Pending);
+                        }
+                    }),
+
                 TestBuilder.Build("Store Current Deep Link Path", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
