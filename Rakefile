@@ -522,7 +522,7 @@ namespace :build do
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
-    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap? && !use_appstore_sdk?
+    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap?
     additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
     additional_args.concat(['--il2cpp']) if android_il2cpp?
 
