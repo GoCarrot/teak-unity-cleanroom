@@ -60,11 +60,10 @@ Expected (App Tester running): `billing.amazon.v2 ... "sandboxMode":true` via br
 
 ## Config (a) — Appstore SDK, no IS_SANDBOX_MODE (PRIMARY)
 
-`USE_APPSTORE_SDK=true` does three things automatically:
+`USE_APPSTORE_SDK=true` does two things automatically:
 
-1. Adds `com.amazon.device:amazon-appstore-sdk` via EDM4U before `android:dependencies` resolves. The Appstore SDK bundles `PurchasingListener` + `PurchasingService` (without `IS_SANDBOX_MODE`) and `LicensingService.getAppstoreSDKMode()`.
-2. Moves Unity IAP's `AmazonAppStore.aar` from the PackageCache aside before the player build so its bundled `in-app-purchasing-2.0.76.jar` (which defines `IS_SANDBOX_MODE`) is absent from the APK. Both files are restored in `ensure`.
-3. Gitignores the EDM4U-resolved Appstore SDK AAR (`Assets/Plugins/Android/com.amazon.device.*`) to prevent accidental commit.
+1. Bumps `com.unity.purchasing` to v5.0.4 (which dropped Amazon entirely — no `AmazonAppStore.aar`, no `IS_SANDBOX_MODE`).
+2. Adds `com.amazon.device:amazon-appstore-sdk:3.0.9` via EDM4U before `android:dependencies` resolves. The Appstore SDK bundles `PurchasingListener` + `PurchasingService` (without `IS_SANDBOX_MODE`) and `LicensingService.getAppstoreSDKMode()`.
 
 ```bash
 BUILD_TYPE=dev USE_APPSTORE_SDK=true bundle exec rake config:all build:amazon install:amazon
@@ -92,20 +91,35 @@ Branch 1 may yield `"sandboxMode":false` if the cleanroom doesn't call `Licensin
 
 ### Confirming the wiring
 
-```bash
-# Appstore SDK in APK (LicensingService present):
-unzip -l teak-unity-cleanroom.apk | grep -i "LicensingService\|appstore"
+Use `strings` on extracted DEX. Two reliable discriminators:
 
-# IS_SANDBOX_MODE absent:
-# (expects no output)
-unzip -p teak-unity-cleanroom.apk classes*.dex | strings | grep IS_SANDBOX_MODE
+```bash
+APK=teak-unity-cleanroom.apk
+mkdir -p /tmp/c845dex
+unzip -o "$APK" 'classes*.dex' -d /tmp/c845dex
+
+# Legacy Amazon IAP v2.0 linked — the lib's own init log (NOT present in Appstore SDK 3.x):
+strings /tmp/c845dex/classes*.dex | grep "In-App Purchasing SDK initializing. SDK Version 2.0.76"
+
+# Standalone Appstore SDK 3.x linked — type-descriptor form (dotted string is just an IPC intent target, ignore it):
+strings /tmp/c845dex/classes*.dex | grep "Lcom/amazon/device/drm/LicensingService;"
 ```
+
+| Signal | Baseline (b) | Appstore SDK (a) |
+|---|---|---|
+| `In-App Purchasing SDK initializing. SDK Version 2.0.76` | **present** | absent |
+| `Lcom/amazon/device/drm/LicensingService;` | absent | **present** |
+
+Notes:
+- Bare strings `getAppstoreSDKMode` and `IS_SANDBOX_MODE` appear in **every** build — they're Teak's reflection-lookup strings, not lib presence signals. Ignore them.
+- The dotted string `com.amazon.device.drm.LicensingService` also appears in the baseline (Unity IAP v4 uses it as an IPC intent target). Only the type-descriptor form (`Lcom/...;`) confirms the class is actually linked.
+- Corroborate with the build log: `purchasing@4.1.2` + AmazonAppStore.aar present (baseline) vs `purchasing@5.0.4` + no AmazonAppStore.aar (appstore).
 
 ---
 
 ## After QA
 
-The Rakefile restores `AdditionalDependencies.xml` and the `AmazonAppStore.aar` automatically. `ProjectSettings/AndroidResolverDependencies.xml` is also restored in `ensure`. The next `rake build:android` run (without the toggle) re-resolves EDM4U deps and removes the Appstore SDK AAR from `Assets/Plugins/Android/`.
+The Rakefile restores `AdditionalDependencies.xml` and `AndroidResolverDependencies.xml` automatically in `ensure`. The next `rake build:android` run (without the toggle) re-resolves EDM4U deps and removes the Appstore SDK AAR from `Assets/Plugins/Android/`.
 
 ---
 
