@@ -219,10 +219,10 @@ def unity(*args, quit: true, nographics: true)
   UNITY_COMPILERS.each do |compiler|
     rsp_path = "Assets/#{compiler}.rsp"
     next unless use_appstore_sdk? || File.exist?(rsp_path)
-    lines = File.exist?(rsp_path) ? File.readlines(rsp_path) : []
+    lines = File.exist?(rsp_path) ? File.readlines(rsp_path, chomp: true) : []
     lines.reject! { |l| l.strip == '-define:UNITY_PURCHASING_V5' }
-    lines << "-define:UNITY_PURCHASING_V5\n" if use_appstore_sdk?
-    File.write(rsp_path, lines.join)
+    lines << '-define:UNITY_PURCHASING_V5' if use_appstore_sdk?
+    File.write(rsp_path, lines.map { |l| "#{l}\n" }.join)
   end
 
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
