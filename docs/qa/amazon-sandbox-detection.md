@@ -81,9 +81,9 @@ adb logcat | grep -iE "billing.amazon.v2|getAppstoreSDKMode|exception"
 
 **Without the fix:** no `getAppstoreSDKMode` branch → branch-3 `NoSuchFieldException` logged + `"sandboxMode":false` always, even under App Tester.
 
-### Known noise to ignore
+### What you will and won't see
 
-Unity IAP auto-initializes at launch (`TestDriver.Awake → SetupStorePlugin`) with `AppStore.AmazonAppStore`. Because `AmazonAppStore.aar` is absent from the APK, Unity IAP's Amazon bridge will fail — expect `TestDriver: OnInitializeFailed` or `ClassNotFoundException` from Unity IAP in logcat. **This is expected and unrelated to Teak's detection.** The `billing.amazon.v2` line comes from Teak's own reflection at SDK init, which fires first and is independent of Unity IAP. Do not trigger a purchase in this config; the Test Purchase button will not function.
+With `UNITY_PURCHASING_V5` active, `SetupStorePlugin`'s `UnityPurchasing.Initialize` is compiled out entirely. Unity IAP never initializes — no `OnInitializeFailed`, no `ClassNotFoundException`. The Test Purchase button does not appear. The only expected signal is the `billing.amazon.v2` line from Teak's own reflection at SDK init.
 
 ### Caveat: getAppstoreSDKMode returns "UNKNOWN" until verifyLicense runs
 
