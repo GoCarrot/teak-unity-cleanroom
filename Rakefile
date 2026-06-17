@@ -133,6 +133,36 @@ def use_facebook?
   ENV.fetch('USE_FACEBOOK', true).to_s == 'true'
 end
 
+AMAZON_APPSTORE_SDK_VERSION = '3.0.9'
+
+def use_appstore_sdk?
+  ENV.fetch('USE_APPSTORE_SDK', false).to_s == 'true'
+end
+
+# Writes AdditionalDependencies.xml with amazon-appstore-sdk for the duration of the
+# build:amazon invocation, then restores both it and AndroidResolverDependencies.xml in ensure.
+def with_appstore_sdk
+  additional_deps_path = File.join(PROJECT_PATH, 'Assets', 'Editor', 'AdditionalDependencies.xml')
+  resolver_deps_path = File.join(PROJECT_PATH, 'ProjectSettings', 'AndroidResolverDependencies.xml')
+  original_deps = File.read(additional_deps_path)
+  original_resolver = File.read(resolver_deps_path)
+
+  File.write(additional_deps_path, <<~XML)
+    <dependencies>
+      <androidPackages>
+        <!-- Appstore SDK bundles PurchasingListener (so Teak's Amazon store activates) but lacks
+             IS_SANDBOX_MODE, forcing the getAppstoreSDKMode() detection path. -->
+        <androidPackage spec="com.amazon.device:amazon-appstore-sdk:#{AMAZON_APPSTORE_SDK_VERSION}" />
+      </androidPackages>
+    </dependencies>
+  XML
+
+  yield
+ensure
+  File.write(additional_deps_path, original_deps)
+  File.write(resolver_deps_path, original_resolver)
+end
+
 def teak_sdk_version
   teak_version_file = File.join(PROJECT_PATH, 'Assets', 'Teak', 'TeakVersion.cs')
   unless File.file?(teak_version_file)
@@ -176,12 +206,24 @@ end
 def unity(*args, quit: true, nographics: true)
   manifest_parameters = {
     use_unity_purchasing: purchasing_plugin == :unity_purchasing,
+    unity_purchasing_version: use_appstore_sdk? ? '5.0.4' : '4.1.2',
     use_teak_upm: !using_unitypackage?,
     use_facebook: use_facebook?
   }
   template = File.read(File.join(PROJECT_PATH, 'Templates', unity_version == 2018 ? 'manifest.json.template2018' : 'manifest.json.template'))
   File.write(File.join(PROJECT_PATH, 'Packages', 'manifest.json'),
     Mustache.render(template, manifest_parameters))
+
+  # Keep UNITY_PURCHASING_V5 in lockstep with the manifest version: present iff use_appstore_sdk?.
+  # Composes with existing .rsp content (e.g. TEAK_NOT_AVAILABLE) rather than clobbering.
+  UNITY_COMPILERS.each do |compiler|
+    rsp_path = "Assets/#{compiler}.rsp"
+    next unless use_appstore_sdk? || File.exist?(rsp_path)
+    lines = File.exist?(rsp_path) ? File.readlines(rsp_path, chomp: true) : []
+    lines.reject! { |l| l.strip == '-define:UNITY_PURCHASING_V5' }
+    lines << '-define:UNITY_PURCHASING_V5' if use_appstore_sdk?
+    File.write(rsp_path, lines.map { |l| "#{l}\n" }.join)
+  end
 
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
 
@@ -211,7 +253,7 @@ def with_defined(defines)
   end
 
   yield
-
+ensure
   File.delete(*Dir['Assets/*.rsp*'])
 end
 
@@ -484,7 +526,7 @@ namespace :build do
     additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
     additional_args.concat(['--il2cpp']) if android_il2cpp?
 
-    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', Args: additional_args
+    print_build_msg 'Android', Store: build_amazon ? 'Amazon' : 'Google Play', AppstoreSDK: (build_amazon && use_appstore_sdk? ? AMAZON_APPSTORE_SDK_VERSION : 'off'), Args: additional_args
 
     # This appeared when using Facebook SDK 7.17.2
     # When the file is deleted, it appears again during the build process
@@ -503,7 +545,11 @@ namespace :build do
   end
 
   task :amazon do
-    Rake::Task['build:android'].invoke('true')
+    if use_appstore_sdk?
+      with_appstore_sdk { Rake::Task['build:android'].invoke('true') }
+    else
+      Rake::Task['build:android'].invoke('true')
+    end
   end
 
   task ios: ['ios:all']
