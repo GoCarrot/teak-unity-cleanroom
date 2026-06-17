@@ -141,7 +141,6 @@ end
 
 # Writes AdditionalDependencies.xml with amazon-appstore-sdk for the duration of the
 # build:amazon invocation, then restores both it and AndroidResolverDependencies.xml in ensure.
-# The Unity IAP AmazonAppStore.aar is moved aside separately in task :android's body.
 def with_appstore_sdk
   additional_deps_path = File.join(PROJECT_PATH, 'Assets', 'Editor', 'AdditionalDependencies.xml')
   resolver_deps_path = File.join(PROJECT_PATH, 'ProjectSettings', 'AndroidResolverDependencies.xml')
@@ -152,8 +151,7 @@ def with_appstore_sdk
     <dependencies>
       <androidPackages>
         <!-- Appstore SDK bundles PurchasingListener (so Teak's Amazon store activates) but lacks
-             IS_SANDBOX_MODE, forcing the getAppstoreSDKMode() detection path. USE_UNITY_IAP's
-             AmazonAppStore.aar (which has IS_SANDBOX_MODE) is moved aside in task :android. -->
+             IS_SANDBOX_MODE, forcing the getAppstoreSDKMode() detection path. -->
         <androidPackage spec="com.amazon.device:amazon-appstore-sdk:#{AMAZON_APPSTORE_SDK_VERSION}" />
       </androidPackages>
     </dependencies>
@@ -208,6 +206,7 @@ end
 def unity(*args, quit: true, nographics: true)
   manifest_parameters = {
     use_unity_purchasing: purchasing_plugin == :unity_purchasing,
+    unity_purchasing_version: use_appstore_sdk? ? '5.0.4' : '4.1.2',
     use_teak_upm: !using_unitypackage?,
     use_facebook: use_facebook?
   }
@@ -243,7 +242,7 @@ def with_defined(defines)
   end
 
   yield
-
+ensure
   File.delete(*Dir['Assets/*.rsp*'])
 end
 
@@ -512,7 +511,7 @@ namespace :build do
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
-    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap?
+    additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap? && !use_appstore_sdk?
     additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
     additional_args.concat(['--il2cpp']) if android_il2cpp?
 
@@ -528,39 +527,17 @@ namespace :build do
       end
     end
 
-    # When USE_APPSTORE_SDK=true, move Unity IAP's AmazonAppStore.aar aside so its bundled
-    # in-app-purchasing-2.0.76.jar (which defines IS_SANDBOX_MODE) is absent from the APK.
-    # This forces Teak's AmazonSandbox to use the getAppstoreSDKMode() reflection path instead
-    # of the IS_SANDBOX_MODE field — the scenario that was previously undetectable.
-    # Timing: android:dependencies (a prerequisite) has already run Unity's ResolveDependencies,
-    # which populates Library/PackageCache, so the AAR exists at this point.
-    # PurchasingListener is provided by the Appstore SDK (added via AdditionalDependencies.xml
-    # by the with_appstore_sdk wrapper in task :amazon), keeping Teak's Amazon store active.
-    unity_iap_aar = nil
-    if build_amazon && use_appstore_sdk?
-      unity_iap_aar = Dir.glob(File.join(PROJECT_PATH, 'Library/PackageCache/com.unity.purchasing@*/Plugins/UnityPurchasing/Android/AmazonAppStore.aar')).first
-      raise "USE_APPSTORE_SDK=true but AmazonAppStore.aar not found under Library/PackageCache/com.unity.purchasing@* — IS_SANDBOX_MODE cannot be confirmed absent; aborting to avoid a false-valid QA result." unless unity_iap_aar
-
-      FileUtils.mv(unity_iap_aar, "#{unity_iap_aar}.disabled")
-      FileUtils.mv("#{unity_iap_aar}.meta", "#{unity_iap_aar}.meta.disabled") if File.exist?("#{unity_iap_aar}.meta")
-    end
-
-    begin
-      with_kms_decrypt SIGNING_KEY do
-        unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
-        sh "keytool -list -v -alias alias_name -storepass pointless -keystore #{File.join(PROJECT_PATH, SIGNING_KEY)}"
-      end
-    ensure
-      if unity_iap_aar
-        FileUtils.mv("#{unity_iap_aar}.disabled", unity_iap_aar) if File.exist?("#{unity_iap_aar}.disabled")
-        FileUtils.mv("#{unity_iap_aar}.meta.disabled", "#{unity_iap_aar}.meta") if File.exist?("#{unity_iap_aar}.meta.disabled")
-      end
+    with_kms_decrypt SIGNING_KEY do
+      unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
+      sh "keytool -list -v -alias alias_name -storepass pointless -keystore #{File.join(PROJECT_PATH, SIGNING_KEY)}"
     end
   end
 
   task :amazon do
     if use_appstore_sdk?
-      with_appstore_sdk { Rake::Task['build:android'].invoke('true') }
+      with_defined(['UNITY_PURCHASING_V5']) do
+        with_appstore_sdk { Rake::Task['build:android'].invoke('true') }
+      end
     else
       Rake::Task['build:android'].invoke('true')
     end
