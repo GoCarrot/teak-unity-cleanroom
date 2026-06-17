@@ -151,7 +151,9 @@ def with_appstore_sdk
   File.write(additional_deps_path, <<~XML)
     <dependencies>
       <androidPackages>
-        <!-- C-834 QA: Appstore SDK bundles PurchasingListener+PurchasingService without IS_SANDBOX_MODE -->
+        <!-- Appstore SDK bundles PurchasingListener (so Teak's Amazon store activates) but lacks
+             IS_SANDBOX_MODE, forcing the getAppstoreSDKMode() detection path. USE_UNITY_IAP's
+             AmazonAppStore.aar (which has IS_SANDBOX_MODE) is moved aside in task :android. -->
         <androidPackage spec="com.amazon.device:amazon-appstore-sdk:#{AMAZON_APPSTORE_SDK_VERSION}" />
       </androidPackages>
     </dependencies>
@@ -528,14 +530,16 @@ namespace :build do
 
     # When USE_APPSTORE_SDK=true, move Unity IAP's AmazonAppStore.aar aside so its bundled
     # in-app-purchasing-2.0.76.jar (which defines IS_SANDBOX_MODE) is absent from the APK.
-    # android:dependencies (a prerequisite) has already run Unity's ResolveDependencies, which
-    # populates Library/PackageCache, so the AAR exists here. The Appstore SDK (added via
-    # AdditionalDependencies.xml by the with_appstore_sdk wrapper in task :amazon) provides
-    # PurchasingListener, keeping Teak's Amazon store active.
+    # This forces Teak's AmazonSandbox to use the getAppstoreSDKMode() reflection path instead
+    # of the IS_SANDBOX_MODE field — the scenario that was previously undetectable.
+    # Timing: android:dependencies (a prerequisite) has already run Unity's ResolveDependencies,
+    # which populates Library/PackageCache, so the AAR exists at this point.
+    # PurchasingListener is provided by the Appstore SDK (added via AdditionalDependencies.xml
+    # by the with_appstore_sdk wrapper in task :amazon), keeping Teak's Amazon store active.
     unity_iap_aar = nil
     if build_amazon && use_appstore_sdk?
       unity_iap_aar = Dir.glob(File.join(PROJECT_PATH, 'Library/PackageCache/com.unity.purchasing@*/Plugins/UnityPurchasing/Android/AmazonAppStore.aar')).first
-      raise "USE_APPSTORE_SDK=true but AmazonAppStore.aar not found under Library/PackageCache/com.unity.purchasing@* — cannot guarantee the C-834 regression config; aborting." unless unity_iap_aar
+      raise "USE_APPSTORE_SDK=true but AmazonAppStore.aar not found under Library/PackageCache/com.unity.purchasing@* — IS_SANDBOX_MODE cannot be confirmed absent; aborting to avoid a false-valid QA result." unless unity_iap_aar
 
       FileUtils.mv(unity_iap_aar, "#{unity_iap_aar}.disabled")
       FileUtils.mv("#{unity_iap_aar}.meta", "#{unity_iap_aar}.meta.disabled") if File.exist?("#{unity_iap_aar}.meta")

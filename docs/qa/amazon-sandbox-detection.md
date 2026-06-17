@@ -1,8 +1,10 @@
-# QA — C-834: Amazon sandbox detection (getAppstoreSDKMode branch)
+# QA — Amazon sandbox detection (getAppstoreSDKMode branch)
 
 ## What we're verifying
 
-C-834: when a host app uses the Amazon Appstore SDK as its billing backend (no legacy IAP v2.0), `PurchasingService.IS_SANDBOX_MODE` doesn't exist and the old code returned `false` unconditionally. The fix adds a `getAppstoreSDKMode()` branch, tried first, with `IS_SANDBOX_MODE` as fallback.
+When a host app uses the **Amazon Appstore SDK** as its billing backend, it does not link the legacy Unity IAP v2.0 Amazon backend. The Appstore SDK ships its own `PurchasingService` class but omits the `IS_SANDBOX_MODE` static field that the legacy backend exposed. If Teak's sandbox detection only reads `IS_SANDBOX_MODE`, it gets a `NoSuchFieldException` and returns `false` unconditionally — misclassifying all sandbox purchases as production.
+
+The fix adds a `getAppstoreSDKMode()` reflection branch (tried first) that reads the Appstore SDK's own detection API, with `IS_SANDBOX_MODE` as a fallback for legacy environments.
 
 Detection lives in `io.teak.sdk.store.AmazonSandbox.isSandboxMode()`. In order:
 
@@ -22,7 +24,7 @@ field:       sandboxMode: true/false
 
 | Config | Branch | Role |
 |---|---|---|
-| **(a) Appstore SDK, no v2.0** — `USE_APPSTORE_SDK=true` | 1 (`getAppstoreSDKMode`) | **PRIMARY — proves C-834** |
+| **(a) Appstore SDK, no v2.0** — `USE_APPSTORE_SDK=true` | 1 (`getAppstoreSDKMode`) | **PRIMARY — exercises the getAppstoreSDKMode path** |
 | (b) Legacy IAP v2.0 only — default | 3 (`IS_SANDBOX_MODE`) | Baseline |
 
 ---
@@ -32,7 +34,7 @@ field:       sandboxMode: true/false
 - [ ] **Amazon App Tester** installed on the Fire device. Makes both branches report SANDBOX.
 - [ ] App Tester IAP catalog (`amazon.sdktester.json`) with SKU `io.teak.app.sku.dollar` on the device.
 - [ ] Fire device over adb, authorized (`adb devices` → `device`). ADB debugging + Unknown Sources on.
-- [ ] teak-unity 4.3.13 build available: either `FL_TEAK_SDK_VERSION=4.3.13.beta0 bundle exec rake package:download` or `bundle exec rake package:copy` from `../teak-unity`. Verify the bundled teak-android AAR contains the `getAppstoreSDKMode` branch before trusting results.
+- [ ] teak-unity build available: `FL_TEAK_SDK_VERSION=<version> bundle exec rake package:download` or `bundle exec rake package:copy` from `../teak-unity`. Verify the bundled teak-android AAR contains the `getAppstoreSDKMode` branch before trusting results.
 - [ ] Tooling: Unity, Ruby + `bundle install`, `aws` CLI, `adb`.
 
 ---
@@ -56,11 +58,11 @@ Expected (App Tester running): `billing.amazon.v2 ... "sandboxMode":true` via br
 
 ---
 
-## Config (a) — Appstore SDK, no IS_SANDBOX_MODE (PRIMARY — proves C-834)
+## Config (a) — Appstore SDK, no IS_SANDBOX_MODE (PRIMARY)
 
 `USE_APPSTORE_SDK=true` does three things automatically:
 
-1. Adds `com.amazon.device:amazon-appstore-sdk:3.0.9` via EDM4U before `android:dependencies` resolves. The Appstore SDK bundles `PurchasingListener` + `PurchasingService` (without `IS_SANDBOX_MODE`) and `LicensingService.getAppstoreSDKMode()`.
+1. Adds `com.amazon.device:amazon-appstore-sdk` via EDM4U before `android:dependencies` resolves. The Appstore SDK bundles `PurchasingListener` + `PurchasingService` (without `IS_SANDBOX_MODE`) and `LicensingService.getAppstoreSDKMode()`.
 2. Moves Unity IAP's `AmazonAppStore.aar` from the PackageCache aside before the player build so its bundled `in-app-purchasing-2.0.76.jar` (which defines `IS_SANDBOX_MODE`) is absent from the APK. Both files are restored in `ensure`.
 3. Gitignores the EDM4U-resolved Appstore SDK AAR (`Assets/Plugins/Android/com.amazon.device.*`) to prevent accidental commit.
 
@@ -78,7 +80,7 @@ adb logcat | grep -iE "billing.amazon.v2|getAppstoreSDKMode|exception"
 
 **Expected (App Tester running, with the fix):** `billing.amazon.v2 ... "sandboxMode":true` via branch 1. No `NoSuchFieldException` / `Teak.log.exception` noise.
 
-**Pre-fix (the bug):** no `getAppstoreSDKMode` branch existed → branch-3 `NoSuchFieldException` logged + `"sandboxMode":false` always.
+**Without the fix:** no `getAppstoreSDKMode` branch → branch-3 `NoSuchFieldException` logged + `"sandboxMode":false` always, even under App Tester.
 
 ### Known noise to ignore
 
@@ -86,12 +88,12 @@ Unity IAP auto-initializes at launch (`TestDriver.Awake → SetupStorePlugin`) w
 
 ### Caveat: getAppstoreSDKMode returns "UNKNOWN" until verifyLicense runs
 
-Branch 1 may yield `"sandboxMode":false` if the cleanroom doesn't call `LicensingService.verifyLicense()`. If you see `false` under App Tester, confirm the `billing.amazon.v2` line is present (store activated) and check whether the app invokes `verifyLicense()`. This is a behavioral nuance of the Appstore SDK, not a C-834 regression.
+Branch 1 may yield `"sandboxMode":false` if the cleanroom doesn't call `LicensingService.verifyLicense()`. If you see `false` under App Tester, confirm the `billing.amazon.v2` line is present (store activated) and check whether the app invokes `verifyLicense()`. This is a behavioral nuance of the Appstore SDK, not a Teak detection regression.
 
 ### Confirming the wiring
 
 ```bash
-# Appstore SDK in APK (classes from 3.0.9):
+# Appstore SDK in APK (LicensingService present):
 unzip -l teak-unity-cleanroom.apk | grep -i "LicensingService\|appstore"
 
 # IS_SANDBOX_MODE absent:
