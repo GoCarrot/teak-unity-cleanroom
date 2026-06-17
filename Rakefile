@@ -214,6 +214,17 @@ def unity(*args, quit: true, nographics: true)
   File.write(File.join(PROJECT_PATH, 'Packages', 'manifest.json'),
     Mustache.render(template, manifest_parameters))
 
+  # Keep UNITY_PURCHASING_V5 in lockstep with the manifest version: present iff use_appstore_sdk?.
+  # Composes with existing .rsp content (e.g. TEAK_NOT_AVAILABLE) rather than clobbering.
+  UNITY_COMPILERS.each do |compiler|
+    rsp_path = "Assets/#{compiler}.rsp"
+    next unless use_appstore_sdk? || File.exist?(rsp_path)
+    lines = File.exist?(rsp_path) ? File.readlines(rsp_path) : []
+    lines.reject! { |l| l.strip == '-define:UNITY_PURCHASING_V5' }
+    lines << "-define:UNITY_PURCHASING_V5\n" if use_appstore_sdk?
+    File.write(rsp_path, lines.join)
+  end
+
   args.push('-serial', ENV['UNITY_SERIAL'], '-username', ENV['UNITY_EMAIL'], '-password', ENV['UNITY_PASSWORD']) if ci?
 
   escaped_args = args.map { |arg| Shellwords.escape(arg) }.join(' ')
@@ -535,9 +546,7 @@ namespace :build do
 
   task :amazon do
     if use_appstore_sdk?
-      with_defined(['UNITY_PURCHASING_V5']) do
-        with_appstore_sdk { Rake::Task['build:android'].invoke('true') }
-      end
+      with_appstore_sdk { Rake::Task['build:android'].invoke('true') }
     else
       Rake::Task['build:android'].invoke('true')
     end
