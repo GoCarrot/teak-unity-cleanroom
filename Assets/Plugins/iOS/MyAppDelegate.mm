@@ -8,6 +8,9 @@
 // We instead observe kUnityOnOpenURL via Unity's AppDelegateListener, which is
 // posted on both the legacy app-delegate and the UnityScene paths -- one
 // lifecycle-agnostic hook. (See C-852.)
+//
+// This must be an Objective-C++ (.mm) file: AppDelegateListener.h declares its
+// notification constants with unguarded `extern "C"`, which does not parse as .m.
 @interface NonTeakDeepLinkListener : NSObject <AppDelegateListener>
 @end
 
