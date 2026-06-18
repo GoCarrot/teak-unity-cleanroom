@@ -1,17 +1,40 @@
-#import <UIKit/UIKit.h>
-#import <objc/runtime.h>
-#import "UnityAppController.h"
+#import <Foundation/Foundation.h>
+#import "AppDelegateListener.h"
+#import "UnityInterface.h"
 
-@interface MyAppDelegate : UnityAppController
+// Non-Teak deep link test hook. Under the Unity 6 UIScene lifecycle iOS routes
+// URL opens to scene:openURLContexts: rather than the app delegate, so a
+// UnityAppController subclass overriding application:openURL: is never called.
+// We instead observe kUnityOnOpenURL via Unity's AppDelegateListener, which is
+// posted on both the legacy app-delegate and the UnityScene paths -- one
+// lifecycle-agnostic hook. (See C-852.)
+@interface NonTeakDeepLinkListener : NSObject <AppDelegateListener>
 @end
 
-IMPL_APP_CONTROLLER_SUBCLASS(MyAppDelegate)
+@implementation NonTeakDeepLinkListener
 
-@implementation MyAppDelegate
++ (void)load {
+    // NSNotificationCenter does not retain observers, so hold the listener for
+    // the lifetime of the app.
+    static NonTeakDeepLinkListener* listener = nil;
+    listener = [[NonTeakDeepLinkListener alloc] init];
+    UnityRegisterAppDelegateListener(listener);
+}
 
-- (BOOL)handleOpenURL:(NSURL*)url fromSelector:(SEL)sel {
+- (void)onOpenURL:(NSNotification*)notification {
+    id urlValue = notification.userInfo[@"url"];
+    NSURL* url = nil;
+    if ([urlValue isKindOfClass:[NSURL class]]) {
+        url = (NSURL*)urlValue;
+    } else if ([urlValue isKindOfClass:[NSString class]]) {
+        url = [NSURL URLWithString:(NSString*)urlValue];
+    }
+    [self handleOpenURL:url];
+}
+
+- (void)handleOpenURL:(NSURL*)url {
     if (![url.scheme isEqualToString:@"nonteak"]) {
-        return NO;
+        return;
     }
 
     NSDictionary* jsonDict = @{
@@ -22,7 +45,7 @@ IMPL_APP_CONTROLLER_SUBCLASS(MyAppDelegate)
         @"log_level" : @"INFO",
         @"event_data" : @{
             @"url" : url.absoluteString,
-            @"method" : NSStringFromSelector(sel)
+            @"method" : @"onOpenURL:"
         }
     };
 
@@ -33,22 +56,6 @@ IMPL_APP_CONTROLLER_SUBCLASS(MyAppDelegate)
         NSString* jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
         UnitySendMessage("TeakGameObject", "LogEvent", [jsonString UTF8String]);
     }
-
-    return YES;
-}
-
-- (BOOL)application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation {
-    [super application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
-    return [self handleOpenURL:url fromSelector:_cmd];
-}
-
-- (BOOL)application:(UIApplication*)application openURL:(NSURL*)url options:(NSDictionary<NSString*, id>*)options {
-    if (class_respondsToSelector(UnityAppController.class, _cmd)) {
-        [super application:application openURL:url options:options];
-        return [self handleOpenURL:url fromSelector:_cmd];
-    }
-
-    return [self application:application openURL:url sourceApplication:options[UIApplicationOpenURLOptionsSourceApplicationKey] annotation:options[UIApplicationOpenURLOptionsAnnotationKey]];
 }
 
 @end
