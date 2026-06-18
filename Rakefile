@@ -206,7 +206,7 @@ end
 def unity(*args, quit: true, nographics: true)
   manifest_parameters = {
     use_unity_purchasing: purchasing_plugin == :unity_purchasing,
-    unity_purchasing_version: use_appstore_sdk? ? '5.0.4' : '4.1.2',
+    unity_purchasing_version: use_appstore_sdk? ? '5.0.4' : '4.12.2',
     use_teak_upm: !using_unitypackage?,
     use_facebook: use_facebook?
   }
