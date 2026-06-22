@@ -1,34 +1,33 @@
 {
   "project_info": {
-    "project_number": "12126273415",
-    "firebase_url": "https://teak-sdk-test.firebaseio.com",
-    "project_id": "teak-sdk-test",
-    "storage_bucket": "teak-sdk-test.appspot.com"
+    "project_number": "271311759137",
+    "project_id": "teak-sdk-test-c3bf7",
+    "storage_bucket": "teak-sdk-test-c3bf7.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:12126273415:android:102329156b15bf0c",
+        "mobilesdk_app_id": "1:271311759137:android:fbcb6c0592451f6a2e4060",
         "android_client_info": {
           "package_name": "com.teakio.pushtest"
         }
       },
       "oauth_client": [
         {
-          "client_id": "12126273415-qkrit6uv5h3ei3a58gvjmjipgpu387l8.apps.googleusercontent.com",
+          "client_id": "271311759137-dksabo3tn9n0rqbtulgn9bbk58gbovq6.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyA_lmYrQPyGS8QQtCKk05-YRU92zWcIZbQ"
+          "current_key": "AIzaSyAzBOa2X1aOWQaesIJGH0V_nY2AF36hfUg"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "12126273415-qkrit6uv5h3ei3a58gvjmjipgpu387l8.apps.googleusercontent.com",
+              "client_id": "271311759137-dksabo3tn9n0rqbtulgn9bbk58gbovq6.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
@@ -37,56 +36,27 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:12126273415:android:ba6ab67679dca460371d22",
+        "mobilesdk_app_id": "1:271311759137:android:f199517707f3ce862e4060",
         "android_client_info": {
           "package_name": "io.teak.app.unity.dev"
         }
       },
       "oauth_client": [
         {
-          "client_id": "12126273415-qkrit6uv5h3ei3a58gvjmjipgpu387l8.apps.googleusercontent.com",
+          "client_id": "271311759137-dksabo3tn9n0rqbtulgn9bbk58gbovq6.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyA_lmYrQPyGS8QQtCKk05-YRU92zWcIZbQ"
+          "current_key": "AIzaSyAzBOa2X1aOWQaesIJGH0V_nY2AF36hfUg"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "12126273415-qkrit6uv5h3ei3a58gvjmjipgpu387l8.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:12126273415:android:bc9f55d84d556703371d22",
-        "android_client_info": {
-          "package_name": "io.teak.app.unity.prod"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "12126273415-qkrit6uv5h3ei3a58gvjmjipgpu387l8.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyA_lmYrQPyGS8QQtCKk05-YRU92zWcIZbQ"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "12126273415-qkrit6uv5h3ei3a58gvjmjipgpu387l8.apps.googleusercontent.com",
+              "client_id": "271311759137-dksabo3tn9n0rqbtulgn9bbk58gbovq6.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
