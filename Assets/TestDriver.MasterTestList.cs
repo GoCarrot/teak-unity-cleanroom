@@ -10,23 +10,6 @@ using System.Text.RegularExpressions;
 using TeakCleanroomExtensions;
 
 public partial class TestDriver : UnityEngine.MonoBehaviour {
-    // C-871: safely check a channel/notification reply's error payload without throwing.
-    // The server can return a success reply (Errors == null), an error keyed differently than
-    // expected, or an empty message list. Indexing reply.Errors[key][0] directly (as the
-    // category/email/identifier tests used to) throws on those shapes — and because the throw
-    // happens inside the reply callback, the test's state setter never fires and the whole suite
-    // hangs. Returning false here makes an off-shape reply fail the test cleanly instead.
-    private static bool ReplyErrorContains(bool hasError, Dictionary<string, List<string>> errors, string key, string needle) {
-        if (!hasError || errors == null) {
-            return false;
-        }
-        List<string> messages;
-        if (!errors.TryGetValue(key, out messages) || messages == null) {
-            return false;
-        }
-        return messages.Exists(m => m != null && m.Contains(needle));
-    }
-
     public static bool ShouldBeAbleToOpenNotificationSettings {
         get {
             Regex rx = new Regex("(iOS|iPadOS||Android OS) (\\d+)\\.?(\\d+)?\\.?(\\d+)?",
@@ -294,7 +277,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Set Does Not Exist Category State (Email) to OptOut", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.SetCategoryState(Teak.Channel.Type.Email, "never never exist", Teak.Channel.State.OptOut, (reply) => {
-                            if(ReplyErrorContains(reply.Error, reply.Errors, "category", "Unknown category")) {
+                            if(reply.Error && reply.Errors["category"][0].Contains("Unknown category")) {
                                 state(Test.TestState.Passed);
                             } else {
                                 state(Test.TestState.Failed);
@@ -338,7 +321,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Set Channel (Email) to OptOut No Email", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.SetChannelState(Teak.Channel.Type.Email, Teak.Channel.State.OptOut, (reply) => {
-                            if(ReplyErrorContains(reply.Error, reply.Errors, "email", "not reachable")) {
+                            if(reply.Error && reply.Errors["email"][0].Contains("not reachable")) {
                                 state(Test.TestState.Passed);
                             } else {
                                 state(Test.TestState.Failed);
@@ -350,7 +333,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Set Category State (Email) to OptOut No Email", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         StartCoroutine(Teak.Instance.SetCategoryState(Teak.Channel.Type.Email, "teak", Teak.Channel.State.OptOut, (reply) => {
-                            if(ReplyErrorContains(reply.Error, reply.Errors, "email", "not reachable")) {
+                            if(reply.Error && reply.Errors["email"][0].Contains("not reachable")) {
                                 state(Test.TestState.Passed);
                             } else {
                                 state(Test.TestState.Failed);
@@ -450,7 +433,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         this.StartCoroutine(Teak.Notification.Schedule("test_never_ever_create_this_notification", 5, null, (Teak.Notification.Reply reply) => {
                             Debug.Log("Response for Report errors fro invalid scheduling received");
                             Debug.Log(reply);
-                            if (!ReplyErrorContains(reply.Error, reply.Errors, "identifier", "dashboard")) {
+                            if (!reply.Error || !reply.Errors["identifier"][0].Contains("dashboard")) {
                                 state(Test.TestState.Failed);
                             } else {
                                 state(Test.TestState.Passed);

@@ -70,9 +70,9 @@ public partial class TestDriver : MonoBehaviour
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
 
-    // C-871: per-test watchdog. A test whose reply callback never fires (or used to throw on an
-    // off-shape error reply) would otherwise hang the whole suite forever. The longest legit test
-    // waits ~15s (numeric/string attributes), so 90s is a wide margin before we force-fail.
+    // Per-test watchdog: a test whose completion callback never fires would otherwise stall the
+    // whole suite indefinitely. Force-fail after a time budget so the run advances. The longest
+    // legitimate test waits ~15s (numeric/string attributes), so 90s is a wide margin.
     // NB: qualify UnityEngine.Coroutine — the unqualified `Coroutine` is this project's helper class.
     private const float TestTimeoutSeconds = 90.0f;
     private UnityEngine.Coroutine testTimeoutCoroutine;
@@ -456,9 +456,9 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 
-    // C-871: force-fails the current test if it doesn't finish within TestTimeoutSeconds, so a
-    // never-firing reply callback can't stall the suite. No-ops if the test already completed or
-    // the suite has advanced to a different test.
+    // Force-fails the current test if it doesn't finish within TestTimeoutSeconds, so a never-firing
+    // completion callback can't stall the suite. No-ops if the test already completed or the suite
+    // has advanced to a different test.
     private IEnumerator TestWatchdog(Test test) {
         yield return new WaitForSeconds(TestTimeoutSeconds);
         if (this.testEnumerator != null && this.testEnumerator.Current == test && !test.IsComplete) {

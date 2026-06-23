@@ -24,8 +24,8 @@ class Test {
     private TestState began, background, reward, deepLink, launchedFromNotification, foregroundNotification,
         logEvent, postLaunchSummary, userData;
 
-    // C-871: guards OnResult against double-firing (e.g. the watchdog's ForceTimeout racing a late
-    // real callback) and backs the IsComplete check the per-test watchdog relies on.
+    // Guards OnResult against double-firing (e.g. the watchdog's ForceTimeout racing a late real
+    // callback) and backs the IsComplete check the per-test watchdog relies on.
     private bool resultReported = false;
 
     /// <summary>True once this test has reported a result (passed, failed, or timed out).</summary>
