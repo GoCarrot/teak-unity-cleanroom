@@ -70,6 +70,13 @@ public partial class TestDriver : MonoBehaviour
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
 
+    // Per-test watchdog: a test whose completion callback never fires would otherwise stall the
+    // whole suite indefinitely. Force-fail after a time budget so the run advances. The longest
+    // legitimate test waits ~15s (numeric/string attributes), so 90s is a wide margin.
+    // NB: qualify UnityEngine.Coroutine — the unqualified `Coroutine` is this project's helper class.
+    private const float TestTimeoutSeconds = 90.0f;
+    private UnityEngine.Coroutine testTimeoutCoroutine;
+
     // IL2CPP builds incorrectly report these as unused?
 #pragma warning disable
     Dictionary<string, object> testContext;
@@ -423,8 +430,15 @@ public partial class TestDriver : MonoBehaviour
 
         this.testContext = new Dictionary<string, object>();
 
+        if (this.testTimeoutCoroutine != null) {
+            this.StopCoroutine(this.testTimeoutCoroutine);
+            this.testTimeoutCoroutine = null;
+        }
+
         if (this.testEnumerator.MoveNext()) {
-            this.testEnumerator.Current.Begin();
+            Test current = this.testEnumerator.Current;
+            current.Begin();
+            this.testTimeoutCoroutine = this.StartCoroutine(this.TestWatchdog(current));
         } else {
             this.testEnumerator = null;
         }
@@ -439,6 +453,17 @@ public partial class TestDriver : MonoBehaviour
                 PlayerPrefs.SetString(TestListCurrentTestKey, null);
             }
             PlayerPrefs.Save();
+        }
+    }
+
+    // Force-fails the current test if it doesn't finish within TestTimeoutSeconds, so a never-firing
+    // completion callback can't stall the suite. No-ops if the test already completed or the suite
+    // has advanced to a different test.
+    private IEnumerator TestWatchdog(Test test) {
+        yield return new WaitForSeconds(TestTimeoutSeconds);
+        if (this.testEnumerator != null && this.testEnumerator.Current == test && !test.IsComplete) {
+            Debug.LogError("[Test Driver] Test timed out after " + TestTimeoutSeconds + "s, forcing failure: " + test.Name);
+            test.ForceTimeout();
         }
     }
 

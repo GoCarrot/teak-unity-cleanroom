@@ -24,6 +24,15 @@ class Test {
     private TestState began, background, reward, deepLink, launchedFromNotification, foregroundNotification,
         logEvent, postLaunchSummary, userData;
 
+    // Guards OnResult against double-firing (e.g. the watchdog's ForceTimeout racing a late real
+    // callback) and backs the IsComplete check the per-test watchdog relies on.
+    private bool resultReported = false;
+
+    /// <summary>True once this test has reported a result (passed, failed, or timed out).</summary>
+    public bool IsComplete {
+        get { return this.resultReported; }
+    }
+
     /// <summary>
     /// This takes all the test states and puts them into an array, then returns it.
     /// </summary>
@@ -68,6 +77,7 @@ class Test {
     // Test lifecycle
     private void ResetTest() {
         this.Status = TestState.Pending;
+        this.resultReported = false;
 
         this.began = TestState.Pending;
         this.background = this.OnBackground == null ? TestState.Passed : TestState.Pending;
@@ -152,9 +162,29 @@ class Test {
 
             this.Status = allPassed ? TestState.Passed : TestState.Failed;
 
-            if (this.OnResult != null) {
-                this.OnResult();
-            }
+            this.ReportResult();
+        }
+    }
+
+    /// <summary>
+    /// Called by the TestDriver watchdog when a test exceeds its time budget. Fails the test so
+    /// the suite can advance, unless it has already reported a result.
+    /// </summary>
+    public void ForceTimeout() {
+        if (this.resultReported) {
+            return;
+        }
+        this.Status = TestState.Failed;
+        this.ReportResult();
+    }
+
+    private void ReportResult() {
+        if (this.resultReported) {
+            return;
+        }
+        this.resultReported = true;
+        if (this.OnResult != null) {
+            this.OnResult();
         }
     }
 
