@@ -79,10 +79,6 @@ def kms_key
   @kms_key ||= `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode`.freeze
 end
 
-def circle_token
-  ENV.fetch('CIRCLE_TOKEN') { `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_circle_ci_key.data -k #{kms_key}` }
-end
-
 def fb_upload_token
   ENV.fetch('FB_UPLOAD_TOKEN') { `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_fb_upload_token.data -k #{kms_key}` }
 end
@@ -288,6 +284,20 @@ def print_build_msg(platform, args = nil)
     #{'-' * 80}
   BUILD_MSG
   puts build_msg.cyan
+end
+
+def write_android_build_assets
+  FileUtils.rm_f('teak-unity-cleanroom.apk')
+
+  template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
+  File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
+
+  template = File.read(File.join(PROJECT_PATH, 'Templates', 'cleanroom_values.xml.template'))
+  FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values'))
+  File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
+
+  FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets'))
+  File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets', 'api_key.txt'), TEAK_CREDENTIALS[BUILD_TYPE][:adm_key])
 end
 
 #
@@ -511,17 +521,7 @@ end
 
 namespace :build do
   task :android, [:amazon?] => %i[android:dependencies warnings_as_errors] do |_, args|
-    FileUtils.rm_f('teak-unity-cleanroom.apk')
-
-    template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
-    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
-
-    template = File.read(File.join(PROJECT_PATH, 'Templates', 'cleanroom_values.xml.template'))
-    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values'))
-    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
-
-    FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets'))
-    File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets', 'api_key.txt'), TEAK_CREDENTIALS[BUILD_TYPE][:adm_key])
+    write_android_build_assets
 
     additional_args = []
     additional_args.concat(['--debug']) unless prod?
@@ -549,6 +549,26 @@ namespace :build do
     with_kms_decrypt SIGNING_KEY do
       unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', File.join(PROJECT_PATH, SIGNING_KEY), *additional_args
       sh "keytool -list -v -alias alias_name -storepass pointless -keystore #{File.join(PROJECT_PATH, SIGNING_KEY)}"
+    end
+  end
+
+  namespace :android do
+    task local: %i[android:dependencies warnings_as_errors] do
+      write_android_build_assets
+
+      debug_keystore = File.join(PROJECT_PATH, 'debug.keystore')
+      unless File.exist?(debug_keystore)
+        sh "keytool -genkey -v -keystore #{debug_keystore} -alias alias_name -keyalg RSA -keysize 2048 -validity 10000 -storepass pointless -keypass pointless -dname 'CN=Android Debug,O=Android,C=US'", verbose: false
+      end
+
+      additional_args = ['--debug']
+      additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap?
+      additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
+      additional_args.concat(['--il2cpp']) if android_il2cpp?
+
+      print_build_msg 'Android (local/debug-signed)', Args: additional_args
+
+      unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', debug_keystore, *additional_args
     end
   end
 
@@ -587,38 +607,6 @@ namespace :build do
       FileUtils.mv "#{tmpdir}/UnityPurchasing", 'Assets/Plugins/UnityPurchasing', force: true
       FileUtils.mv "#{tmpdir}/UnityChannel", 'Assets/Plugins/UnityChannel', force: true
       FileUtils.remove_entry tmpdir
-    end
-  end
-end
-
-namespace :build do
-  namespace :android do
-    task local: %i[android:dependencies warnings_as_errors] do
-      FileUtils.rm_f('teak-unity-cleanroom.apk')
-
-      template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
-      File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
-
-      template = File.read(File.join(PROJECT_PATH, 'Templates', 'cleanroom_values.xml.template'))
-      FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values'))
-      File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
-
-      FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets'))
-      File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets', 'api_key.txt'), TEAK_CREDENTIALS[BUILD_TYPE][:adm_key])
-
-      debug_keystore = File.join(PROJECT_PATH, 'debug.keystore')
-      unless File.exist?(debug_keystore)
-        sh "keytool -genkey -v -keystore #{debug_keystore} -alias alias_name -keyalg RSA -keysize 2048 -validity 10000 -storepass pointless -keypass pointless -dname 'CN=Android Debug,O=Android,C=US'", verbose: false
-      end
-
-      additional_args = ['--debug']
-      additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap?
-      additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
-      additional_args.concat(['--il2cpp']) if android_il2cpp?
-
-      print_build_msg 'Android (local/debug-signed)', Args: additional_args
-
-      unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', debug_keystore, *additional_args
     end
   end
 end
