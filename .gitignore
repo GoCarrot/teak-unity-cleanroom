@@ -89,6 +89,7 @@ Assets/Plugins/UnityChannel*
 Assets/FacebookSDK*
 
 # Generated Files
+debug.keystore
 Unity-iPhone/*
 WebGLBuild*
 Teak.unitypackage
