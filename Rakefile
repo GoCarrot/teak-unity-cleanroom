@@ -75,9 +75,17 @@ TEAK_CREDENTIALS = {
 PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
 SIGNING_KEY = TEAK_CREDENTIALS[BUILD_TYPE][:signing_key]
 
-KMS_KEY = `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode`.freeze
-CIRCLE_TOKEN = ENV.fetch('CIRCLE_TOKEN') { `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_circle_ci_key.data -k #{KMS_KEY}` }
-FB_UPLOAD_TOKEN = ENV.fetch('FB_UPLOAD_TOKEN') { `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_fb_upload_token.data -k #{KMS_KEY}` }
+def kms_key
+  @kms_key ||= `aws kms decrypt --ciphertext-blob fileb://kms/store_encryption_key.key --output text --query Plaintext | base64 --decode`.freeze
+end
+
+def circle_token
+  ENV.fetch('CIRCLE_TOKEN') { `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_circle_ci_key.data -k #{kms_key}` }
+end
+
+def fb_upload_token
+  ENV.fetch('FB_UPLOAD_TOKEN') { `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_fb_upload_token.data -k #{kms_key}` }
+end
 
 FORCE_CIRCLE_BUILD_ON_FETCH = ENV.fetch('FORCE_CIRCLE_BUILD_ON_FETCH', false)
 
@@ -340,7 +348,7 @@ end
 
 namespace :prime31 do
   task :import do
-    `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_prime31_plugin.data -out Prime31_IAP.unitypackage -k #{KMS_KEY}`
+    `openssl enc -md MD5 -d -aes-256-cbc -in kms/encrypted_prime31_plugin.data -out Prime31_IAP.unitypackage -k #{kms_key}`
 
     without_teak_available do
       unity '-importPackage', 'Prime31_IAP.unitypackage'
@@ -351,7 +359,7 @@ namespace :prime31 do
 
   task :encrypt, [:path] do |_, args|
     prime31_path = args[:path] || '../IAPAndroid_3.9.unitypackage'
-    `openssl enc -md MD5 -aes-256-cbc -in #{prime31_path} -out kms/encrypted_prime31_plugin.data -k #{KMS_KEY}`
+    `openssl enc -md MD5 -aes-256-cbc -in #{prime31_path} -out kms/encrypted_prime31_plugin.data -k #{kms_key}`
   end
 end
 
@@ -583,6 +591,38 @@ namespace :build do
   end
 end
 
+namespace :build do
+  namespace :android do
+    task local: %i[android:dependencies warnings_as_errors] do
+      FileUtils.rm_f('teak-unity-cleanroom.apk')
+
+      template = File.read(File.join(PROJECT_PATH, 'Templates', 'AndroidManifest.xml.template'))
+      File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'AndroidManifest.xml'), Mustache.render(template, template_parameters))
+
+      template = File.read(File.join(PROJECT_PATH, 'Templates', 'cleanroom_values.xml.template'))
+      FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values'))
+      File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'res', 'values', 'cleanroom_values.xml'), Mustache.render(template, template_parameters))
+
+      FileUtils.mkdir_p(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets'))
+      File.write(File.join(PROJECT_PATH, 'Assets', 'Plugins', 'Android', 'teak-resources.androidlib', 'assets', 'api_key.txt'), TEAK_CREDENTIALS[BUILD_TYPE][:adm_key])
+
+      debug_keystore = File.join(PROJECT_PATH, 'debug.keystore')
+      unless File.exist?(debug_keystore)
+        sh "keytool -genkey -v -keystore #{debug_keystore} -alias alias_name -keyalg RSA -keysize 2048 -validity 10000 -storepass pointless -keypass pointless -dname 'CN=Android Debug,O=Android,C=US'", verbose: false
+      end
+
+      additional_args = ['--debug']
+      additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap?
+      additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
+      additional_args.concat(['--il2cpp']) if android_il2cpp?
+
+      print_build_msg 'Android (local/debug-signed)', Args: additional_args
+
+      unity '-buildTarget', 'Android', '-executeMethod', 'BuildPlayer.Android', '--api', TARGET_API, '--keystore', debug_keystore, *additional_args
+    end
+  end
+end
+
 namespace :ios do
   task all: %i[build fastlane]
 
@@ -626,7 +666,7 @@ namespace :deploy do
   end
 
   task :webgl do
-    sh "curl --max-time 7 -X POST https://graph-video.facebook.com/#{TEAK_CREDENTIALS[BUILD_TYPE][:teak_app_id]}/assets -F 'access_token=#{FB_UPLOAD_TOKEN}' -F 'type=UNITY_WEBGL' -F 'asset=@./teak-unity-cleanroom.zip' -F 'comment=#{`cat TEAK_VERSION`}'"
+    sh "curl --max-time 7 -X POST https://graph-video.facebook.com/#{TEAK_CREDENTIALS[BUILD_TYPE][:teak_app_id]}/assets -F 'access_token=#{fb_upload_token}' -F 'type=UNITY_WEBGL' -F 'asset=@./teak-unity-cleanroom.zip' -F 'comment=#{`cat TEAK_VERSION`}'"
   end
 
   task :google_play do
@@ -720,7 +760,7 @@ namespace :kms do
 
     raise "Could not find file: '#{args[:path]}'" unless File.exist?(args[:path])
 
-    `openssl enc -md MD5 -aes-256-cbc -in #{args[:path]} -out kms/#{File.basename(args[:path])}.data -k #{KMS_KEY}`
+    `openssl enc -md MD5 -aes-256-cbc -in #{args[:path]} -out kms/#{File.basename(args[:path])}.data -k #{kms_key}`
   end
 
   task :decrypt, [:encrypted_file] do |_, args|
@@ -728,7 +768,7 @@ namespace :kms do
 
     raise "Could not find file: 'kms/#{args[:encrypted_file]}.data'" unless File.exist?("kms/#{args[:encrypted_file]}.data")
 
-    `openssl enc -md MD5 -d -aes-256-cbc -in kms/#{args[:encrypted_file]}.data -out #{args[:encrypted_file]} -k #{KMS_KEY}`
+    `openssl enc -md MD5 -d -aes-256-cbc -in kms/#{args[:encrypted_file]}.data -out #{args[:encrypted_file]} -k #{kms_key}`
   end
 end
 
