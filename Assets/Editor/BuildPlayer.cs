@@ -204,11 +204,14 @@ public class BuildPlayer
         // Debug build?
         bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
 
-        // IL2CPP?
+        // IL2CPP? Keep the target ABI in lockstep with the scripting backend: IL2CPP ships
+        // arm64-v8a (64-bit, required by Android 14+), Mono only supports 32-bit armeabi-v7a.
         if (parsedArgs.ContainsKey("il2cpp")) {
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
         } else {
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.Mono2x);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARMv7;
         }
 
         // UnityIAP. This changes Assets/Resources/BillingMode.json
