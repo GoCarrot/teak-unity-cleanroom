@@ -82,7 +82,7 @@ Performs the build.
 
 For Android the following environment variables are available:
 
-* `USE_IL2CPP_ON_ANDROID` with 'true' or 'false' defaults to 'false'
+* `USE_IL2CPP_ON_ANDROID` with 'true' or 'false' defaults to 'true' (IL2CPP + arm64-v8a; set 'false' for a Mono/armeabi-v7a build)
 * `TARGET_API` to set the targetSdkLevel for Android, defaults to 33
 
 ## install ##

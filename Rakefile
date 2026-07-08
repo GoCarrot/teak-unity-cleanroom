@@ -112,7 +112,9 @@ def use_unity_iap?
 end
 
 def android_il2cpp?
-  ENV.fetch('USE_IL2CPP_ON_ANDROID', false).to_s == 'true'
+  # Default to IL2CPP so the cleanroom ships a 64-bit (arm64-v8a) APK matching how
+  # production games build. Set USE_IL2CPP_ON_ANDROID=false for a Mono/armeabi-v7a build.
+  ENV.fetch('USE_IL2CPP_ON_ANDROID', true).to_s == 'true'
 end
 
 def prod?
