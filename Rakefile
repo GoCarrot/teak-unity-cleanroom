@@ -134,7 +134,7 @@ def using_unitypackage?
 end
 
 def use_facebook?
-  ENV.fetch('USE_FACEBOOK', true).to_s == 'true'
+  ENV.fetch('USE_FACEBOOK', false).to_s == 'true'
 end
 
 AMAZON_APPSTORE_SDK_VERSION = '3.0.9'

@@ -59,7 +59,7 @@ You can control what is used with the following environment variables:
 * `USE_UNITY_IAP` with 'true' or 'false' defaults to 'true'
 * `USE_PRIME31` with 'true' or 'false' defaults to 'false'
 * `FACEBOOK_SDK_VERSION` with a specific Facebook SDK for Unity version, defaults to '16.0.1'
-* `USE_FACEBOOK` with 'true' or 'false' to control if Facebook is in the build, defaults to true
+* `USE_FACEBOOK` with 'true' or 'false' to control if Facebook is in the build, defaults to false
 
 ### config ###
 
