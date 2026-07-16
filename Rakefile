@@ -445,7 +445,7 @@ namespace :package do
   end
 
   task copy: [:clean] do
-    fastlane 'sdk', env: { FL_TEAK_SDK_SOURCE: "#{PROJECT_PATH}/../teak-unity/" }
+    fastlane 'sdk', env: { FL_TEAK_SDK_SOURCE: ENV.fetch('FL_TEAK_SDK_SOURCE', "#{PROJECT_PATH}/../teak-unity/") }
   end
 
   task build: [:clean] do
