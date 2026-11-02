@@ -26,8 +26,9 @@ jobs:
       - run:
           name: Ruby Gems
           command: |
-            gem update bundler
-            bundle check || bundle install --path vendor/bundle
+            gem install bundler:$(grep -A 1 'BUNDLED WITH' Gemfile.lock | tail -1 | awk '{ print $1 }')
+            bundle config set --local path vendor/bundle
+            bundle check || bundle install
       - save_cache:
           paths:
             - /usr/local/share/android-sdk
