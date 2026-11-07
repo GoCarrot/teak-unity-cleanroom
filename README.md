@@ -4,6 +4,12 @@
 
 Will find the best version of Unity it can, download the latest Teak SDK, configure a development build, then build the Android app and install it on any connected device.
 
+## Verifying the UPM path ##
+
+`script/verify-upm`
+
+One command for the UPM half of the pre-release gate. It installs gems if needed, then runs `rake verify:upm` (`package:upm firebase:import config:all build:android:local`) and prints which `io.teak.unity.sdk` version UPM resolved. UPM only serves published versions, so promote an rc first and check that the printed version matches it.
+
 ## Unity Version ##
 
 The `UNITY_HOME` environment variable sets which Unity editor will be used for building, e.g. `UNITY_HOME=/Applications/Unity/Hub/Editor/2020.3.47f1`
