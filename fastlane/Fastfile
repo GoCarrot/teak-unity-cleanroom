@@ -13,6 +13,9 @@
 FASTFILE_PATH = File.expand_path(File.dirname(File.dirname(__FILE__)))
 XCODE_PROJECT = File.join(FASTFILE_PATH, '..', 'Unity-iPhone', 'Unity-iPhone.xcodeproj')
 XCODE_WORKSPACE = File.join(FASTFILE_PATH, '..', 'Unity-iPhone', 'Unity-iPhone.xcworkspace')
+# Worktree-local build output (gitignored, removed by `git clean -fdx`), so iOS builds never write to the shared ~/Library/Developer/Xcode.
+BUILD_OUTPUT_PATH = File.join(FASTFILE_PATH, '..', 'build')
+DERIVED_DATA_PATH = File.join(BUILD_OUTPUT_PATH, 'DerivedData')
 TEAK_APP_EXTENSIONS = %w[TeakNotificationService TeakNotificationContent].freeze
 BUILD_CONFIGURATIONS = %w[Debug Release ReleaseForRunning ReleaseForProfiling].freeze
 
@@ -137,6 +140,8 @@ platform :ios do
       scheme: 'Unity-iPhone',
       configuration: BUILD_CONFIGURATION,
       clean: true,
+      derived_data_path: DERIVED_DATA_PATH,
+      archive_path: File.join(BUILD_OUTPUT_PATH, 'Archives', 'teak-unity-cleanroom.xcarchive'),
       output_directory: File.join(FASTFILE_PATH, '..'),
       output_name: 'teak-unity-cleanroom.ipa',
       export_method: CONFIG_TYPE.sub('appstore', 'app-store')
@@ -150,6 +155,7 @@ platform :ios do
       scheme: 'Unity-iPhone',
       configuration: 'Release',
       build: true,
+      derivedDataPath: DERIVED_DATA_PATH,
       destination: 'generic/platform=iOS',
       build_settings: {
         'CODE_SIGNING_REQUIRED' => 'NO',
