@@ -307,14 +307,16 @@ end
 #
 task :clean do
   sh 'git clean -fdx', verbose: false unless ci?
+end
 
-  xcode_artifacts = File.expand_path('~/Library/Developer/Xcode/')
-  FileUtils.rm_rf Dir[File.join(xcode_artifacts, 'DerivedData', 'Unity-iPhone-*')]
-  FileUtils.rm_rf Dir[File.join(xcode_artifacts, 'Archives', '**', 'teak-unity-cleanroom*')]
-
-  Dir[File.join(xcode_artifacts, '**', '*')].select { |d| File.directory? d }
-                                            .select { |d| (Dir.entries(d) - %w[. ..]).empty? }
-                                            .each   { |d| Dir.rmdir d }
+# Global Xcode state is shared by every worktree and Unity export on this machine.
+# Opt-in only: nothing depends on this task.
+namespace :clean do
+  task :xcode do
+    xcode_artifacts = File.expand_path('~/Library/Developer/Xcode/')
+    FileUtils.rm_rf Dir[File.join(xcode_artifacts, 'DerivedData', 'Unity-iPhone-*')]
+    FileUtils.rm_rf Dir[File.join(xcode_artifacts, 'Archives', '**', 'teak-unity-cleanroom*')]
+  end
 end
 
 task :warnings_as_errors do
