@@ -488,6 +488,13 @@ namespace :package do
   end
 end
 
+namespace :verify do
+  desc 'One-shot UPM consumption check: resolve Teak via UPM, import EDM, build a debug-signed APK'
+  task :upm do
+    %w[package:upm firebase:import config:all build:android:local].each { |t| Rake::Task[t].invoke }
+  end
+end
+
 namespace :config do
   task all: %i[id settings apple_team_id]
 
