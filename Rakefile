@@ -37,9 +37,20 @@ desc 'Build Unity package'
 task :default
 
 UNITY_COMPILERS = %i[gmsc smcs smcs mcs csc].freeze
-UNITY_HOME = ENV.fetch('UNITY_HOME', Dir.glob('/Applications/Unity/Hub/Editor/*').last)
-RVM_VARS = %w[GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH].freeze
+UNITY_EDITORS_DIR = '/Applications/Unity/Hub/Editor'.freeze
 PROJECT_PATH = Rake.application.original_dir
+
+# Editor version pinned by ProjectSettings/ProjectVersion.txt.
+def pinned_unity_version
+  version_file = File.join(PROJECT_PATH, 'ProjectSettings', 'ProjectVersion.txt')
+  File.read(version_file)[/^m_EditorVersion:\s*(\S+)/, 1] if File.exist?(version_file)
+end
+
+UNITY_HOME = ENV.fetch('UNITY_HOME') do
+  version = pinned_unity_version
+  version ? File.join(UNITY_EDITORS_DIR, version) : nil
+end
+RVM_VARS = %w[GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH].freeze
 BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
 TARGET_API = ENV.fetch('TARGET_API', 36)
 TEAK_CREDENTIALS = {
@@ -86,7 +97,20 @@ end
 FORCE_CIRCLE_BUILD_ON_FETCH = ENV.fetch('FORCE_CIRCLE_BUILD_ON_FETCH', false)
 
 def unity?
-  File.exist? "#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity"
+  !UNITY_HOME.nil? && File.exist?("#{UNITY_HOME}/Unity.app/Contents/MacOS/Unity")
+end
+
+# Aborts before any Unity launch if the editor we would use isn't installed.
+def require_unity!
+  return if unity?
+
+  installed = Dir.glob("#{UNITY_EDITORS_DIR}/*").map { |dir| File.basename(dir) }
+  if UNITY_HOME.nil?
+    abort "Can't read m_EditorVersion from ProjectSettings/ProjectVersion.txt in #{PROJECT_PATH}. " \
+          "Set UNITY_HOME to an installed editor (installed: #{installed.join(', ')})."
+  end
+  pin = ENV.key?('UNITY_HOME') ? '' : " ProjectVersion.txt pins #{pinned_unity_version}."
+  abort "Unity editor not found at #{UNITY_HOME}.#{pin} Installed: #{installed.join(', ')}."
 end
 
 def ci?
@@ -210,6 +234,7 @@ end
 # Helper methods
 #
 def unity(*args, quit: true, nographics: true)
+  require_unity!
   manifest_parameters = {
     use_unity_purchasing: purchasing_plugin == :unity_purchasing,
     unity_purchasing_version: use_appstore_sdk? ? '5.0.4' : '4.12.2',
@@ -278,6 +303,7 @@ def with_kms_decrypt(file, &block)
 end
 
 def print_build_msg(platform, args = nil)
+  require_unity!
   build_msg = <<~BUILD_MSG
     #{'-' * 80}
     Building #{PACKAGE_NAME} - #{platform} - #{BUILD_TYPE.capitalize}
