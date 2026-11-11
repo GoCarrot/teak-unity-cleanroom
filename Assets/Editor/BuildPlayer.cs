@@ -303,6 +303,10 @@ public class BuildPlayer
 
         PlayerSettings.SetScriptingBackend(BuildTargetGroup.iOS, ScriptingImplementation.IL2CPP);
 
+        // Device or simulator SDK
+        PlayerSettings.iOS.sdkVersion = GetStringArg(parsedArgs, "ios-sdk", "device") == "simulator" ?
+            iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
+
         // Debug build?
         bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
 

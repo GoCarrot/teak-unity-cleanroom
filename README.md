@@ -96,6 +96,8 @@ For iOS, `IOS_LIFECYCLE` picks the app lifecycle:
 * `scene` (default) Unity's UIScene export as-is. The build fails if Unity stops emitting `UIApplicationSceneManifest`. Use on iOS 27.
 * `legacy` removes `UIApplicationSceneManifest` for an app-delegate build. Use as the iOS 26 and earlier control; it traps at launch on the iOS 27 SDK.
 
+`IOS_SDK` is `device` (default) or `simulator`; use `simulator` to export a project that builds for the iOS Simulator.
+
 The installed app is named `<Lifecycle> <BuildType>` (e.g. `Scene Dev`) so you can tell which build you're running.
 
 ## install ##
