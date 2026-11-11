@@ -144,7 +144,14 @@ class DeviceDestination < Destination
     [cmd + [bundle_id], {}]
   end
 
-  def termination_reason(_pid, _since) = nil
+  # devicectl's console ends with "App terminated due to signal N." when the app dies by a signal.
+  def termination_reason(_pid, _since, app_log)
+    signal = File.exist?(app_log) && File.read(app_log)[/App terminated due to signal (\d+)\./, 1]
+    return nil unless signal
+
+    name = Signal.signame(signal.to_i)
+    "terminated by #{name ? "SIG#{name}" : "signal #{signal}"}"
+  end
 
   # Copies the device's crash logs into dir. Returns [paths, error].
   def collect_crash_reports(dir, _since)
@@ -193,7 +200,7 @@ class SimulatorDestination < Destination
 
   # How the app's process ended, from the simulator's own log, for when no crash report gets written.
   # RunningBoard logs "termination reported by launchd (namespace, code, status)"; namespace 2 is a signal.
-  def termination_reason(pid, since)
+  def termination_reason(pid, since, _app_log)
     return nil unless pid
 
     out, = run('xcrun', 'simctl', 'spawn', udid, 'log', 'show', '--style', 'compact',
@@ -396,7 +403,7 @@ if outcome == :exited
 
     sleep 3
   end
-  exit_reason = destination.termination_reason(app_pid, started_at) unless crash
+  exit_reason = destination.termination_reason(app_pid, started_at, app_log) unless crash
 end
 
 stop(app_wait)
