@@ -58,6 +58,11 @@ public partial class TestDriver : MonoBehaviour
 
     string testPurchaseSku = "io.teak.app.sku.dollar";
 
+#if TEAK_IAP_V4 || TEAK_IAP_V5
+    // A purchase link that arrived before the product was fetched; started once it is.
+    string pendingLinkPurchaseSku;
+#endif
+
 #if UNITY_ANDROID
     int AndroidAPILevel {
         get {
@@ -128,6 +133,20 @@ public partial class TestDriver : MonoBehaviour
             if (!this.DeepLinkTestExceptionThrown) {
                 throw new ArgumentException("Test exception");
             }
+        });
+
+        Teak.Instance.RegisterRoute("/purchase/:sku", "Purchase", "Start a test purchase of an SKU", (Dictionary<string, object> parameters) => {
+            string sku = parameters["sku"] as string;
+#if TEAK_IAP_V4 || TEAK_IAP_V5
+            // Hop to the main thread; the store APIs need it.
+            this.StartCoroutine(Coroutine.Do(() => {
+                Debug.Log("[TestDriver-UnityIAP] Purchase link: " + sku);
+                this.pendingLinkPurchaseSku = sku;
+                this.StartPendingLinkPurchase();
+            }));
+#else
+            Debug.Log("[TestDriver] Purchase link ignored, no Unity IAP in this build: " + sku);
+#endif
         });
 
         this.SetupStorePlugin();
@@ -336,10 +355,7 @@ public partial class TestDriver : MonoBehaviour
         {
             Button button = this.CreateButton("Test Purchase");
             button.onClick.AddListener(() => {
-                UnityEngine.Purchasing.Product product = this.storeController.products.WithID(this.testPurchaseSku);
-                if (product != null && product.availableToPurchase) {
-                    this.storeController.InitiatePurchase(product);
-                } else {
+                if (!this.TryStartTestPurchase(this.testPurchaseSku)) {
                     Debug.LogError("THE THING WAS ALREADY PURCHASED IT THINKS!");
                 }
             });
@@ -348,10 +364,7 @@ public partial class TestDriver : MonoBehaviour
         {
             Button button = this.CreateButton("Test Purchase");
             button.onClick.AddListener(() => {
-                UnityEngine.Purchasing.Product product = this.storeController?.GetProductById(this.testPurchaseSku);
-                if (product != null) {
-                    this.storeController.PurchaseProduct(product);
-                } else {
+                if (!this.TryStartTestPurchase(this.testPurchaseSku)) {
                     Debug.LogError("[TestDriver-UnityIAP] Product not fetched: " + this.testPurchaseSku);
                 }
             });
@@ -619,7 +632,27 @@ public partial class TestDriver : MonoBehaviour
 #endif // USE_PRIME31
 
 
+#if TEAK_IAP_V4 || TEAK_IAP_V5
+    // Starts the purchase a link asked for, or leaves it pending until the product is fetched.
+    private void StartPendingLinkPurchase() {
+        string sku = this.pendingLinkPurchaseSku;
+        if (sku == null || !this.TryStartTestPurchase(sku)) {
+            return;
+        }
+        this.pendingLinkPurchaseSku = null;
+    }
+#endif
+
 #if TEAK_IAP_V4
+    private bool TryStartTestPurchase(string sku) {
+        UnityEngine.Purchasing.Product product = this.storeController?.products.WithID(sku);
+        if (product == null || !product.availableToPurchase) {
+            return false;
+        }
+        this.storeController.InitiatePurchase(product);
+        return true;
+    }
+
     public void OnInitialized(IStoreController controller, IExtensionProvider extensions) {
         Debug.Log("[TestDriver-UnityIAP] OnInitialized");
 
@@ -631,6 +664,8 @@ public partial class TestDriver : MonoBehaviour
             Debug.Log("[TestDriver-UnityIAP] Confirming Pending Purchase: " + product);
             this.storeController.ConfirmPendingPurchase(product);
         }
+
+        this.StartPendingLinkPurchase();
     }
 
     public void OnInitializeFailed(InitializationFailureReason error) {
@@ -652,6 +687,15 @@ public partial class TestDriver : MonoBehaviour
 #endif // TEAK_IAP_V4
 
 #if TEAK_IAP_V5
+    private bool TryStartTestPurchase(string sku) {
+        UnityEngine.Purchasing.Product product = this.storeController?.GetProductById(sku);
+        if (product == null) {
+            return false;
+        }
+        this.storeController.PurchaseProduct(product);
+        return true;
+    }
+
     private async void SetupUnityIAPv5() {
         Debug.Log("[TestDriver] Initializing Unity IAP v5 for: Google Play");
         this.storeController = UnityIAPServices.StoreController();
@@ -660,6 +704,7 @@ public partial class TestDriver : MonoBehaviour
             Debug.Log("[TestDriver-UnityIAP] OnProductsFetched: " + products.Count);
             // After the products, so a fetched pending order resolves against a known product.
             this.storeController.FetchPurchases();
+            this.StartPendingLinkPurchase();
         };
         this.storeController.OnProductsFetchFailed += (ProductFetchFailed failure) => {
             Debug.Log("[TestDriver-UnityIAP] OnProductsFetchFailed: " + failure.FailureReason);
