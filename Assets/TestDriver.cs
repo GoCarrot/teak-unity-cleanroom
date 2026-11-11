@@ -631,6 +631,14 @@ public partial class TestDriver : MonoBehaviour
         this.storeController.OnPurchaseFailed += (FailedOrder order) => {
             Debug.Log("[TestDriver-UnityIAP] OnPurchaseFailed: " + order.FailureReason + " " + order.Details);
         };
+        // Fetched pending orders also arrive through OnPurchasePending, so a purchase that
+        // completed while the app wasn't running gets confirmed at launch.
+        this.storeController.OnPurchasesFetched += (Orders orders) => {
+            Debug.Log("[TestDriver-UnityIAP] OnPurchasesFetched: " + orders.PendingOrders.Count + " pending, " + orders.ConfirmedOrders.Count + " confirmed");
+        };
+        this.storeController.OnPurchasesFetchFailed += (PurchasesFetchFailureDescription failure) => {
+            Debug.Log("[TestDriver-UnityIAP] OnPurchasesFetchFailed: " + failure.FailureReason + " " + failure.Message);
+        };
 
         try {
             await this.storeController.Connect();
@@ -638,6 +646,7 @@ public partial class TestDriver : MonoBehaviour
             this.storeController.FetchProducts(new List<ProductDefinition> {
                 new ProductDefinition(this.testPurchaseSku, ProductType.Consumable)
             });
+            this.storeController.FetchPurchases();
         } catch (Exception e) {
             Debug.Log("[TestDriver-UnityIAP] OnInitializeFailed: " + e.Message);
         }
