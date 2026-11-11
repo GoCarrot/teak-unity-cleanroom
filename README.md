@@ -110,6 +110,21 @@ Installs the build.
 * `install:amazon` installs the build with the installer ref set to the Amazon store (`com.amazon.venezia`)
 * `install:webgl` runs an http server on local port `8000` hosting the WebGL build
 
+## Running the suite unattended on iOS ##
+
+`rake test:ios` installs the last iOS build fresh, runs the whole TestDriver suite with nobody touching the device, and prints every test's result. A small XCUITest driver (`ios-driver/`) answers the system UI the suite can't: the notification permission prompt, "Open in…?" alerts, notification banners and Notification Center, and returning from Settings.
+
+* Device: `IOS_DEVICE=<udid> rake ios:build ios:device_app test:ios`.
+  * There's no default device. Use the hardware UDID from `xcrun xctrace list devices`, not the CoreDevice identifier from `devicectl list devices`; xcodebuild only takes the UDID.
+  * One-time setup on the device: Developer Mode on, Settings › Developer › Enable UI Automation on, Auto-Lock set to Never. The first driver run raises a UI Automation prompt on the device that someone has to accept; until then the driver times out "enabling automation mode".
+  * The device has to be in the team's development profiles. `ALLOW_PROVISIONING_UPDATES=1` lets Xcode register it and create profiles on the shared Apple team; that's off by default.
+  * `ios:device_app` signs with Xcode-managed profiles. `ios:fastlane` signs with match's profiles, which only carry devices match knows about; use it for builds that go out, not for this.
+* Simulator: `IOS_SDK=simulator rake ios:build ios:simulator_app test:ios`, with one simulator booted (or `IOS_SIMULATOR=<udid>`).
+
+If the app dies before the suite finishes, the run stops, the test it died in is marked Crashed, and the crash report path and faulting frames are printed. The rest are marked Not run. If no report can be found, it prints the signal the app died from instead (from the device console, or the simulator's log). `CRASH_AT="<test name>"` makes a debug build crash just before that test, to check this works.
+
+Logs, the driver's result bundle and `results.json` go to `build/ios-suite/<time>/`. `script/ios-suite --help` has the options.
+
 ## deploy ##
 
 Deploys the build.

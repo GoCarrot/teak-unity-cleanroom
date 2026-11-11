@@ -1,0 +1,463 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Runs the cleanroom TestDriver suite on an iOS device or simulator with no one touching it.
+#
+# The Driver UI test (ios-driver/) answers system UI: the notification prompt, "Open in…?" alerts,
+# notification banners and Notification Center, and Settings. This script installs the app fresh,
+# starts the driver, launches the app attached to its console, and reads the TestDriver log lines
+# to build the results. If the app exits before the suite completes, it looks for a crash report
+# and marks the running test Crashed.
+#
+#   script/ios-suite --app path/to/App.app --device <udid>
+#   script/ios-suite --app path/to/App.app --simulator <udid|booted>
+#
+# Exit status: 0 all passed, 1 a test failed, 2 the run didn't finish (crash, exit, timeout), or
+# --crash-at was given and the crash never happened.
+
+require 'fileutils'
+require 'json'
+require 'open3'
+require 'optparse'
+require 'shellwords'
+require 'time'
+
+ROOT = File.expand_path('..', __dir__)
+DRIVER_PROJECT = File.join(ROOT, 'ios-driver', 'CleanroomDriver.xcodeproj')
+CRASH_AT_ENV = 'TEAK_CLEANROOM_CRASH_AT'
+
+options = { timeout: 2400, crash_at: nil, out: nil, allow_provisioning_updates: false }
+OptionParser.new do |o|
+  o.banner = 'Usage: script/ios-suite --app App.app (--device UDID | --simulator UDID|booted) [options]'
+  o.on('--app PATH', 'Built .app to install') { |v| options[:app] = File.expand_path(v) }
+  o.on('--device UDID', 'Physical device (explicit UDID, never a default)') { |v| options[:device] = v }
+  o.on('--simulator UDID', 'Simulator UDID, or "booted"') { |v| options[:simulator] = v }
+  o.on('--crash-at NAME', 'Debug builds: crash just before this test begins') { |v| options[:crash_at] = v }
+  o.on('--timeout SECONDS', Integer, "Whole-run cap (default #{options[:timeout]})") { |v| options[:timeout] = v }
+  o.on('--out DIR', 'Where logs and results go (default build/ios-suite/<time>)') { |v| options[:out] = File.expand_path(v) }
+  o.on('--allow-provisioning-updates',
+       'Device: let Xcode register the device and create profiles on the shared Apple team') do
+    options[:allow_provisioning_updates] = true
+  end
+end.parse!
+
+abort 'missing --app' unless options[:app] && File.directory?(options[:app])
+abort 'pass exactly one of --device or --simulator' unless options[:device].nil? ^ options[:simulator].nil?
+
+# One test in run order. Names can repeat ("Delete Email" runs twice), so lines match by position.
+Entry = Struct.new(:name, :status, keyword_init: true)
+
+# Reads TestDriver's log lines into per-test results.
+class SuiteLog
+  attr_reader :entries, :current
+
+  def initialize
+    @entries = []
+    @current = nil
+    @complete = false
+  end
+
+  def complete?
+    @complete
+  end
+
+  # True once the first test has begun, which is after the whole test list was logged.
+  def started?
+    @entries.any? { |e| !e.status.nil? }
+  end
+
+  def feed(line)
+    case line
+    when /\[Test Driver\] tests: (\d+)/
+      @entries = []
+      @current = nil
+    when /\[Test Driver\] test (.+)$/
+      @entries << Entry.new(name: Regexp.last_match(1).strip, status: nil)
+    when /\[Test Driver\] begin (.+)$/
+      name = Regexp.last_match(1).strip
+      @current = @entries.find { |e| e.name == name && e.status.nil? }
+      @current.status = 'Running' if @current
+    when /\[Test Driver\] result (.+): (Passed|Failed)/
+      name = Regexp.last_match(1).strip
+      entry = @entries.find { |e| e.name == name && (e.status.nil? || e.status == 'Running') }
+      entry.status = Regexp.last_match(2) if entry
+      @current = nil if entry.equal?(@current)
+    when /\[Test Driver\] suite complete/
+      @complete = true
+    end
+  end
+
+  # Marks the test that was running (or, if none, the next one) and leaves the rest Not run.
+  def interrupt(status)
+    target = @current || @entries.find { |e| e.status.nil? }
+    target.status = status if target
+    target
+  end
+end
+
+# Where the app runs: install, launch with a console, and find crash reports.
+class Destination
+  attr_reader :udid
+
+  def self.for(options)
+    if options[:device]
+      DeviceDestination.new(options[:device], allow_provisioning_updates: options[:allow_provisioning_updates])
+    else
+      SimulatorDestination.new(options[:simulator])
+    end
+  end
+
+  def run!(*cmd)
+    out, status = Open3.capture2e(*cmd)
+    raise "#{cmd.shelljoin} failed:\n#{out}" unless status.success?
+
+    out
+  end
+
+  def run(*cmd)
+    Open3.capture2e(*cmd)
+  end
+end
+
+class DeviceDestination < Destination
+  def initialize(udid, allow_provisioning_updates:)
+    @udid = udid
+    @allow_provisioning_updates = allow_provisioning_updates
+  end
+
+  def label = "device #{udid}"
+  def xcodebuild_destination = "id=#{udid}"
+
+  # Off by default: it writes to the shared Apple team (registers the device, creates profiles).
+  def xcodebuild_extra
+    @allow_provisioning_updates ? %w[-allowProvisioningUpdates -allowProvisioningDeviceRegistration] : []
+  end
+
+  def reinstall(app, bundle_id)
+    run('xcrun', 'devicectl', 'device', 'uninstall', 'app', '--device', udid, bundle_id)
+    run!('xcrun', 'devicectl', 'device', 'install', 'app', '--device', udid, app)
+  end
+
+  def launch_command(bundle_id, env)
+    cmd = %w[xcrun devicectl device process launch --console --terminate-existing --device] + [udid]
+    cmd += ['--environment-variables', JSON.generate(env)] unless env.empty?
+    [cmd + [bundle_id], {}]
+  end
+
+  # devicectl's console ends with "App terminated due to signal N." when the app dies by a signal.
+  def termination_reason(_pid, _since, app_log)
+    signal = File.exist?(app_log) && File.read(app_log)[/App terminated due to signal (\d+)\./, 1]
+    return nil unless signal
+
+    name = Signal.signame(signal.to_i)
+    "terminated by #{name ? "SIG#{name}" : "signal #{signal}"}"
+  end
+
+  # Copies the device's crash logs into dir. Returns [paths, error].
+  def collect_crash_reports(dir, _since)
+    FileUtils.rm_rf(dir)
+    FileUtils.mkdir_p(dir)
+    out, status = run('xcrun', 'devicectl', 'device', 'copy', 'from', '--device', udid,
+                      '--domain-type', 'systemCrashLogs', '--source', '/', '--destination', dir)
+    return [[], "devicectl copy from failed: #{out.lines.last(5).join.strip}"] unless status.success?
+
+    [Dir.glob(File.join(dir, '**', '*.ips')), nil]
+  end
+end
+
+class SimulatorDestination < Destination
+  def initialize(udid)
+    @udid = udid
+  end
+
+  def label = "simulator #{udid}"
+
+  def xcodebuild_destination
+    sim = udid == 'booted' ? booted_udid : udid
+    "id=#{sim}"
+  end
+
+  def xcodebuild_extra = []
+
+  def booted_udid
+    @booted_udid ||= begin
+      devices = JSON.parse(run!('xcrun', 'simctl', 'list', 'devices', 'booted', '-j'))['devices'].values.flatten
+      abort 'no booted simulator' if devices.empty?
+      abort "more than one booted simulator, pass a UDID: #{devices.map { |d| d['udid'] }.join(', ')}" if devices.size > 1
+      devices.first['udid']
+    end
+  end
+
+  def reinstall(app, bundle_id)
+    run('xcrun', 'simctl', 'uninstall', udid, bundle_id)
+    run!('xcrun', 'simctl', 'install', udid, app)
+  end
+
+  def launch_command(bundle_id, env)
+    child_env = env.to_h { |k, v| ["SIMCTL_CHILD_#{k}", v] }
+    [%w[xcrun simctl launch --console-pty --terminate-running-process] + [udid, bundle_id], child_env]
+  end
+
+  # How the app's process ended, from the simulator's own log, for when no crash report gets written.
+  # RunningBoard logs "termination reported by launchd (namespace, code, status)"; namespace 2 is a signal.
+  def termination_reason(pid, since, _app_log)
+    return nil unless pid
+
+    out, = run('xcrun', 'simctl', 'spawn', udid, 'log', 'show', '--style', 'compact',
+               '--start', since.strftime('%Y-%m-%d %H:%M:%S'),
+               '--predicate', "process == \"runningboardd\" AND eventMessage CONTAINS \":#{pid}]\"")
+    match = out.match(/termination reported by launchd \((\d+), (\d+), (\d+)\)/)
+    return nil unless match
+
+    namespace, code, = match.captures.map(&:to_i)
+    namespace == 2 ? "terminated by #{Signal.signame(code) ? "SIG#{Signal.signame(code)}" : "signal #{code}"}" : "terminated (launchd #{match.captures.join(', ')})"
+  end
+
+  # Simulator crashes land in the host's own DiagnosticReports, next to every other Mac crash.
+  def collect_crash_reports(_dir, since)
+    paths = Dir.glob(File.expand_path('~/Library/Logs/DiagnosticReports/*.ips')).select do |path|
+      File.mtime(path) >= since
+    rescue Errno::ENOENT
+      false
+    end
+    [paths, nil]
+  end
+end
+
+# A crash report (.ips): one JSON header line, then the JSON body.
+class CrashReport
+  attr_reader :path, :header, :body
+
+  def self.load(path)
+    header_line, body = File.read(path).split("\n", 2)
+    new(path, JSON.parse(header_line), body && !body.strip.empty? ? JSON.parse(body) : {})
+  rescue StandardError
+    # Empty, half-written, vanished, or not ours to read: not a report we can use.
+    nil
+  end
+
+  def initialize(path, header, body)
+    @path = path
+    @header = header
+    @body = body
+  end
+
+  def bundle_id = header['bundleID']
+
+  def time
+    Time.parse(header['timestamp'].to_s)
+  rescue ArgumentError
+    File.mtime(path)
+  end
+
+  def summary
+    exception = body['exception'] || {}
+    [exception['type'], exception['signal'], exception['subtype']].compact.join(' ')
+  end
+
+  def faulting_frames(limit = 12)
+    thread = (body['threads'] || [])[body['faultingThread'].to_i] || {}
+    images = body['usedImages'] || []
+    (thread['frames'] || []).first(limit).each_with_index.map do |frame, i|
+      image = images[frame['imageIndex'].to_i] || {}
+      symbol = frame['symbol'] ? "#{frame['symbol']} + #{frame['symbolLocation']}" : format('0x%x', frame['imageOffset'].to_i)
+      format('%2d  %-28s %s', i, image['name'] || '???', symbol)
+    end
+  end
+end
+
+def say(message)
+  puts "[ios-suite] #{message}"
+  $stdout.flush
+end
+
+def plist_value(app, key)
+  out, status = Open3.capture2('plutil', '-extract', key, 'raw', '-o', '-', File.join(app, 'Info.plist'))
+  status.success? ? out.strip : nil
+end
+
+# Streams a child's merged output to a log file and a block, line by line.
+def spawn_streaming(cmd, env, log_path, &on_line)
+  stdin, out, wait = Open3.popen2e(env, *cmd, pgroup: true)
+  stdin.close
+  reader = Thread.new do
+    File.open(log_path, 'w') do |log|
+      out.each_line do |raw|
+        line = raw.scrub.chomp
+        log.puts(line)
+        log.flush
+        on_line&.call(line)
+      end
+    end
+  rescue IOError
+    nil
+  end
+  [wait, reader]
+end
+
+def stop(wait)
+  return unless wait&.alive?
+
+  Process.kill('INT', -wait.pid)
+  return if wait.join(15)
+
+  Process.kill('KILL', -wait.pid)
+  wait.join(5)
+rescue Errno::ESRCH
+  nil
+end
+
+app = options[:app]
+bundle_id = plist_value(app, 'CFBundleIdentifier') or abort "no CFBundleIdentifier in #{app}"
+app_name = plist_value(app, 'CFBundleDisplayName') || plist_value(app, 'CFBundleName')
+destination = Destination.for(options)
+started_at = Time.now
+out_dir = options[:out] || File.join(ROOT, 'build', 'ios-suite', started_at.strftime('%Y%m%d-%H%M%S'))
+FileUtils.mkdir_p(out_dir)
+
+say "#{destination.label}, #{bundle_id} (\"#{app_name}\"), out #{out_dir}"
+say "crash requested before \"#{options[:crash_at]}\"" if options[:crash_at]
+
+# Driver
+driver_data = File.join(ROOT, 'build', 'DriverDerivedData')
+say 'building driver'
+build_cmd = ['xcodebuild', 'build-for-testing', '-project', DRIVER_PROJECT, '-scheme', 'Driver',
+             '-destination', destination.xcodebuild_destination, '-derivedDataPath', driver_data,
+             *destination.xcodebuild_extra]
+build_out, build_status = Open3.capture2e(*build_cmd)
+File.write(File.join(out_dir, 'driver-build.log'), build_out)
+abort "driver build failed, see #{File.join(out_dir, 'driver-build.log')}" unless build_status.success?
+xctestrun = Dir.glob(File.join(driver_data, 'Build', 'Products', '*.xctestrun')).max_by { |f| File.mtime(f) }
+
+say 'installing app'
+destination.reinstall(app, bundle_id)
+
+driver_env = {
+  'TEST_RUNNER_CLEANROOM_BUNDLE_ID' => bundle_id,
+  'TEST_RUNNER_CLEANROOM_APP_NAME' => app_name.to_s,
+  'TEST_RUNNER_CLEANROOM_DRIVER_SECONDS' => options[:timeout].to_s
+}
+driver_ready = Queue.new
+driver_cmd = ['xcodebuild', 'test-without-building', '-xctestrun', xctestrun,
+              '-destination', destination.xcodebuild_destination, '-only-testing:DriverUITests/Driver/testDrive',
+              '-resultBundlePath', File.join(out_dir, 'driver.xcresult')]
+driver_wait, = spawn_streaming(driver_cmd, driver_env, File.join(out_dir, 'driver.log')) do |line|
+  next unless line.include?('[driver] ')
+
+  puts line[line.index('[driver] ')..]
+  driver_ready << true if line.include?('[driver] ready')
+end
+
+children = [driver_wait]
+at_exit { children.each { |child| stop(child) } }
+%w[INT TERM].each { |signal| trap(signal) { exit 130 } }
+
+ready_deadline = Time.now + 300
+ready = false
+until ready || !driver_wait.alive? || Time.now > ready_deadline
+  ready = driver_ready.pop(timeout: 1)
+end
+abort "driver never reported ready, see #{File.join(out_dir, 'driver.log')}" unless ready
+
+# App
+suite = SuiteLog.new
+app_pid = nil
+app_env = options[:crash_at] ? { CRASH_AT_ENV => options[:crash_at] } : {}
+launch_cmd, launch_env = destination.launch_command(bundle_id, app_env)
+app_log = File.join(out_dir, 'app.log')
+say "launching app: #{launch_cmd.shelljoin}"
+app_wait, app_reader = spawn_streaming(launch_cmd, launch_env, app_log) do |line|
+  app_pid ||= Regexp.last_match(1).to_i if line =~ /^#{Regexp.escape(bundle_id)}: (\d+)$/
+  suite.feed(line)
+  puts "[app] #{line[/\[Test Driver\] .*/]}" if line =~ /\[Test Driver\] (tests:|begin|result|suite complete|crashing)/
+end
+children << app_wait
+
+deadline = started_at + options[:timeout]
+outcome = nil
+until outcome
+  outcome = if suite.complete? then :complete
+            elsif options[:crash_at] && suite.started? && suite.entries.none? { |e| e.name == options[:crash_at] }
+              :unknown_crash_at
+            elsif Time.now >= deadline then :timeout
+            elsif !app_wait.alive? then suite.entries.empty? ? :launch_failed : :exited
+            elsif !driver_wait.alive? then :driver_exited
+            end
+  sleep 1 unless outcome
+end
+app_reader.join(5)
+# The driver could tap a pending notification or leave Settings and relaunch a crashed app.
+stop(driver_wait)
+
+crash = nil
+exit_reason = nil
+crash_log_error = nil
+if outcome == :exited
+  say 'app exited before the suite finished, looking for a crash report'
+  20.times do
+    paths, crash_log_error = destination.collect_crash_reports(File.join(out_dir, 'crashlogs'), started_at - 5)
+    crash = paths.filter_map { |path| CrashReport.load(path) }
+                 .select { |report| report.bundle_id == bundle_id && report.time >= started_at - 5 }
+                 .max_by(&:time)
+    break if crash
+
+    sleep 3
+  end
+  exit_reason = destination.termination_reason(app_pid, started_at, app_log) unless crash
+end
+
+stop(app_wait)
+
+crashed = !crash.nil? || exit_reason.to_s.include?('SIG')
+interrupted = case outcome
+              when :timeout then suite.interrupt('Timed out')
+              when :driver_exited then suite.interrupt('No driver')
+              when :exited then suite.interrupt(crashed ? 'Crashed' : 'App exited')
+              end
+suite.entries.each { |e| e.status = 'Not run' if e.status.nil? || e.status == 'Running' }
+
+puts
+puts "Results (#{destination.label}, #{bundle_id})"
+puts '-' * 72
+suite.entries.each_with_index { |e, i| puts format('%3d  %-10s %s', i + 1, e.status, e.name) }
+puts '-' * 72
+counts = suite.entries.group_by(&:status).transform_values(&:size)
+puts counts.map { |k, v| "#{k}: #{v}" }.join(', ')
+puts
+
+case outcome
+when :exited
+  if crash
+    puts "CRASHED in \"#{interrupted&.name}\": #{crash.summary}"
+    puts "report: #{crash.path}"
+    puts 'faulting thread:'
+    crash.faulting_frames.each { |f| puts "  #{f}" }
+  elsif crashed
+    puts "CRASHED in \"#{interrupted&.name}\": process #{app_pid} #{exit_reason}, but no crash report for #{bundle_id} was written."
+  else
+    puts "App exited during \"#{interrupted&.name}\" with no crash report for #{bundle_id}."
+  end
+  puts "Crash logs could not be read: #{crash_log_error}" if crash_log_error
+when :launch_failed
+  puts "The app never started the suite. Last lines of #{app_log}:"
+  File.readlines(app_log).last(15).each { |line| puts "  #{line.chomp}" } if File.exist?(app_log)
+when :unknown_crash_at
+  puts "--crash-at \"#{options[:crash_at]}\" isn't in this build's test list; stopped."
+when :timeout
+  puts "Run hit the #{options[:timeout]}s cap during \"#{interrupted&.name}\"."
+when :driver_exited
+  puts "The driver stopped during \"#{interrupted&.name}\", see #{File.join(out_dir, 'driver.log')}."
+when :complete
+  puts "--crash-at \"#{options[:crash_at]}\" was set but the app never crashed. Is this a debug build?" if options[:crash_at]
+end
+say "logs: #{out_dir}"
+
+File.write(File.join(out_dir, 'results.json'), JSON.pretty_generate(
+  destination: destination.label, bundle_id: bundle_id, outcome: outcome, crash_report: crash&.path,
+  exit_reason: exit_reason, crash_log_error: crash_log_error, tests: suite.entries.map(&:to_h)
+))
+
+exit 2 unless outcome == :complete
+exit 2 if options[:crash_at]
+exit 1 if suite.entries.any? { |e| e.status != 'Passed' }
+exit 0

@@ -112,6 +112,7 @@ class Test {
     }
 
     public void Begin() {
+        UnityEngine.Debug.LogFormat(UnityEngine.LogType.Log, UnityEngine.LogOption.NoStacktrace, null, "[Test Driver] begin {0}", this.Name);
         this.ResetTest();
         this.Status = TestState.Running;
         this.EvaluatePredicate(this.OnBegin, (TestState state) => {

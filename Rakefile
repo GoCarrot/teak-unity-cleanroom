@@ -683,6 +683,45 @@ namespace :ios do
   task :ci do
     fastlane 'ci'
   end
+
+  # Debug archive signed for development with automatic signing (the team comes from
+  # config:apple_team_id). The device has to be in the team's profiles; ALLOW_PROVISIONING_UPDATES=1
+  # lets Xcode register it on the shared team.
+  desc 'Archive the exported project for a device (export with IOS_SDK=device first)'
+  task :device_app do
+    provisioning = if ENV['ALLOW_PROVISIONING_UPDATES'] == '1'
+                     %w[-allowProvisioningUpdates -allowProvisioningDeviceRegistration]
+                   else
+                     []
+                   end
+    destination = ENV['IOS_DEVICE'] ? "id=#{ENV['IOS_DEVICE']}" : 'generic/platform=iOS'
+    FileUtils.rm_rf(IOS_ARCHIVE)
+    sh 'xcodebuild', 'archive', '-workspace', 'Unity-iPhone/Unity-iPhone.xcworkspace', '-scheme', 'Unity-iPhone',
+       '-configuration', 'Debug', '-destination', destination, '-archivePath', IOS_ARCHIVE,
+       '-derivedDataPath', IOS_DERIVED_DATA, 'CODE_SIGN_STYLE=Automatic', *provisioning, verbose: false
+  end
+
+  # Ad-hoc signed rather than unsigned: the simulator only gets a push token when the app carries
+  # its aps-environment entitlement.
+  desc 'Build the exported project for the iOS Simulator (export with IOS_SDK=simulator first)'
+  task :simulator_app do
+    sh 'xcodebuild', 'build', '-workspace', 'Unity-iPhone/Unity-iPhone.xcworkspace', '-scheme', 'Unity-iPhone',
+       '-configuration', 'Debug', '-sdk', 'iphonesimulator', '-destination', 'generic/platform=iOS Simulator',
+       '-derivedDataPath', IOS_DERIVED_DATA, 'CODE_SIGN_IDENTITY=-', 'CODE_SIGN_STYLE=Manual', 'PROVISIONING_PROFILE_SPECIFIER=', verbose: false
+  end
+end
+
+IOS_DERIVED_DATA = File.join(PROJECT_PATH, 'build', 'DerivedData')
+IOS_ARCHIVE = File.join(PROJECT_PATH, 'build', 'Archives', 'teak-unity-cleanroom.xcarchive')
+
+# The .app the last iOS build produced: the simulator build, or the signed app in the device archive.
+def built_ios_app
+  pattern = if IOS_SDK == 'simulator'
+              File.join(IOS_DERIVED_DATA, 'Build', 'Products', 'Debug-iphonesimulator', '*.app')
+            else
+              File.join(IOS_ARCHIVE, 'Products', 'Applications', '*.app')
+            end
+  Dir.glob(pattern).first or abort "No built app matches #{pattern}"
 end
 
 namespace :deploy do
@@ -774,8 +813,17 @@ namespace :install do
 end
 
 namespace :test do
+  desc 'Run the suite unattended on IOS_DEVICE=<udid>, or IOS_SIMULATOR=<udid|booted> with IOS_SDK=simulator'
   task :ios do
-    # osascript -e 'tell application "Messages" to send "https://teak-dev.freechips.link/h/i-0sMjn-F" to buddy "teak.devices@gmail.com"'
+    target = if IOS_SDK == 'simulator'
+               ['--simulator', ENV.fetch('IOS_SIMULATOR', 'booted')]
+             else
+               ['--device', ENV.fetch('IOS_DEVICE') { abort 'Set IOS_DEVICE to the device UDID (xcrun xctrace list devices)' }]
+             end
+    crash_at = ENV['CRASH_AT'] ? ['--crash-at', ENV['CRASH_AT']] : []
+    provisioning = ENV['ALLOW_PROVISIONING_UPDATES'] == '1' ? ['--allow-provisioning-updates'] : []
+    sh File.join(PROJECT_PATH, 'script', 'ios-suite'), '--app', built_ios_app, *target, *crash_at, *provisioning,
+       verbose: false
   end
 
   task :webgl do
