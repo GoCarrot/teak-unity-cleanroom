@@ -217,8 +217,12 @@ def unity_iap_v5?
   unity_iap_version.start_with?('5.')
 end
 
+def announce_unity_iap
+  puts "Unity IAP: #{unity_iap_version} (#{$unity_iap_store})" if purchasing_plugin == :unity_purchasing
+end
+
 namespace :iap do
-  task(:v4) { $unity_iap_store = :v4 }
+  task(:v4) { $unity_iap_store = :v4; announce_unity_iap }
   # Gets build:android's amazon? arg. Re-enabled each run so every Android task in one
   # invocation picks its own store.
   task :android, [:amazon?] do |t, args|
@@ -227,6 +231,7 @@ namespace :iap do
                        elsif use_appstore_sdk? then :amazon_appstore_sdk
                        else :v4
                        end
+    announce_unity_iap
     t.reenable
   end
 end
@@ -301,7 +306,6 @@ end
 #
 def unity(*args, quit: true, nographics: true)
   require_unity!
-  puts "Unity IAP: #{unity_iap_version} (#{$unity_iap_store})" if purchasing_plugin == :unity_purchasing
   manifest_parameters = {
     use_unity_purchasing: purchasing_plugin == :unity_purchasing,
     unity_purchasing_version: unity_iap_version,
@@ -595,7 +599,9 @@ namespace :verify do
 end
 
 namespace :config do
-  task all: %i[id settings apple_team_id]
+  task all: %i[id settings apple_team_id] do
+    announce_unity_iap
+  end
 
   task :id do
     without_teak_available do

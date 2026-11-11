@@ -614,6 +614,8 @@ public partial class TestDriver : MonoBehaviour
 
         this.storeController.OnProductsFetched += (List<UnityEngine.Purchasing.Product> products) => {
             Debug.Log("[TestDriver-UnityIAP] OnProductsFetched: " + products.Count);
+            // After the products, so a fetched pending order resolves against a known product.
+            this.storeController.FetchPurchases();
         };
         this.storeController.OnProductsFetchFailed += (ProductFetchFailed failure) => {
             Debug.Log("[TestDriver-UnityIAP] OnProductsFetchFailed: " + failure.FailureReason);
@@ -646,7 +648,6 @@ public partial class TestDriver : MonoBehaviour
             this.storeController.FetchProducts(new List<ProductDefinition> {
                 new ProductDefinition(this.testPurchaseSku, ProductType.Consumable)
             });
-            this.storeController.FetchPurchases();
         } catch (Exception e) {
             Debug.Log("[TestDriver-UnityIAP] OnInitializeFailed: " + e.Message);
         }
