@@ -91,6 +91,15 @@ For Android the following environment variables are available:
 * `USE_IL2CPP_ON_ANDROID` with 'true' or 'false' defaults to 'true' (IL2CPP + arm64-v8a; set 'false' for a Mono/armeabi-v7a build)
 * `TARGET_API` to set the targetSdkLevel for Android, defaults to 33
 
+For iOS, `IOS_LIFECYCLE` picks the app lifecycle:
+
+* `scene` (default) Unity's UIScene export as-is. The build fails if Unity stops emitting `UIApplicationSceneManifest`. Use on iOS 27.
+* `legacy` removes `UIApplicationSceneManifest` for an app-delegate build. Use as the iOS 26 and earlier control; it traps at launch on the iOS 27 SDK.
+
+`IOS_SDK` is `device` (default) or `simulator`; use `simulator` to export a project that builds for the iOS Simulator.
+
+The installed app is named `<Lifecycle> <BuildType>` (e.g. `Scene Dev`) so you can tell which build you're running.
+
 ## install ##
 
 Installs the build.
