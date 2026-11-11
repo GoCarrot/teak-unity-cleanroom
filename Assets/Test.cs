@@ -193,6 +193,7 @@ class Test {
             return;
         }
         this.resultReported = true;
+        UnityEngine.Debug.Log("[Test Driver] result " + this.Name + ": " + this.Status);
         if (this.OnResult != null) {
             this.OnResult();
         }
