@@ -102,51 +102,8 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
                         state(Test.TestState.Passed);
                     })
-                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        if ("request.send".Equals(logEvent.EventType) &&
-                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json") &&
-                            ((logEvent.EventData["payload"] as Dictionary<string, object>)["email"] != null)) {
-                            Debug.Log(logEvent);
-                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
-                            Debug.Log(this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) ? "Api Key match" : "Api Key mismatch");
-                            Debug.Log(payload.ContainsKey("email") ? "Email present" : "Email absent");
-                            Debug.Log((this.testContext["userEmail"] as string).Equals(payload["email"] as string) ? "Email match" : "Email mismatch");
-                            Debug.Log((bool)payload["do_not_track_event"] ? "do not track" : "tracked");
-
-
-                            if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
-                                payload.ContainsKey("email") &&
-                                (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
-                                ((bool)payload["do_not_track_event"])) {
-                                Debug.Log("Re-Identify Passed");
-                                state(Test.TestState.Passed);
-                            } else {
-                                Debug.Log("Re-Identify Failed");
-                                state(Test.TestState.Failed);
-                            }
-                        } else {
-                            Debug.Log("Re-Identify Pending");
-                            state(Test.TestState.Pending);
-                        }
-                    })
-                    .ExpectUserData((object obj, Action<Test.TestState> state) => {
-#if TEAK_4_2_OR_NEWER
-                        Teak.UserData userData = obj as Teak.UserData;
-                        Debug.Log(userData.EmailStatus.State);
-                        if(
-                            (userData.EmailStatus.State == Teak.Channel.State.Available || userData.EmailStatus.State == Teak.Channel.State.OptIn)
-                            && userData.PushStatus.State == Teak.Channel.State.OptIn
-#if TEAK_4_3_OR_NEWER
-                            && userData.EmailStatus["teak"] == Teak.Channel.State.OptIn
-                            && userData.PushStatus["teak"] == Teak.Channel.State.OptIn
-#endif // TEAK_4_3_OR_NEWER
-                        ) {
-                            state(Test.TestState.Passed);
-                        } else {
-                            state(Test.TestState.Failed);
-                        }
-#endif
-                    }),
+                    .ExpectLogEvent(this.ReIdentifyWithEmailLogPredicate)
+                    .ExpectUserData(this.ReIdentifyWithEmailUserDataPredicate),
 
                 TestBuilder.Build("Delete Email", this)
                     .WhenStarted((Action<Test.TestState> state) => {
@@ -172,50 +129,8 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, this.testContext["userEmail"] as string);
                         state(Test.TestState.Passed);
                     })
-                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        if ("request.send".Equals(logEvent.EventType) &&
-                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json") &&
-                            ((logEvent.EventData["payload"] as Dictionary<string, object>)["email"] != null)) {
-                            Debug.Log(logEvent);
-                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
-                            Debug.Log(this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) ? "Api Key match" : "Api Key mismatch");
-                            Debug.Log(payload.ContainsKey("email") ? "Email present" : "Email absent");
-                            Debug.Log((this.testContext["userEmail"] as string).Equals(payload["email"] as string) ? "Email match" : "Email mismatch");
-                            Debug.Log((bool)payload["do_not_track_event"] ? "do not track" : "tracked");
-
-
-                            if (this.teakInterface.TeakUserId.Equals(payload["api_key"] as string) &&
-                                payload.ContainsKey("email") &&
-                                (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
-                                ((bool)payload["do_not_track_event"])) {
-                                Debug.Log("Re-Identify Passed");
-                                state(Test.TestState.Passed);
-                            } else {
-                                Debug.Log("Re-Identify Failed");
-                                state(Test.TestState.Failed);
-                            }
-                        } else {
-                            Debug.Log("Re-Identify Pending");
-                            state(Test.TestState.Pending);
-                        }
-                    })
-                    .ExpectUserData((object obj, Action<Test.TestState> state) => {
-#if TEAK_4_2_OR_NEWER
-                        Teak.UserData userData = obj as Teak.UserData;
-                        if(
-                            (userData.EmailStatus.State == Teak.Channel.State.Available || userData.EmailStatus.State == Teak.Channel.State.OptIn)
-                            && userData.PushStatus.State == Teak.Channel.State.OptIn
-#if TEAK_4_3_OR_NEWER
-                            && userData.EmailStatus["teak"] == Teak.Channel.State.OptIn
-                            && userData.PushStatus["teak"] == Teak.Channel.State.OptIn
-#endif // TEAK_4_3_OR_NEWER
-                        ) {
-                            state(Test.TestState.Passed);
-                        } else {
-                            state(Test.TestState.Failed);
-                        }
-#endif
-                    }),
+                    .ExpectLogEvent(this.ReIdentifyWithEmailLogPredicate)
+                    .ExpectUserData(this.ReIdentifyWithEmailUserDataPredicate),
 
 #if UNITY_ANDROID && !UNITY_EDITOR
                 // For 2.1.1, test to make certain that io_teak_enable_caching is definitely
@@ -616,15 +531,12 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         state(Test.TestState.Passed);
                     })
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        if ("request.send".Equals(logEvent.EventType) &&
-                            (logEvent.EventData["endpoint"] as string).EndsWith("/users.json")) {
+                        // A users.json still in flight for the previous id can land here first, so only
+                        // the request for the new id decides; a true miss falls to the watchdog.
+                        Dictionary<string, object> payload = UsersJsonRequestPayload(logEvent);
+                        if (payload != null && (this.testContext["updatedUserId"] as string).Equals(payload.GetValueOrDefault("api_key") as string)) {
                             Debug.Log(logEvent);
-                            Dictionary<string, object> payload = logEvent.EventData["payload"] as Dictionary<string, object>;
-                            if ((this.testContext["updatedUserId"] as string).Equals(payload["api_key"] as string)) {
-                                state(Test.TestState.Passed);
-                            } else {
-                                state(Test.TestState.Failed);
-                            }
+                            state(Test.TestState.Passed);
                         } else {
                             state(Test.TestState.Pending);
                         }
@@ -664,4 +576,57 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
             };
         }
     }
+
+#if !TEAK_NOT_AVAILABLE
+    /// <summary>The payload of a users.json request.send log event, or null for any other event.</summary>
+    static Dictionary<string, object> UsersJsonRequestPayload(TeakLogEvent logEvent) {
+        if (!"request.send".Equals(logEvent.EventType) || logEvent.EventData == null) {
+            return null;
+        }
+        string endpoint = logEvent.EventData.GetValueOrDefault("endpoint") as string;
+        if (endpoint == null || !endpoint.EndsWith("/users.json")) {
+            return null;
+        }
+        return logEvent.EventData.GetValueOrDefault("payload") as Dictionary<string, object>;
+    }
+
+    // Identify requests that don't carry an email (e.g. the earlier push-token refresh) aren't the
+    // one under test, so they stay Pending rather than throwing on a missing key.
+    void ReIdentifyWithEmailLogPredicate(TeakLogEvent logEvent, Action<Test.TestState> state) {
+        Dictionary<string, object> payload = UsersJsonRequestPayload(logEvent);
+        if (payload == null || payload.GetValueOrDefault("email") == null) {
+            state(Test.TestState.Pending);
+            return;
+        }
+
+        Debug.Log(logEvent);
+        object doNotTrack = payload.GetValueOrDefault("do_not_track_event");
+        bool passed = this.teakInterface.TeakUserId.Equals(payload.GetValueOrDefault("api_key") as string) &&
+                      (this.testContext["userEmail"] as string).Equals(payload["email"] as string) &&
+                      doNotTrack is bool && (bool)doNotTrack;
+        Debug.Log(passed ? "Re-Identify Passed" : "Re-Identify Failed");
+        state(passed ? Test.TestState.Passed : Test.TestState.Failed);
+    }
+
+    // A user data reply from before the email was registered can arrive first, so wait for one that
+    // shows the email channel before judging it.
+    void ReIdentifyWithEmailUserDataPredicate(object obj, Action<Test.TestState> state) {
+#if TEAK_4_2_OR_NEWER
+        Teak.UserData userData = obj as Teak.UserData;
+        Debug.Log(userData.EmailStatus.State);
+        if (userData.EmailStatus.State != Teak.Channel.State.Available && userData.EmailStatus.State != Teak.Channel.State.OptIn) {
+            state(Test.TestState.Pending);
+            return;
+        }
+
+        bool passed = userData.PushStatus.State == Teak.Channel.State.OptIn
+#if TEAK_4_3_OR_NEWER
+                      && userData.EmailStatus["teak"] == Teak.Channel.State.OptIn
+                      && userData.PushStatus["teak"] == Teak.Channel.State.OptIn
+#endif // TEAK_4_3_OR_NEWER
+                      ;
+        state(passed ? Test.TestState.Passed : Test.TestState.Failed);
+#endif // TEAK_4_2_OR_NEWER
+    }
+#endif // !TEAK_NOT_AVAILABLE
 }

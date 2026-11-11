@@ -174,8 +174,18 @@ class Test {
         if (this.resultReported) {
             return;
         }
+        UnityEngine.Debug.LogError("[Test Driver] " + this.Name + " still pending: " + string.Join(", ", this.PendingStateNames));
         this.Status = TestState.Failed;
         this.ReportResult();
+    }
+
+    private IEnumerable<string> PendingStateNames {
+        get {
+            string[] names = { "began", "background", "reward", "deepLink", "launchedFromNotification",
+                               "foregroundNotification", "logEvent", "postLaunchSummary", "userData" };
+            TestState[] states = this.AllStates;
+            return names.Where((name, i) => states[i] == TestState.Pending);
+        }
     }
 
     private void ReportResult() {
@@ -233,7 +243,8 @@ class Test {
 #if TEAK_4_2_OR_NEWER
     public void UserData(Teak.UserData userData) {
         this.EvaluatePredicate(this.OnUserData, userData, (TestState state) => {
-            this.userData = state;
+            // Same first-decision-wins rule as LogEvent: a later reply can't overwrite a verdict.
+            this.userData = this.userData == TestState.Pending ? state : this.userData;
         });
     }
 #endif // TEAK_4_2_OR_NEWER
