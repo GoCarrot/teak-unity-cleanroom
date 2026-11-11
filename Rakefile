@@ -89,7 +89,27 @@ TEAK_CREDENTIALS = {
     adm_key: 'eyJhbGciOiJSU0EtU0hBMjU2IiwidmVyIjoiMSJ9.eyJ2ZXIiOiIzIiwiZW5kcG9pbnRzIjp7ImF1dGh6IjoiaHR0cHM6Ly93d3cuYW1hem9uLmNvbS9hcC9vYSIsInRva2VuRXhjaGFuZ2UiOiJodHRwczovL2FwaS5hbWF6b24uY29tL2F1dGgvbzIvdG9rZW4ifSwiY2xpZW50SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi1vYTItY2xpZW50LmE0NGU4Yzc5ODQ3ODQ3ODE4NzU1ZWU4YjliNDI2ZDgyIiwiYXBwRmFtaWx5SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi43OGUwMmEwZGM5ZGI0ZTRhODRiNmUyYTk5NWY3NDhmMCIsImlzcyI6IkFtYXpvbiIsInR5cGUiOiJBUElLZXkiLCJwa2ciOiJpby50ZWFrLmFwcC51bml0eS5wcm9kIiwiYXBwVmFyaWFudElkIjoiYW16bjEuYXBwbGljYXRpb24tY2xpZW50LjJiMzA2ODM2Yjk3MzRmYjNhZTA0NzVhYWM0ZmFjZTVjIiwidHJ1c3RQb29sIjpudWxsLCJhcHBzaWdTaGEyNTYiOiJGQjoxMTo3NjowQToxRDo1Nzo3QjpBMjo4RDpGNjpERDo4NDpDODo2NzpGNzpFMTozRjpEQjo3NToyQjoyRTpCQzozNjo3NTo5QTo2Qjo5MDo3MDpDNjowQzo5QTpBOCIsImFwcHNpZyI6IjQ1OkI1OjVEOkM0OjI5OjNFOjREOjc5OjAwOkUwOjg0OjZGOjQ5OkRCOjZCOjgwIiwiYXBwSWQiOiJhbXpuMS5hcHBsaWNhdGlvbi1jbGllbnQuMmIzMDY4MzZiOTczNGZiM2FlMDQ3NWFhYzRmYWNlNWMiLCJpZCI6IjY4MjFhZWIyLWQ1Y2UtNDVjOS1hMDUyLTBhOWYwMGJkNTUyMCIsImlhdCI6IjE1OTg5MDc2MjUwMjUifQ==.G/ShmiPOBiKOKCoTVKdec+INUZIdOlZRB8CeZRzz4LVSMGJkzzkapZAl7/aQ8khk5PuQVpMbQqhcSEjYhhvBlXzkW0XlqJHKQ4viA30sF5e2wbo62UINL38/6TQKj7m1bre/JEfTupnWnxHHib6sL0T4iYRO7pteeg9PFKDanlC+CFBY29XWWzypE6cfrWY/rsXazCUF2Tw9vP96zfsQy6KZ/jsG3PvOUppMlhw9m7kWPZp+nKCso5UTrYYUxtrpTOnZSGZCKtXm2KmsFqAUQgSjakYZPzrnSroficz/vwDwJG6zlktKwDeD+j0+KM11bsOgnpLnAUOPfF5gZ+xcjg=='
   }
 }.freeze
-PACKAGE_NAME = TEAK_CREDENTIALS[BUILD_TYPE][:package_name]
+# PLAY_UPLOAD=true builds a release AAB Google Play accepts: not debuggable, versionCode from
+# PLAY_VERSION_CODE. The dev Play app is io.teak.sdk.unity.dev because io.teak.app.unity.dev is
+# held by a deleted Play account.
+PLAY_UPLOAD_CREDENTIALS = {
+  'dev' => {
+    package_name: 'io.teak.sdk.unity.dev',
+    teak_firebase_app_id: '1:271311759137:android:7c8fd37820c5fab52e4060'
+  }
+}.freeze
+
+def play_upload?
+  ENV.fetch('PLAY_UPLOAD', false).to_s == 'true'
+end
+
+def credentials
+  return TEAK_CREDENTIALS[BUILD_TYPE] unless play_upload?
+
+  TEAK_CREDENTIALS[BUILD_TYPE].merge(PLAY_UPLOAD_CREDENTIALS.fetch(BUILD_TYPE, {}))
+end
+
+PACKAGE_NAME = credentials[:package_name]
 SIGNING_KEY = TEAK_CREDENTIALS[BUILD_TYPE][:signing_key]
 
 def kms_key
@@ -245,9 +265,10 @@ end
 # Template parameters
 #
 def template_parameters
-  TEAK_CREDENTIALS[BUILD_TYPE].merge(
+  credentials.merge(
     app_name: "#{BUILD_TYPE.capitalize} #{teak_sdk_version}",
-    target_api: TARGET_API
+    target_api: TARGET_API,
+    play_upload: play_upload?
   )
 end
 
@@ -351,6 +372,13 @@ def print_build_msg(platform, args = nil)
     #{'-' * 80}
   BUILD_MSG
   puts build_msg.cyan
+end
+
+# BuildPlayer args for a Google Play upload bundle. Never debuggable, so no --debug.
+def play_upload_args(output)
+  abort 'PLAY_UPLOAD is Google Play only' if $building_amazon
+  version_code = ENV.fetch('PLAY_VERSION_CODE') { abort 'PLAY_UPLOAD needs PLAY_VERSION_CODE (above the last Play upload)' }
+  ['--aab', output, '--version-code', version_code]
 end
 
 def write_android_build_assets
@@ -598,9 +626,13 @@ namespace :build do
     write_android_build_assets
 
     additional_args = []
-    additional_args.concat(['--debug']) unless prod?
-
     build_amazon = args[:amazon?] ? args[:amazon?].to_s == 'true' : false
+
+    if play_upload?
+      additional_args.concat(play_upload_args('teak-unity-cleanroom.aab'))
+    elsif !prod?
+      additional_args.concat(['--debug'])
+    end
 
     additional_args.concat(['--define', 'AMAZON']) if build_amazon
     additional_args.concat(['--define', 'USE_PRIME31']) if use_prime31?
@@ -635,7 +667,9 @@ namespace :build do
         sh "keytool -genkey -v -keystore #{debug_keystore} -alias alias_name -keyalg RSA -keysize 2048 -validity 10000 -storepass pointless -keypass pointless -dname 'CN=Android Debug,O=Android,C=US'", verbose: false
       end
 
-      additional_args = ['--debug']
+      # A debug-signed upload bundle is only good as a compile check: the first Play upload's key
+      # becomes the app's upload key, so the file name says what signed it.
+      additional_args = play_upload? ? play_upload_args('teak-unity-cleanroom.debug-signed.aab') : ['--debug']
       additional_args.concat(['--define', 'USE_UNITY_IAP']) if use_unity_iap?
       additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
       additional_args.concat(['--il2cpp']) if android_il2cpp?

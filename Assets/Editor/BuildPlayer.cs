@@ -162,9 +162,17 @@ public class BuildPlayer
 #if !TEAK_NOT_AVAILABLE
         TeakSettings.JustShutUpIKnowWhatImDoing = false;
 #endif
-        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../teak-unity-cleanroom.apk");
-
         Dictionary<string, object> parsedArgs = GetArgsAfter("BuildPlayer.Android");
+
+        // Google Play upload: --aab <file> builds an App Bundle, --version-code sets bundleVersionCode.
+        string aabName = GetStringArg(parsedArgs, "aab", null);
+        EditorUserBuildSettings.buildAppBundle = aabName != null;
+        string buildPath = System.IO.Path.GetFullPath(Application.dataPath + "/../" + (aabName ?? "teak-unity-cleanroom.apk"));
+        int versionCode;
+        if (System.Int32.TryParse(GetStringArg(parsedArgs, "version-code", null), out versionCode)) {
+            Debug.Log("[teak-unity-cleanroom] Setting bundleVersionCode to " + versionCode);
+            PlayerSettings.Android.bundleVersionCode = versionCode;
+        }
 
         // Target API Level
         int targetApiVersion = 0;
