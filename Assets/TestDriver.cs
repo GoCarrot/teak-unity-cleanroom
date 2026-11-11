@@ -423,10 +423,9 @@ public partial class TestDriver : MonoBehaviour
         yield return new WaitForSeconds(15.0f);
         yield return this.teakInterface.GetUserJson((json) => {
             Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
-            Dictionary<string, object> numericAttributes = null;
-            if (userProfile != null && userProfile.ContainsKey("number_attributes")) {
-                numericAttributes = userProfile["number_attributes"] as Dictionary<string, object>;
-            }
+            object attributes;
+            userProfile.TryGetValue("number_attributes", out attributes);
+            Dictionary<string, object> numericAttributes = attributes as Dictionary<string, object>;
 
             object raw = null;
             if (numericAttributes == null || !numericAttributes.TryGetValue(key, out raw) || raw == null) {
@@ -445,7 +444,7 @@ public partial class TestDriver : MonoBehaviour
             }
 
             bool matches = Math.Abs(readBack - value) <= NumericAttributeTolerance;
-            Debug.Log("[TestDriver] Numeric attribute " + key + " sent=" + value.ToString("R") + " read back=" + raw + " (" + raw.GetType() + ") " + (matches ? "within" : "outside") + " tolerance " + NumericAttributeTolerance);
+            Debug.Log("[TestDriver] Numeric attribute " + key + " sent=" + value.ToString("R") + " read back=" + readBack.ToString("R") + " (" + raw.GetType() + ") " + (matches ? "within" : "outside") + " tolerance " + NumericAttributeTolerance);
             state(matches ? Test.TestState.Passed : Test.TestState.Failed);
         });
     }
