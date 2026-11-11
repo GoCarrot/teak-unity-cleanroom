@@ -146,8 +146,7 @@ class DeviceDestination < Destination
 
   def termination_reason(_pid, _since) = nil
 
-  # Copies the device's crash logs into dir. Returns [paths, error]; a failed copy is an error, not
-  # an empty result, so it can't pass for "no crash report".
+  # Copies the device's crash logs into dir. Returns [paths, error].
   def collect_crash_reports(dir, _since)
     FileUtils.rm_rf(dir)
     FileUtils.mkdir_p(dir)

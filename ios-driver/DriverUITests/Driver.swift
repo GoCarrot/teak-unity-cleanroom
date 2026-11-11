@@ -1,13 +1,13 @@
 import XCTest
 
-/// Answers the system UI the cleanroom suite can't: notification permission and "Open in…?"
-/// alerts, notification banners and Notification Center cells, and Settings when a test leaves
-/// the app there. It knows nothing about tests. The host runner starts it, launches the app, and
-/// stops it when the suite ends; the time cap is only a backstop.
 enum ConfigurationError: Error {
     case missingAppName
 }
 
+/// Answers the system UI the cleanroom suite can't: notification permission and "Open in…?"
+/// alerts, notification banners and Notification Center cells, and Settings when a test leaves
+/// the app there. It knows nothing about tests. The host runner starts it, launches the app, and
+/// stops it when the suite ends; the time cap is only a backstop.
 final class Driver: XCTestCase {
     private let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
     private let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
