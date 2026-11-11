@@ -175,6 +175,38 @@ def use_appstore_sdk?
   ENV.fetch('USE_APPSTORE_SDK', false).to_s == 'true'
 end
 
+# Unity IAP store the next unity() call renders the manifest and UNITY_PURCHASING_V5 for.
+# Google Play needs billing 8+, so it gets IAP 5. iOS, WebGL and Amazon without the Appstore SDK
+# stay on IAP 4 (v5 drops AppStore.AmazonAppStore and moves iOS to StoreKit 2). Defaults to
+# Google Play so `config:all` matches a following build:android; the other builds switch through
+# the iap:* tasks before their first unity() call.
+$unity_iap_store = :google_play
+
+def unity_iap_version
+  case $unity_iap_store
+  when :google_play then '5.5.0'
+  when :amazon_appstore_sdk then '5.0.4'
+  else '4.12.2'
+  end
+end
+
+def unity_iap_v5?
+  unity_iap_version.start_with?('5.')
+end
+
+# Set by build:amazon before it invokes build:android, so iap:android can tell the two apart.
+$building_amazon = false
+
+namespace :iap do
+  task(:v4) { $unity_iap_store = :v4 }
+  task :android do
+    $unity_iap_store = if !$building_amazon then :google_play
+                       elsif use_appstore_sdk? then :amazon_appstore_sdk
+                       else :v4
+                       end
+  end
+end
+
 # Writes AdditionalDependencies.xml with amazon-appstore-sdk for the duration of the
 # build:amazon invocation, then restores both it and AndroidResolverDependencies.xml in ensure.
 def with_appstore_sdk
@@ -241,9 +273,10 @@ end
 #
 def unity(*args, quit: true, nographics: true)
   require_unity!
+  puts "Unity IAP: #{unity_iap_version} (#{$unity_iap_store})" if purchasing_plugin == :unity_purchasing
   manifest_parameters = {
     use_unity_purchasing: purchasing_plugin == :unity_purchasing,
-    unity_purchasing_version: use_appstore_sdk? ? '5.0.4' : '4.12.2',
+    unity_purchasing_version: unity_iap_version,
     use_teak_upm: !using_unitypackage?,
     use_facebook: use_facebook?
   }
@@ -251,14 +284,14 @@ def unity(*args, quit: true, nographics: true)
   File.write(File.join(PROJECT_PATH, 'Packages', 'manifest.json'),
     Mustache.render(template, manifest_parameters))
 
-  # Keep UNITY_PURCHASING_V5 in lockstep with the manifest version: present iff use_appstore_sdk?.
+  # Keep UNITY_PURCHASING_V5 in lockstep with the manifest version: present iff unity_iap_v5?.
   # Composes with existing .rsp content (e.g. TEAK_NOT_AVAILABLE) rather than clobbering.
   UNITY_COMPILERS.each do |compiler|
     rsp_path = "Assets/#{compiler}.rsp"
-    next unless use_appstore_sdk? || File.exist?(rsp_path)
+    next unless unity_iap_v5? || File.exist?(rsp_path)
     lines = File.exist?(rsp_path) ? File.readlines(rsp_path, chomp: true) : []
     lines.reject! { |l| l.strip == '-define:UNITY_PURCHASING_V5' }
-    lines << '-define:UNITY_PURCHASING_V5' if use_appstore_sdk?
+    lines << '-define:UNITY_PURCHASING_V5' if unity_iap_v5?
     File.write(rsp_path, lines.map { |l| "#{l}\n" }.join)
   end
 
@@ -561,7 +594,7 @@ namespace :android do
 end
 
 namespace :build do
-  task :android, [:amazon?] => %i[android:dependencies warnings_as_errors] do |_, args|
+  task :android, [:amazon?] => %i[iap:android android:dependencies warnings_as_errors] do |_, args|
     write_android_build_assets
 
     additional_args = []
@@ -594,7 +627,7 @@ namespace :build do
   end
 
   namespace :android do
-    task local: %i[android:dependencies warnings_as_errors] do
+    task local: %i[iap:android android:dependencies warnings_as_errors] do
       write_android_build_assets
 
       debug_keystore = File.join(PROJECT_PATH, 'debug.keystore')
@@ -614,16 +647,22 @@ namespace :build do
   end
 
   task :amazon do
+    $building_amazon = true
+    Rake::Task['iap:android'].reenable
     if use_appstore_sdk?
       with_appstore_sdk { Rake::Task['build:android'].invoke('true') }
     else
       Rake::Task['build:android'].invoke('true')
     end
+  ensure
+    # A later Android task in the same invocation goes back to Google Play.
+    $building_amazon = false
+    Rake::Task['iap:android'].reenable
   end
 
   task ios: ['ios:all']
 
-  task webgl: [:warnings_as_errors] do
+  task webgl: %i[iap:v4 warnings_as_errors] do
     raise "Need to build using Unity 2020" unless UNITY_HOME =~ /202\d/
 
     begin
@@ -659,7 +698,7 @@ namespace :ios do
     fastlane 'match', 'development' if ci?
   end
 
-  task build: [:warnings_as_errors] do
+  task build: %i[iap:v4 warnings_as_errors] do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
 
