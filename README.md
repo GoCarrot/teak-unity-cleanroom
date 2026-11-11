@@ -110,6 +110,17 @@ Installs the build.
 * `install:amazon` installs the build with the installer ref set to the Amazon store (`com.amazon.venezia`)
 * `install:webgl` runs an http server on local port `8000` hosting the WebGL build
 
+## Running the suite unattended on iOS ##
+
+`rake test:ios` installs the last iOS build fresh, runs the whole TestDriver suite with nobody touching the device, and prints every test's result. A small XCUITest driver (`ios-driver/`) answers the system UI the suite can't: the notification permission prompt, "Open in…?" alerts, notification banners and Notification Center, and returning from Settings.
+
+* Device: `IOS_DEVICE=<udid> rake test:ios` after `rake ios:build ios:fastlane`. There's no default device. Use the hardware UDID from `xcrun xctrace list devices`, not the CoreDevice identifier `devicectl list devices` shows, because xcodebuild only takes the UDID. The device needs Developer Mode, Settings › Developer › UI Automation, and Auto-Lock set to Never.
+* Simulator: `IOS_SDK=simulator rake ios:build ios:simulator_app test:ios`, with one simulator booted (or `IOS_SIMULATOR=<udid>`).
+
+If the app dies before the suite finishes, the run stops, the test it died in is marked Crashed, and the crash report path and faulting frames are printed. The rest are marked Not run. On the simulator, if the host never writes a report, the runner prints the signal from the simulator's log instead. `CRASH_AT="<test name>"` makes a debug build crash just before that test, to check this works.
+
+Logs, the driver's result bundle and `results.json` go to `build/ios-suite/<time>/`. `script/ios-suite --help` has the options.
+
 ## deploy ##
 
 Deploys the build.

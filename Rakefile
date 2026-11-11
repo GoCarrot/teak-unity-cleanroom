@@ -683,6 +683,27 @@ namespace :ios do
   task :ci do
     fastlane 'ci'
   end
+
+  # Ad-hoc signed rather than unsigned: the simulator only gets a push token when the app carries
+  # its aps-environment entitlement.
+  desc 'Build the exported project for the iOS Simulator (export with IOS_SDK=simulator first)'
+  task :simulator_app do
+    sh 'xcodebuild', 'build', '-workspace', 'Unity-iPhone/Unity-iPhone.xcworkspace', '-scheme', 'Unity-iPhone',
+       '-configuration', 'Debug', '-sdk', 'iphonesimulator', '-destination', 'generic/platform=iOS Simulator',
+       '-derivedDataPath', IOS_DERIVED_DATA, 'CODE_SIGN_IDENTITY=-', 'CODE_SIGN_STYLE=Manual', 'PROVISIONING_PROFILE_SPECIFIER=', verbose: false
+  end
+end
+
+IOS_DERIVED_DATA = File.join(PROJECT_PATH, 'build', 'DerivedData')
+
+# The .app the last iOS build produced: the simulator build, or the signed app in the device archive.
+def built_ios_app
+  pattern = if IOS_SDK == 'simulator'
+              File.join(IOS_DERIVED_DATA, 'Build', 'Products', 'Debug-iphonesimulator', '*.app')
+            else
+              File.join(PROJECT_PATH, 'build', 'Archives', 'teak-unity-cleanroom.xcarchive', 'Products', 'Applications', '*.app')
+            end
+  Dir.glob(pattern).first or abort "No built app matches #{pattern}"
 end
 
 namespace :deploy do
@@ -774,8 +795,15 @@ namespace :install do
 end
 
 namespace :test do
+  desc 'Run the suite unattended on IOS_DEVICE=<udid>, or IOS_SIMULATOR=<udid|booted> with IOS_SDK=simulator'
   task :ios do
-    # osascript -e 'tell application "Messages" to send "https://teak-dev.freechips.link/h/i-0sMjn-F" to buddy "teak.devices@gmail.com"'
+    target = if IOS_SDK == 'simulator'
+               ['--simulator', ENV.fetch('IOS_SIMULATOR', 'booted')]
+             else
+               ['--device', ENV.fetch('IOS_DEVICE') { abort 'Set IOS_DEVICE to the device UDID (xcrun devicectl list devices)' }]
+             end
+    crash_at = ENV['CRASH_AT'] ? ['--crash-at', ENV['CRASH_AT']] : []
+    sh File.join(PROJECT_PATH, 'script', 'ios-suite'), '--app', built_ios_app, *target, *crash_at, verbose: false
   end
 
   task :webgl do
