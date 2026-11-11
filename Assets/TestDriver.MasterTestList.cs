@@ -359,9 +359,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Numeric Attributes (15+ seconds)", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         double randomDouble = UnityEngine.Random.value;
-                        StartCoroutine(this.TestNumericAttribute("automated_test_number", randomDouble, (n) => {
-                            state(n == randomDouble ? Test.TestState.Passed : Test.TestState.Failed);
-                        }));
+                        StartCoroutine(this.TestNumericAttribute("automated_test_number", randomDouble, state));
                     }),
 
                 TestBuilder.Build("String Attributes (15+ seconds)", this)

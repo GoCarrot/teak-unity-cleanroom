@@ -392,13 +392,39 @@ public partial class TestDriver : MonoBehaviour
     }
 
 #if !TEAK_NOT_AVAILABLE
-    private IEnumerator TestNumericAttribute(string key, double value, Action<double> action) {
+    // The server keeps numeric attributes as DECIMAL(36,9), so a double comes back rounded to nine
+    // decimal places. Compare within a tolerance that covers that rounding.
+    private const double NumericAttributeTolerance = 1e-8;
+
+    private IEnumerator TestNumericAttribute(string key, double value, Action<Test.TestState> state) {
         Teak.Instance.SetNumericAttribute(key, value);
         yield return new WaitForSeconds(15.0f);
         yield return this.teakInterface.GetUserJson((json) => {
             Dictionary<string, object> userProfile = json["user_profile"] as Dictionary<string, object>;
-            Dictionary<string, object> numericAttributes = userProfile["number_attributes"] as Dictionary<string, object>;
-            action((double) numericAttributes[key]);
+            Dictionary<string, object> numericAttributes = null;
+            if (userProfile != null && userProfile.ContainsKey("number_attributes")) {
+                numericAttributes = userProfile["number_attributes"] as Dictionary<string, object>;
+            }
+
+            object raw = null;
+            if (numericAttributes == null || !numericAttributes.TryGetValue(key, out raw) || raw == null) {
+                Debug.LogError("[TestDriver] Numeric attribute " + key + " not in number_attributes, sent=" + value.ToString("R"));
+                state(Test.TestState.Failed);
+                return;
+            }
+
+            double readBack;
+            try {
+                readBack = Convert.ToDouble(raw);
+            } catch (Exception e) {
+                Debug.LogError("[TestDriver] Numeric attribute " + key + " is not a number: " + raw + " (" + raw.GetType() + ") " + e.Message);
+                state(Test.TestState.Failed);
+                return;
+            }
+
+            bool matches = Math.Abs(readBack - value) <= NumericAttributeTolerance;
+            Debug.Log("[TestDriver] Numeric attribute " + key + " sent=" + value.ToString("R") + " read back=" + raw + " (" + raw.GetType() + ") " + (matches ? "within" : "outside") + " tolerance " + NumericAttributeTolerance);
+            state(matches ? Test.TestState.Passed : Test.TestState.Failed);
         });
     }
 
