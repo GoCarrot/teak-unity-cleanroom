@@ -138,12 +138,9 @@ public partial class TestDriver : MonoBehaviour
         Teak.Instance.RegisterRoute("/purchase/:sku", "Purchase", "Start a test purchase of an SKU", (Dictionary<string, object> parameters) => {
             string sku = parameters["sku"] as string;
 #if TEAK_IAP_V4 || TEAK_IAP_V5
-            // Hop to the main thread; the store APIs need it.
-            this.StartCoroutine(Coroutine.Do(() => {
-                Debug.Log("[TestDriver-UnityIAP] Purchase link: " + sku);
-                this.pendingLinkPurchaseSku = sku;
-                this.StartPendingLinkPurchase();
-            }));
+            Debug.Log("[TestDriver-UnityIAP] Purchase link: " + sku);
+            this.pendingLinkPurchaseSku = sku;
+            this.StartPendingLinkPurchase();
 #else
             Debug.Log("[TestDriver] Purchase link ignored, no Unity IAP in this build: " + sku);
 #endif
@@ -636,7 +633,11 @@ public partial class TestDriver : MonoBehaviour
     // Starts the purchase a link asked for, or leaves it pending until the product is fetched.
     private void StartPendingLinkPurchase() {
         string sku = this.pendingLinkPurchaseSku;
-        if (sku == null || !this.TryStartTestPurchase(sku)) {
+        if (sku == null) {
+            return;
+        }
+        if (!this.TryStartTestPurchase(sku)) {
+            Debug.Log("[TestDriver-UnityIAP] Purchase link pending, product not fetched: " + sku);
             return;
         }
         this.pendingLinkPurchaseSku = null;
