@@ -104,8 +104,15 @@ public class BuildPlayer
         });
     }
 
+    // Set when a Play upload overrides bundleVersionCode, so the tracked ProjectSettings.asset
+    // keeps its value and later APK builds don't inherit the upload's number.
+    static int? restoreBundleVersionCode = null;
+
     static void DoBuildPlayer(BuildPlayerOptions buildPlayerOptions) {
         BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+        if (restoreBundleVersionCode.HasValue) {
+            PlayerSettings.Android.bundleVersionCode = restoreBundleVersionCode.Value;
+        }
         if(report.summary.result == BuildResult.Succeeded) {
             // Preserve the merged AndroidManifest.xml
             if (buildPlayerOptions.target == BuildTarget.Android) {
@@ -171,6 +178,7 @@ public class BuildPlayer
         int versionCode;
         if (System.Int32.TryParse(GetStringArg(parsedArgs, "version-code", null), out versionCode)) {
             Debug.Log("[teak-unity-cleanroom] Setting bundleVersionCode to " + versionCode);
+            restoreBundleVersionCode = PlayerSettings.Android.bundleVersionCode;
             PlayerSettings.Android.bundleVersionCode = versionCode;
         }
 

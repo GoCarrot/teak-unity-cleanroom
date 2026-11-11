@@ -103,6 +103,9 @@ def play_upload?
   ENV.fetch('PLAY_UPLOAD', false).to_s == 'true'
 end
 
+# Checked up front so a bad value fails before Unity runs.
+abort 'PLAY_UPLOAD needs an integer PLAY_VERSION_CODE (above the last Play upload)' if play_upload? && ENV.fetch('PLAY_VERSION_CODE', '') !~ /\A\d+\z/
+
 def credentials
   return TEAK_CREDENTIALS[BUILD_TYPE] unless play_upload?
 
@@ -214,18 +217,22 @@ def unity_iap_v5?
   unity_iap_version.start_with?('5.')
 end
 
-# Set by build:amazon before it invokes build:android, so iap:android can tell the two apart.
-$building_amazon = false
-
 namespace :iap do
   task(:v4) { $unity_iap_store = :v4 }
-  task :android do
-    $unity_iap_store = if !$building_amazon then :google_play
+  # Gets build:android's amazon? arg. Re-enabled each run so every Android task in one
+  # invocation picks its own store.
+  task :android, [:amazon?] do |t, args|
+    amazon = args[:amazon?].to_s == 'true'
+    $unity_iap_store = if !amazon then :google_play
                        elsif use_appstore_sdk? then :amazon_appstore_sdk
                        else :v4
                        end
+    t.reenable
   end
 end
+
+# An upload build configures the project itself, so the package can't be half-applied.
+ANDROID_BUILD_PREREQS = [:'iap:android', *(play_upload? ? [:'config:all'] : []), :'android:dependencies', :warnings_as_errors].freeze
 
 # Writes AdditionalDependencies.xml with amazon-appstore-sdk for the duration of the
 # build:amazon invocation, then restores both it and AndroidResolverDependencies.xml in ensure.
@@ -375,10 +382,9 @@ def print_build_msg(platform, args = nil)
 end
 
 # BuildPlayer args for a Google Play upload bundle. Never debuggable, so no --debug.
-def play_upload_args(output)
-  abort 'PLAY_UPLOAD is Google Play only' if $building_amazon
-  version_code = ENV.fetch('PLAY_VERSION_CODE') { abort 'PLAY_UPLOAD needs PLAY_VERSION_CODE (above the last Play upload)' }
-  ['--aab', output, '--version-code', version_code]
+def play_upload_args(output, amazon: false)
+  abort 'PLAY_UPLOAD is Google Play only' if amazon
+  ['--aab', output, '--version-code', ENV.fetch('PLAY_VERSION_CODE')]
 end
 
 def write_android_build_assets
@@ -622,14 +628,14 @@ namespace :android do
 end
 
 namespace :build do
-  task :android, [:amazon?] => %i[iap:android android:dependencies warnings_as_errors] do |_, args|
+  task :android, [:amazon?] => ANDROID_BUILD_PREREQS do |_, args|
     write_android_build_assets
 
     additional_args = []
     build_amazon = args[:amazon?] ? args[:amazon?].to_s == 'true' : false
 
     if play_upload?
-      additional_args.concat(play_upload_args('teak-unity-cleanroom.aab'))
+      additional_args.concat(play_upload_args('teak-unity-cleanroom.aab', amazon: build_amazon))
     elsif !prod?
       additional_args.concat(['--debug'])
     end
@@ -659,7 +665,7 @@ namespace :build do
   end
 
   namespace :android do
-    task local: %i[iap:android android:dependencies warnings_as_errors] do
+    task local: ANDROID_BUILD_PREREQS do
       write_android_build_assets
 
       debug_keystore = File.join(PROJECT_PATH, 'debug.keystore')
@@ -681,17 +687,11 @@ namespace :build do
   end
 
   task :amazon do
-    $building_amazon = true
-    Rake::Task['iap:android'].reenable
     if use_appstore_sdk?
       with_appstore_sdk { Rake::Task['build:android'].invoke('true') }
     else
       Rake::Task['build:android'].invoke('true')
     end
-  ensure
-    # A later Android task in the same invocation goes back to Google Play.
-    $building_amazon = false
-    Rake::Task['iap:android'].reenable
   end
 
   task ios: ['ios:all']
