@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Callbacks;
 
 using UnityEditor.iOS.Xcode;
@@ -251,6 +252,24 @@ public class BuildPlayer
         // Add a non-Teak URL scheme
         AddURLSchemeToPlist(plist, "nonteak");
 
+        // Lifecycle: scene keeps Unity's UIScene export, legacy strips it for an app-delegate build
+        Dictionary<string, object> buildArgs = GetArgsAfter("BuildPlayer.iOS");
+        string lifecycle = GetStringArg(buildArgs, "ios-lifecycle", "scene");
+        string buildType = GetStringArg(buildArgs, "build-type", "dev");
+        bool hasSceneManifest = plist.root.values.ContainsKey("UIApplicationSceneManifest");
+        if (lifecycle == "legacy") {
+            plist.root.values.Remove("UIApplicationSceneManifest");
+        } else if (lifecycle == "scene") {
+            if (!hasSceneManifest) {
+                throw new BuildFailedException("[teak-unity-cleanroom] IOS_LIFECYCLE=scene but Unity did not emit UIApplicationSceneManifest");
+            }
+        } else {
+            throw new BuildFailedException("[teak-unity-cleanroom] Unknown ios-lifecycle '" + lifecycle + "', expected scene or legacy");
+        }
+
+        // Short enough to survive home screen truncation
+        plist.root.SetString("CFBundleDisplayName", char.ToUpper(lifecycle[0]) + lifecycle.Substring(1) + " " + char.ToUpper(buildType[0]) + buildType.Substring(1));
+
         File.WriteAllText(plistPath, plist.WriteToString());
 
         // Disable Bitcode
@@ -284,6 +303,9 @@ public class BuildPlayer
 
         PlayerSettings.SetScriptingBackend(BuildTargetGroup.iOS, ScriptingImplementation.IL2CPP);
 
+        PlayerSettings.iOS.sdkVersion = GetStringArg(parsedArgs, "ios-sdk", "device") == "simulator" ?
+            iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
+
         // Debug build?
         bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
 
@@ -306,6 +328,12 @@ public class BuildPlayer
             parsedArgs = ParseArgs(buildArgs);
         }
         return parsedArgs;
+    }
+
+    static string GetStringArg(Dictionary<string, object> args, string key, string fallback) {
+        object value;
+        if (args != null && args.TryGetValue(key, out value) && value is string) return (string)value;
+        return fallback;
     }
 
     static Dictionary<string, object> ParseArgs(string[] args) {

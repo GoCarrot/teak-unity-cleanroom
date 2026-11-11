@@ -52,6 +52,12 @@ UNITY_HOME = ENV.fetch('UNITY_HOME') do
 end
 RVM_VARS = %w[GEM_HOME IRBRC MY_RUBY_HOME GEM_PATH].freeze
 BUILD_TYPE = ENV.fetch('BUILD_TYPE', 'dev')
+IOS_LIFECYCLES = %w[scene legacy].freeze
+IOS_LIFECYCLE = ENV.fetch('IOS_LIFECYCLE', 'scene')
+IOS_SDKS = %w[device simulator].freeze
+IOS_SDK = ENV.fetch('IOS_SDK', 'device')
+abort "IOS_SDK must be one of #{IOS_SDKS.join(', ')} (got '#{IOS_SDK}')" unless IOS_SDKS.include?(IOS_SDK)
+abort "IOS_LIFECYCLE must be one of #{IOS_LIFECYCLES.join(', ')} (got '#{IOS_LIFECYCLE}')" unless IOS_LIFECYCLES.include?(IOS_LIFECYCLE)
 TARGET_API = ENV.fetch('TARGET_API', 36)
 TEAK_CREDENTIALS = {
   'dev' => {
@@ -657,7 +663,7 @@ namespace :ios do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
 
-    additional_args = []
+    additional_args = ['--ios-lifecycle', IOS_LIFECYCLE, '--ios-sdk', IOS_SDK, '--build-type', BUILD_TYPE]
     additional_args.concat(['--debug']) unless prod?
     additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
 
