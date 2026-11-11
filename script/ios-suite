@@ -129,7 +129,9 @@ class DeviceDestination < Destination
   def xcodebuild_destination = "id=#{udid}"
 
   # Off by default: it writes to the shared Apple team (registers the device, creates profiles).
-  def xcodebuild_extra = @allow_provisioning_updates ? ['-allowProvisioningUpdates'] : []
+  def xcodebuild_extra
+    @allow_provisioning_updates ? %w[-allowProvisioningUpdates -allowProvisioningDeviceRegistration] : []
+  end
 
   def reinstall(app, bundle_id)
     run('xcrun', 'devicectl', 'device', 'uninstall', 'app', '--device', udid, bundle_id)
