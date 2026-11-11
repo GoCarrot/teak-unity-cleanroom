@@ -439,10 +439,12 @@ public partial class TestDriver : MonoBehaviour
 
         if (this.testEnumerator.MoveNext()) {
             Test current = this.testEnumerator.Current;
+            CrashIfRequested(current.Name);
             current.Begin();
             this.testTimeoutCoroutine = this.StartCoroutine(this.TestWatchdog(current));
         } else {
             this.testEnumerator = null;
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] suite complete");
         }
 
         if (!doNotSerialize) {
@@ -469,9 +471,26 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 
+    // Debug builds only: hard-crash the player when the named test is about to begin, so a test
+    // runner's crash detection can be exercised on demand.
+    private const string CrashAtEnvironmentVariable = "TEAK_CLEANROOM_CRASH_AT";
+    private static void CrashIfRequested(string testName) {
+        if (!Debug.isDebugBuild) {
+            return;
+        }
+        if (testName.Equals(Environment.GetEnvironmentVariable(CrashAtEnvironmentVariable))) {
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] crashing on request before {0}", testName);
+            UnityEngine.Diagnostics.Utils.ForceCrash(UnityEngine.Diagnostics.ForcedCrashCategory.AccessViolation);
+        }
+    }
+
     private void ResetTests() {
         Debug.Log("[Test Driver] Resetting tests...");
         this.testList = this.MasterTestList.FindAll(e => !e.ExcludedPlatforms.Contains(Application.platform));
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] tests: {0}", this.testList.Count);
+        foreach (Test test in this.testList) {
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] test {0}", test.Name);
+        }
         this.testEnumerator = null;
         this.AdvanceTests();
         this.SetupUI();
