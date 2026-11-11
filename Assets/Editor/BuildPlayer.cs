@@ -287,9 +287,6 @@ public class BuildPlayer
         // Debug build?
         bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
 
-        // Set both ways: sdkVersion persists in ProjectSettings between builds.
-        PlayerSettings.iOS.sdkVersion = parsedArgs.ContainsKey("simulator") ? iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
-
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = BuildPlayer.scenes;
         buildPlayerOptions.locationPathName = buildPath;

@@ -660,7 +660,6 @@ namespace :ios do
     additional_args = []
     additional_args.concat(['--debug']) unless prod?
     additional_args.concat(['--define', 'UNITY_FACEBOOK']) if use_facebook?
-    additional_args.concat(['--simulator']) if ENV['IOS_SIMULATOR'] == 'true'
 
     print_build_msg 'iOS', Args: additional_args
 
