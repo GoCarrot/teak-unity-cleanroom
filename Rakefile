@@ -40,8 +40,7 @@ UNITY_COMPILERS = %i[gmsc smcs smcs mcs csc].freeze
 UNITY_EDITORS_DIR = '/Applications/Unity/Hub/Editor'.freeze
 PROJECT_PATH = Rake.application.original_dir
 
-# The editor named by ProjectSettings/ProjectVersion.txt, so a bare `rake` never
-# opens (and upgrades) the project in whatever editor sorts last.
+# Editor version pinned by ProjectSettings/ProjectVersion.txt.
 def pinned_unity_version
   version_file = File.join(PROJECT_PATH, 'ProjectSettings', 'ProjectVersion.txt')
   File.read(version_file)[/^m_EditorVersion:\s*(\S+)/, 1] if File.exist?(version_file)
