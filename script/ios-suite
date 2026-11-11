@@ -387,14 +387,8 @@ exit_reason = nil
 crash_log_error = nil
 if outcome == :exited
   say 'app exited before the suite finished, looking for a crash report'
-  slowest_copy = 0
-  attempts = 0
-  poll_started = Time.now
   20.times do
-    attempts += 1
-    copy_started = Time.now
     paths, crash_log_error = destination.collect_crash_reports(File.join(out_dir, 'crashlogs'), started_at - 5)
-    slowest_copy = [slowest_copy, Time.now - copy_started].max
     crash = paths.filter_map { |path| CrashReport.load(path) }
                  .select { |report| report.bundle_id == bundle_id && report.time >= started_at - 5 }
                  .max_by(&:time)
@@ -402,8 +396,6 @@ if outcome == :exited
 
     sleep 3
   end
-  say format('looked for a crash report %d times over %.0fs (slowest collection %.1fs)',
-             attempts, Time.now - poll_started, slowest_copy)
   exit_reason = destination.termination_reason(app_pid, started_at) unless crash
 end
 
