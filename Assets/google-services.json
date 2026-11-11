@@ -62,6 +62,25 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:271311759137:android:7c8fd37820c5fab52e4060",
+        "android_client_info": {
+          "package_name": "io.teak.sdk.unity.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzBOa2X1aOWQaesIJGH0V_nY2AF36hfUg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"
