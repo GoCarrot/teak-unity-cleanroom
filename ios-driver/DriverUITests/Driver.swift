@@ -4,6 +4,10 @@ import XCTest
 /// alerts, notification banners and Notification Center cells, and Settings when a test leaves
 /// the app there. It knows nothing about tests. The host runner starts it, launches the app, and
 /// stops it when the suite ends; the time cap is only a backstop.
+enum ConfigurationError: Error {
+    case missingAppName
+}
+
 final class Driver: XCTestCase {
     private let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
     private let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
@@ -21,7 +25,8 @@ final class Driver: XCTestCase {
         let seconds = TimeInterval(env["CLEANROOM_DRIVER_SECONDS"] ?? "") ?? 1800
         app = XCUIApplication(bundleIdentifier: bundleId)
         log("config bundle=\(bundleId) app_name=\(appName.isEmpty ? "(none)" : appName) seconds=\(Int(seconds))")
-        XCTAssertFalse(appName.isEmpty, "CLEANROOM_APP_NAME is required to recognize the app's notifications")
+        // An empty name would match every app's notifications, so refuse to start.
+        guard !appName.isEmpty else { throw ConfigurationError.missingAppName }
         log("ready")
 
         let deadline = Date().addingTimeInterval(seconds)
