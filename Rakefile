@@ -800,10 +800,12 @@ namespace :test do
     target = if IOS_SDK == 'simulator'
                ['--simulator', ENV.fetch('IOS_SIMULATOR', 'booted')]
              else
-               ['--device', ENV.fetch('IOS_DEVICE') { abort 'Set IOS_DEVICE to the device UDID (xcrun devicectl list devices)' }]
+               ['--device', ENV.fetch('IOS_DEVICE') { abort 'Set IOS_DEVICE to the device UDID (xcrun xctrace list devices)' }]
              end
     crash_at = ENV['CRASH_AT'] ? ['--crash-at', ENV['CRASH_AT']] : []
-    sh File.join(PROJECT_PATH, 'script', 'ios-suite'), '--app', built_ios_app, *target, *crash_at, verbose: false
+    provisioning = ENV['ALLOW_PROVISIONING_UPDATES'] == '1' ? ['--allow-provisioning-updates'] : []
+    sh File.join(PROJECT_PATH, 'script', 'ios-suite'), '--app', built_ios_app, *target, *crash_at, *provisioning,
+       verbose: false
   end
 
   task :webgl do
