@@ -34,22 +34,26 @@ class Test {
     }
 
     /// <summary>
-    /// This takes all the test states and puts them into an array, then returns it.
+    /// Every sub-state, named, so a timeout can report which ones were still pending.
     /// </summary>
-    private TestState[] AllStates {
+    private KeyValuePair<string, TestState>[] NamedStates {
         get {
-            return new TestState[] {
-                this.began,
-                this.background,
-                this.reward,
-                this.deepLink,
-                this.launchedFromNotification,
-                this.foregroundNotification,
-                this.logEvent,
-                this.postLaunchSummary,
-                this.userData
+            return new KeyValuePair<string, TestState>[] {
+                new KeyValuePair<string, TestState>("began", this.began),
+                new KeyValuePair<string, TestState>("background", this.background),
+                new KeyValuePair<string, TestState>("reward", this.reward),
+                new KeyValuePair<string, TestState>("deepLink", this.deepLink),
+                new KeyValuePair<string, TestState>("launchedFromNotification", this.launchedFromNotification),
+                new KeyValuePair<string, TestState>("foregroundNotification", this.foregroundNotification),
+                new KeyValuePair<string, TestState>("logEvent", this.logEvent),
+                new KeyValuePair<string, TestState>("postLaunchSummary", this.postLaunchSummary),
+                new KeyValuePair<string, TestState>("userData", this.userData)
             };
         }
+    }
+
+    private IEnumerable<TestState> AllStates {
+        get { return this.NamedStates.Select(pair => pair.Value); }
     }
 
     // Teak Events
@@ -174,8 +178,13 @@ class Test {
         if (this.resultReported) {
             return;
         }
+        UnityEngine.Debug.LogError("[Test Driver] " + this.Name + " still pending: " + string.Join(", ", this.PendingStateNames));
         this.Status = TestState.Failed;
         this.ReportResult();
+    }
+
+    private IEnumerable<string> PendingStateNames {
+        get { return this.NamedStates.Where(pair => pair.Value == TestState.Pending).Select(pair => pair.Key); }
     }
 
     private void ReportResult() {
@@ -183,6 +192,7 @@ class Test {
             return;
         }
         this.resultReported = true;
+        UnityEngine.Debug.Log("[Test Driver] result " + this.Name + ": " + this.Status);
         if (this.OnResult != null) {
             this.OnResult();
         }
@@ -233,7 +243,8 @@ class Test {
 #if TEAK_4_2_OR_NEWER
     public void UserData(Teak.UserData userData) {
         this.EvaluatePredicate(this.OnUserData, userData, (TestState state) => {
-            this.userData = state;
+            // Same first-decision-wins rule as LogEvent: a later reply can't overwrite a verdict.
+            this.userData = this.userData == TestState.Pending ? state : this.userData;
         });
     }
 #endif // TEAK_4_2_OR_NEWER

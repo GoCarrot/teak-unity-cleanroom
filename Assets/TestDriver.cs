@@ -193,6 +193,8 @@ public partial class TestDriver : MonoBehaviour
 
     void OnLogEvent(Dictionary<string, object> logEvent) {
         TeakLogEvent teakLogEvent = new TeakLogEvent(logEvent);
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] log {0} -> {1}", teakLogEvent.EventType,
+                        this.testEnumerator != null ? this.testEnumerator.Current.Name : "(no test)");
         if (this.testEnumerator != null) {
             this.testEnumerator.Current.LogEvent(teakLogEvent);
         }
