@@ -684,8 +684,9 @@ namespace :ios do
     fastlane 'ci'
   end
 
-  # Debug archive signed for development with automatic signing. The device has to be in the team's
-  # profiles; ALLOW_PROVISIONING_UPDATES=1 lets Xcode register it on the shared team.
+  # Debug archive signed for development with automatic signing (the team comes from
+  # config:apple_team_id). The device has to be in the team's profiles; ALLOW_PROVISIONING_UPDATES=1
+  # lets Xcode register it on the shared team.
   desc 'Archive the exported project for a device (export with IOS_SDK=device first)'
   task :device_app do
     provisioning = if ENV['ALLOW_PROVISIONING_UPDATES'] == '1'
@@ -697,8 +698,7 @@ namespace :ios do
     FileUtils.rm_rf(IOS_ARCHIVE)
     sh 'xcodebuild', 'archive', '-workspace', 'Unity-iPhone/Unity-iPhone.xcworkspace', '-scheme', 'Unity-iPhone',
        '-configuration', 'Debug', '-destination', destination, '-archivePath', IOS_ARCHIVE,
-       '-derivedDataPath', IOS_DERIVED_DATA, 'CODE_SIGN_STYLE=Automatic', 'DEVELOPMENT_TEAM=7FLZTACJ82',
-       *provisioning, verbose: false
+       '-derivedDataPath', IOS_DERIVED_DATA, 'CODE_SIGN_STYLE=Automatic', *provisioning, verbose: false
   end
 
   # Ad-hoc signed rather than unsigned: the simulator only gets a push token when the app carries
