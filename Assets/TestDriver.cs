@@ -700,15 +700,16 @@ public partial class TestDriver : MonoBehaviour
     }
 
 #if UNITY_IOS
+    [System.Runtime.InteropServices.DllImport("__Internal")]
+    private static extern IntPtr TeakCleanroomReceiptPath();
+
     // Logs the app receipt in chunks (device log lines truncate) with its length and SHA-256,
-    // so it can be reassembled and POSTed to Apple's verifyReceipt.
+    // so it can be reassembled and POSTed to Apple's verifyReceipt. The path comes from
+    // [NSBundle appStoreReceiptURL], not a guess.
     private void LogAppReceipt(string tag) {
-        string path = System.IO.Path.GetFullPath(Application.dataPath + "/../StoreKit/sandboxReceipt");
-        if (!System.IO.File.Exists(path)) {
-            path = System.IO.Path.GetFullPath(Application.dataPath + "/../StoreKit/receipt");
-        }
-        if (!System.IO.File.Exists(path)) {
-            Debug.Log("[TestDriver-Receipt] " + tag + " no receipt at " + path);
+        string path = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(TeakCleanroomReceiptPath());
+        if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) {
+            Debug.Log("[TestDriver-Receipt] " + tag + " no receipt at appStoreReceiptURL=" + path);
             return;
         }
         byte[] bytes = System.IO.File.ReadAllBytes(path);
