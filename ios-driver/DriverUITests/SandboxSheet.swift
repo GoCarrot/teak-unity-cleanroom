@@ -35,6 +35,115 @@ final class SandboxSheet: XCTestCase {
         return nil
     }
 
+    /// Taps OK on the "You're all set" purchase-complete alert, so the phone isn't left with it up.
+    /// Returns whether it found and dismissed one.
+    @discardableResult
+    private func dismissPurchaseComplete(waiting seconds: TimeInterval) -> Bool {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let end = Date().addingTimeInterval(seconds)
+        repeat {
+            let up = springboard.staticTexts.allElementsBoundByIndex.contains { $0.label.contains("Your purchase was successful") }
+            if up {
+                let ok = springboard.buttons["OK"].exists ? springboard.buttons["OK"] : springboard.alerts.buttons.firstMatch
+                if ok.exists {
+                    NSLog("SANDBOXFLOW tap OK on purchase-complete alert")
+                    ok.tap()
+                    return true
+                }
+            }
+            Thread.sleep(forTimeInterval: 1)
+        } while Date() < end
+        return false
+    }
+
+    /// All labels on an app's screen, read from one snapshot so elements disappearing mid-read
+    /// can't fail the test. Empty if the snapshot can't be taken.
+    private func snapshotLabels(_ app: XCUIApplication) -> [String] {
+        guard let root = try? app.snapshot() else { return [] }
+        var out: [String] = []
+        func walk(_ e: XCUIElementSnapshot) {
+            if !e.label.isEmpty { out.append(e.label) }
+            e.children.forEach { walk($0) }
+        }
+        walk(root)
+        return out
+    }
+
+    /// Run B in one resumable pass: whatever state the phone is in (nothing yet, sheet up, prompt up,
+    /// purchase done), do the next step once. Each tap is gated on what the screen shows: Purchase
+    /// only on the "Sandbox" sheet with the no-charge text, the password only on the prompt showing
+    /// "Environment: Sandbox" (password from CLEANROOM_SANDBOX_PASSWORD, never logged or attached),
+    /// OK only on the purchase-complete alert.
+    func testResumeFlow() throws {
+        continueAfterFailure = true
+        let env = ProcessInfo.processInfo.environment
+        let bundleId = env["CLEANROOM_BUNDLE_ID"] ?? "io.teak.app.unity.dev"
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let app = XCUIApplication(bundleIdentifier: bundleId)
+        var tappedTestPurchase = false, tappedPurchase = false, typedPassword = false
+        let end = Date().addingTimeInterval(TimeInterval(env["CLEANROOM_DRIVER_SECONDS"] ?? "") ?? 240)
+        var settledSince: Date?
+        var lastLabels = ""
+        while Date() < end {
+            let labels = snapshotLabels(springboard)
+            let joined = labels.joined(separator: " | ")
+            if joined != lastLabels { NSLog("SANDBOXFLOW labels=%@", joined); lastLabels = joined }
+            if labels.contains(where: { $0.contains("Your purchase was successful") }) {
+                let ok = springboard.buttons["OK"].exists ? springboard.buttons["OK"] : springboard.alerts.buttons.firstMatch
+                if ok.exists { NSLog("SANDBOXFLOW tap OK on purchase-complete alert"); ok.tap(); attachScreenshot("resume-done"); return }
+            } else if labels.contains(where: { $0.contains("Enter the password for") }) {
+                guard labels.contains(where: { $0.contains("Environment: Sandbox") }) else {
+                    attachScreenshot("resume-fail-no-banner"); return XCTFail("sign-in prompt without Environment: Sandbox, not typing")
+                }
+                if !typedPassword, let password = env["CLEANROOM_SANDBOX_PASSWORD"], !password.isEmpty {
+                    attachScreenshot("resume-prompt")
+                    let field = springboard.secureTextFields.firstMatch
+                    if field.waitForExistence(timeout: 10) {
+                        field.tap(); field.typeText(password)
+                        springboard.buttons["Sign In"].tap()
+                        typedPassword = true
+                        NSLog("SANDBOXFLOW typed password, tapped Sign In")
+                    }
+                }
+            } else if labels.contains("Sandbox") && labels.contains(where: { $0.contains("You will not be charged") }) {
+                if !tappedPurchase, springboard.buttons["Purchase"].exists {
+                    attachScreenshot("resume-sheet")
+                    NSLog("SANDBOXFLOW tap Purchase")
+                    springboard.buttons["Purchase"].tap()
+                    tappedPurchase = true
+                }
+            } else if !tappedTestPurchase {
+                let alert = springboard.alerts.firstMatch
+                if alert.exists, alert.buttons["Allow"].exists {
+                    alert.buttons["Allow"].tap(); settledSince = nil
+                } else {
+                    if app.state != .runningForeground { app.activate() }
+                    if app.state == .runningForeground {
+                        settledSince = settledSince ?? Date()
+                        if Date().timeIntervalSince(settledSince!) > 3, let y = findFirstButtonY() {
+                            attachScreenshot("resume-before-test-purchase")
+                            NSLog("SANDBOXFLOW tap Test Purchase at y=%.4f", Double(y))
+                            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: y)).tap()
+                            tappedTestPurchase = true
+                        }
+                    }
+                }
+            }
+            Thread.sleep(forTimeInterval: 1)
+        }
+        attachScreenshot("resume-timeout")
+        XCTFail("flow did not reach the purchase-complete alert")
+    }
+
+    /// Dismisses a purchase-complete alert left up by an earlier run.
+    func testDismissPurchaseAlert() throws {
+        continueAfterFailure = true
+        attachScreenshot("dismiss-before")
+        XCTAssertTrue(dismissPurchaseComplete(waiting: 10), "no purchase-complete alert found")
+        Thread.sleep(forTimeInterval: 2)
+        attachScreenshot("dismiss-after")
+    }
+
     private func attachScreenshot(_ name: String) {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = name
@@ -117,8 +226,9 @@ final class SandboxSheet: XCTestCase {
         field.typeText(password)
         springboard.buttons["Sign In"].tap()
         NSLog("SANDBOXFLOW tapped Sign In")
-
-        for i in 1...15 {
+        let dismissed = dismissPurchaseComplete(waiting: 30)
+        NSLog("SANDBOXFLOW purchase-complete alert dismissed=%@", dismissed ? "yes" : "no")
+        for i in 1...5 {
             Thread.sleep(forTimeInterval: 3)
             attachScreenshot("flow-4-after-signin-\(i * 3)s")
             NSLog("SANDBOXFLOW +%ds labels=%@ alerts=%@", i * 3, labels().joined(separator: " | "),
@@ -146,7 +256,9 @@ final class SandboxSheet: XCTestCase {
         field.typeText(password)
         springboard.buttons["Sign In"].tap()
         NSLog("SANDBOXFLOW tapped Sign In")
-        for i in 1...15 {
+        let dismissed = dismissPurchaseComplete(waiting: 30)
+        NSLog("SANDBOXFLOW purchase-complete alert dismissed=%@", dismissed ? "yes" : "no")
+        for i in 1...5 {
             Thread.sleep(forTimeInterval: 3)
             attachScreenshot("pw-2-after-signin-\(i * 3)s")
             NSLog("SANDBOXFLOW +%ds labels=%@ alerts=%@", i * 3, labels().joined(separator: " | "),
