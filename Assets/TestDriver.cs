@@ -727,7 +727,19 @@ public partial class TestDriver : MonoBehaviour
     }
 #endif
 
+#if UNITY_IOS && TEAK_UPDATES_PROBE
+    [System.Runtime.InteropServices.DllImport("__Internal")]
+    private static extern void TeakCleanroomNSLog(string message);
+    private static void ProbeLog(string message) {
+        Debug.Log("[TestDriver-Probe] " + message);
+        TeakCleanroomNSLog(message);
+    }
+#else
+    private static void ProbeLog(string message) { }
+#endif
+
     private async void SetupUnityIAPv5() {
+
 #if UNITY_IOS
         Debug.Log("[TestDriver] Initializing Unity IAP v5 for: Apple App Store");
 #if TEAK_FORCE_SK1
@@ -750,6 +762,7 @@ public partial class TestDriver : MonoBehaviour
         };
         // Consumable: confirm every pending order, which consumes it (v4's ProcessPurchase -> Complete).
         this.storeController.OnPurchasePending += (PendingOrder order) => {
+            ProbeLog("OnPurchasePending");
             foreach (CartItem item in order.CartOrdered.Items()) {
                 Debug.Log("[TestDriver-UnityIAP] ProcessPurchase: " + item.Product.definition.id);
             }
@@ -757,6 +770,7 @@ public partial class TestDriver : MonoBehaviour
         };
         this.storeController.OnPurchaseConfirmed += (Order order) => {
             Debug.Log("[TestDriver-UnityIAP] OnPurchaseConfirmed");
+            ProbeLog("OnPurchaseConfirmed");
 #if UNITY_IOS
             this.LogAppReceipt("confirmed");
 #endif

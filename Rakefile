@@ -324,7 +324,8 @@ def unity(*args, quit: true, nographics: true)
   # Keep UNITY_PURCHASING_V5 in lockstep with the manifest version: present iff unity_iap_v5?.
   # Composes with existing .rsp content (e.g. TEAK_NOT_AVAILABLE) rather than clobbering.
   # FORCE_SK1=1 (iOS, IAP 5) defines TEAK_FORCE_SK1 so TestDriver sets StoreKitSelector.forceStoreKit1.
-  spike_defines = { 'UNITY_PURCHASING_V5' => unity_iap_v5?, 'TEAK_FORCE_SK1' => ENV['FORCE_SK1'].to_s == '1' }
+  spike_defines = { 'UNITY_PURCHASING_V5' => unity_iap_v5?, 'TEAK_FORCE_SK1' => ENV['FORCE_SK1'].to_s == '1',
+                    'TEAK_UPDATES_PROBE' => ENV['UPDATES_PROBE'].to_s == '1' }
   UNITY_COMPILERS.each do |compiler|
     rsp_path = "Assets/#{compiler}.rsp"
     next unless spike_defines.values.any? || File.exist?(rsp_path)
