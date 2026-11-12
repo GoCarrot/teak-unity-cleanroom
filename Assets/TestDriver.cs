@@ -57,6 +57,8 @@ public partial class TestDriver : MonoBehaviour
 #endif
 
     string testPurchaseSku = "io.teak.app.sku.dollar";
+    // The App Store Connect id for the same product: the prod app already owns io.teak.app.sku.dollar.
+    const string testPurchaseAppleSku = "io.teak.app.unity.dev.dollar";
 
 #if TEAK_IAP_V4 || TEAK_IAP_V5
     // A purchase link that arrived before the product was fetched; started once it is.
@@ -599,7 +601,7 @@ public partial class TestDriver : MonoBehaviour
         builder.AddProduct(this.testPurchaseSku, ProductType.Consumable, new IDs {
             { this.testPurchaseSku, GooglePlay.Name },
             { this.testPurchaseSku, AmazonApps.Name },
-            { this.testPurchaseSku, AppleAppStore.Name }
+            { testPurchaseAppleSku, AppleAppStore.Name }
         });
 
         Debug.Log("[TestDriver] Initializing UnityPurchasing...");
@@ -736,7 +738,11 @@ public partial class TestDriver : MonoBehaviour
             await this.storeController.Connect();
             Debug.Log("[TestDriver-UnityIAP] OnInitialized");
             this.storeController.FetchProducts(new List<ProductDefinition> {
+#if UNITY_IOS
+                new ProductDefinition(this.testPurchaseSku, testPurchaseAppleSku, ProductType.Consumable)
+#else
                 new ProductDefinition(this.testPurchaseSku, ProductType.Consumable)
+#endif
             });
         } catch (Exception e) {
             Debug.Log("[TestDriver-UnityIAP] OnInitializeFailed: " + e.Message);
