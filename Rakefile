@@ -207,7 +207,7 @@ $unity_iap_store = :google_play
 
 def unity_iap_version
   case $unity_iap_store
-  when :google_play then '5.5.0'
+  when :google_play, :ios_v5 then '5.5.0'
   when :amazon_appstore_sdk then '5.0.4'
   else '4.12.2'
   end
@@ -223,6 +223,11 @@ end
 
 namespace :iap do
   task(:v4) { $unity_iap_store = :v4; announce_unity_iap }
+  # iOS builds stay on IAP 4 unless IOS_IAP=5 (StoreKit 2 spike).
+  task :ios do
+    $unity_iap_store = ENV['IOS_IAP'].to_s == '5' ? :ios_v5 : :v4
+    announce_unity_iap
+  end
   # Gets build:android's amazon? arg. Re-enabled each run so every Android task in one
   # invocation picks its own store.
   task :android, [:amazon?] do |t, args|
@@ -318,12 +323,16 @@ def unity(*args, quit: true, nographics: true)
 
   # Keep UNITY_PURCHASING_V5 in lockstep with the manifest version: present iff unity_iap_v5?.
   # Composes with existing .rsp content (e.g. TEAK_NOT_AVAILABLE) rather than clobbering.
+  # FORCE_SK1=1 (iOS, IAP 5) defines TEAK_FORCE_SK1 so TestDriver sets StoreKitSelector.forceStoreKit1.
+  spike_defines = { 'UNITY_PURCHASING_V5' => unity_iap_v5?, 'TEAK_FORCE_SK1' => ENV['FORCE_SK1'].to_s == '1' }
   UNITY_COMPILERS.each do |compiler|
     rsp_path = "Assets/#{compiler}.rsp"
-    next unless unity_iap_v5? || File.exist?(rsp_path)
+    next unless spike_defines.values.any? || File.exist?(rsp_path)
     lines = File.exist?(rsp_path) ? File.readlines(rsp_path, chomp: true) : []
-    lines.reject! { |l| l.strip == '-define:UNITY_PURCHASING_V5' }
-    lines << '-define:UNITY_PURCHASING_V5' if unity_iap_v5?
+    spike_defines.each do |name, on|
+      lines.reject! { |l| l.strip == "-define:#{name}" }
+      lines << "-define:#{name}" if on
+    end
     File.write(rsp_path, lines.map { |l| "#{l}\n" }.join)
   end
 
@@ -738,7 +747,7 @@ namespace :ios do
     fastlane 'match', 'development' if ci?
   end
 
-  task build: %i[iap:v4 warnings_as_errors] do
+  task build: %i[iap:ios warnings_as_errors] do
     FileUtils.rm_f('teak-unity-cleanroom.ipa')
     FileUtils.rm_f('teak-unity-cleanroom.app.dSYM.zip')
 

@@ -4,7 +4,7 @@
 // purchase through the Appstore SDK.
 #if USE_UNITY_IAP && !UNITY_PURCHASING_V5 && (UNITY_FACEBOOK || !UNITY_WEBGL)
 #define TEAK_IAP_V4
-#elif USE_UNITY_IAP && UNITY_PURCHASING_V5 && UNITY_ANDROID && !AMAZON
+#elif USE_UNITY_IAP && UNITY_PURCHASING_V5 && ((UNITY_ANDROID && !AMAZON) || UNITY_IOS)
 #define TEAK_IAP_V5
 #endif
 
@@ -699,8 +699,43 @@ public partial class TestDriver : MonoBehaviour
         return true;
     }
 
+#if UNITY_IOS
+    // Logs the app receipt in chunks (device log lines truncate) with its length and SHA-256,
+    // so it can be reassembled and POSTed to Apple's verifyReceipt.
+    private void LogAppReceipt(string tag) {
+        string path = System.IO.Path.GetFullPath(Application.dataPath + "/../StoreKit/sandboxReceipt");
+        if (!System.IO.File.Exists(path)) {
+            path = System.IO.Path.GetFullPath(Application.dataPath + "/../StoreKit/receipt");
+        }
+        if (!System.IO.File.Exists(path)) {
+            Debug.Log("[TestDriver-Receipt] " + tag + " no receipt at " + path);
+            return;
+        }
+        byte[] bytes = System.IO.File.ReadAllBytes(path);
+        string base64 = Convert.ToBase64String(bytes);
+        string sha;
+        using (System.Security.Cryptography.SHA256 hash = System.Security.Cryptography.SHA256.Create()) {
+            sha = BitConverter.ToString(hash.ComputeHash(bytes)).Replace("-", "");
+        }
+        Debug.Log("[TestDriver-Receipt] " + tag + " path=" + path + " bytes=" + bytes.Length + " base64Length=" + base64.Length + " sha256=" + sha);
+        const int chunk = 800;
+        int parts = (base64.Length + chunk - 1) / chunk;
+        for (int i = 0; i < parts; i++) {
+            Debug.Log("[TestDriver-Receipt] " + tag + " part " + (i + 1) + "/" + parts + " " + base64.Substring(i * chunk, Math.Min(chunk, base64.Length - i * chunk)));
+        }
+    }
+#endif
+
     private async void SetupUnityIAPv5() {
+#if UNITY_IOS
+        Debug.Log("[TestDriver] Initializing Unity IAP v5 for: Apple App Store");
+#if TEAK_FORCE_SK1
+        global::Purchasing.Utilities.StoreKitSelector.forceStoreKit1 = true;
+        Debug.Log("[TestDriver-UnityIAP] forceStoreKit1 = true");
+#endif
+#else
         Debug.Log("[TestDriver] Initializing Unity IAP v5 for: Google Play");
+#endif
         this.storeController = UnityIAPServices.StoreController();
 
         this.storeController.OnProductsFetched += (List<UnityEngine.Purchasing.Product> products) => {
@@ -721,6 +756,9 @@ public partial class TestDriver : MonoBehaviour
         };
         this.storeController.OnPurchaseConfirmed += (Order order) => {
             Debug.Log("[TestDriver-UnityIAP] OnPurchaseConfirmed");
+#if UNITY_IOS
+            this.LogAppReceipt("confirmed");
+#endif
         };
         this.storeController.OnPurchaseFailed += (FailedOrder order) => {
             Debug.Log("[TestDriver-UnityIAP] OnPurchaseFailed: " + order.FailureReason + " " + order.Details);
@@ -737,6 +775,9 @@ public partial class TestDriver : MonoBehaviour
         try {
             await this.storeController.Connect();
             Debug.Log("[TestDriver-UnityIAP] OnInitialized");
+#if UNITY_IOS
+            this.LogAppReceipt("launch");
+#endif
             this.storeController.FetchProducts(new List<ProductDefinition> {
 #if UNITY_IOS
                 new ProductDefinition(this.testPurchaseSku, testPurchaseAppleSku, ProductType.Consumable)
