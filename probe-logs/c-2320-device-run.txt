@@ -1,0 +1,71 @@
+# C-2320 device run, 2026-11-12, Teak's iPhone 14 Pro Max (iOS 18.7), Unity IAP 5.5.0, build of this branch at e203541
+# Driver: SandboxSheet.testPurchaseFlow (16:57, failed at the Purchase tap on a stale snapshot), then testResumeFlow x2 (both passed)
+
+## Device console, PROBE and IAP lines (launch 1)
+2026-11-12 16:56:36.528 teak-unity-cleanroom[1534:566612] PROBE [objc] hook: rebound afp=1 fn=1 slot(s) in /private/var/containers/Bundle/Application/EB537233-A601-4A7F-A9D9-C81FD044D121/teak-unity-cleanroom.app/Frameworks/UnityFramework.framework/UnityFramework
+2026-11-12 16:56:36.529 teak-unity-cleanroom[1534:566612] PROBE [objc] hook: finish afp=0x1bc1f6720 orig=0x1bc140344 ctxSize=96 total rebound=2 json=yes
+2026-11-12 16:56:36.530 teak-unity-cleanroom[1534:566612] PROBE [objc] hook: rebound jws 1 slot(s) in /private/var/containers/Bundle/Application/EB537233-A601-4A7F-A9D9-C81FD044D121/teak-unity-cleanroom.app/Frameworks/UnityFramework.framework/UnityFramework
+2026-11-12 16:56:36.530 teak-unity-cleanroom[1534:566612] PROBE [objc] jws hook: total rebound=1
+2026-11-12 16:56:36.530 teak-unity-cleanroom[1534:566612] PROBE [objc] loader: finish slots=2 jws slots=1
+[TestDriver-UnityIAP] OnInitialized
+[TestDriver-UnityIAP] OnProductsFetched: 1
+[TestDriver-UnityIAP] OnPurchasesFetched: 0 pending, 0 confirmed
+UnityEngine.Purchasing.<OnPurchasesFetched>d__77:MoveNext()
+UnityEngine.Purchasing.AppleStoreImpl:OnPurchasesFetched(String)
+InAppPurchasing: IPurchaseService.Purchase called without a callback defined for IPurchaseService.OnPurchaseDeferred.
+2026-11-12 16:57:59.600 teak-unity-cleanroom[1534:568104] PROBE [objc] jws thunk: length=5423 prefix=eyJhbGciOiJFUzI1NiIsIng1YyI6WyJNSUlFTVRD
+[TestDriver-UnityIAP] ProcessPurchase: io.teak.app.sku.dollar
+UnityEngine.Purchasing.PurchaseUseCase:OnPurchaseSucceeded(PendingOrder)
+UnityEngine.Purchasing.<OnPurchaseSucceeded>d__111:MoveNext()
+2026-11-12 16:58:00.103 teak-unity-cleanroom[1534:568104] PROBE [objc] finish thunk: Transaction.id=2000001265157768 receipt=bytes=5180 txIdOccurrences=2 json={"transactionId":"2000001265157768","originalTransactionId":"2000001265157768","bundleId":"io.teak.app.unity.dev","productId":"io.teak.app.unity.dev.dollar","purchaseDate":1794531478000,"originalPurchaseDate":1794531478000,"quantity":1,"type":"Consumable","deviceVerification":"XvwxEcxGJC9u5Q1ykUdb/kspZKlvC7cjRyMiwMeRONwo3tSTHVAa5qLrHbEvZIC8","deviceVerificationNonce":"bfe4072a-54a4-4a45-af15-65a89a9e0709","appAccountToken":"00000000-0000-0000-0000-000000000000","inAppOwnershipType":"PURCHASED","signedDate":1794531479368,"environment":"Sandbox","transactionReason":"PURCHASE","storefront":"USA","storefrontId":"143441","price":990,"currency":"USD","appTransactionId":"706051954853445094"}
+[TestDriver-UnityIAP] OnPurchaseConfirmed
+2026-11-12 16:58:02.734 teak-unity-cleanroom[1534:568104] PROBE [objc] jws thunk: length=5423 prefix=eyJhbGciOiJFUzI1NiIsIng1YyI6WyJNSUlFTVRD
+2026-11-12 16:58:03.141 teak-unity-cleanroom[1534:568962] PROBE [objc] finish thunk: Transaction.id=2000001265157768 receipt=bytes=5180 txIdOccurrences=2 json={"transactionId":"2000001265157768","originalTransactionId":"2000001265157768","bundleId":"io.teak.app.unity.dev","productId":"io.teak.app.unity.dev.dollar","purchaseDate":1794531478000,"originalPurchaseDate":1794531478000,"quantity":1,"type":"Consumable","deviceVerification":"4liAPPc/5EOHTCxwWUGD3KYic7lzRHrl/77TYucoZjqCgvopbmMbs68sx4J8vN1W","deviceVerificationNonce":"fe80ba35-05b1-4dd7-a956-f29e335ae156","appAccountToken":"00000000-0000-0000-0000-000000000000","inAppOwnershipType":"PURCHASED","signedDate":1794531477968,"environment":"Sandbox","transactionReason":"PURCHASE","storefront":"USA","storefrontId":"143441","price":990,"currency":"USD","appTransactionId":"706051954853445094"}
+InAppPurchasing: IPurchaseService.Purchase called without a callback defined for IPurchaseService.OnPurchaseDeferred.
+2026-11-12 16:58:37.558 teak-unity-cleanroom[1534:568838] PROBE [objc] jws thunk: length=5423 prefix=eyJhbGciOiJFUzI1NiIsIng1YyI6WyJNSUlFTVRD
+[TestDriver-UnityIAP] ProcessPurchase: io.teak.app.sku.dollar
+UnityEngine.Purchasing.PurchaseUseCase:OnPurchaseSucceeded(PendingOrder)
+UnityEngine.Purchasing.<OnPurchaseSucceeded>d__111:MoveNext()
+2026-11-12 16:58:37.604 teak-unity-cleanroom[1534:570096] PROBE [objc] finish thunk: Transaction.id=2000001265157858 receipt=bytes=5180 txIdOccurrences=0 json={"transactionId":"2000001265157858","originalTransactionId":"2000001265157858","bundleId":"io.teak.app.unity.dev","productId":"io.teak.app.unity.dev.dollar","purchaseDate":1794531516000,"originalPurchaseDate":1794531516000,"quantity":1,"type":"Consumable","deviceVerification":"uP3H3e92tXvX9Pkh2Hpc7V04K8/UpZUFS108XkA1tXkqka3Xkyz7rQUWRnHZYUtt","deviceVerificationNonce":"56387876-d455-4280-93ff-99cd35afeb08","appAccountToken":"00000000-0000-0000-0000-000000000000","inAppOwnershipType":"PURCHASED","signedDate":1794531517446,"environment":"Sandbox","transactionReason":"PURCHASE","storefront":"USA","storefrontId":"143441","price":990,"currency":"USD","appTransactionId":"706051954853445094"}
+[TestDriver-UnityIAP] OnPurchaseConfirmed
+2026-11-12 16:58:40.972 teak-unity-cleanroom[1534:567499] PROBE [objc] jws thunk: length=5423 prefix=eyJhbGciOiJFUzI1NiIsIng1YyI6WyJNSUlFTVRD
+2026-11-12 16:58:41.370 teak-unity-cleanroom[1534:570096] PROBE [objc] finish thunk: Transaction.id=2000001265157858 receipt=bytes=5180 txIdOccurrences=0 json={"transactionId":"2000001265157858","originalTransactionId":"2000001265157858","bundleId":"io.teak.app.unity.dev","productId":"io.teak.app.unity.dev.dollar","purchaseDate":1794531516000,"originalPurchaseDate":1794531516000,"quantity":1,"type":"Consumable","deviceVerification":"U5vmCoJZ9ic/C/RzQNDFcCDYAnnMjrDgVuWI+Y7BQDb0chiKHJxH4RwNDkdKd1Kb","deviceVerificationNonce":"a4b91b61-9194-4fd1-a139-68ab43d1f1a3","appAccountToken":"00000000-0000-0000-0000-000000000000","inAppOwnershipType":"PURCHASED","signedDate":1794531515732,"environment":"Sandbox","transactionReason":"PURCHASE","storefront":"USA","storefrontId":"143441","price":990,"currency":"USD","appTransactionId":"706051954853445094"}
+
+## Driver steps (password never logged)
+### p1
+SANDBOXFLOW tap Test Purchase at y=0.5477
+SANDBOXFLOW sheet labels=Sandbox | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, 
+Test Case '-[DriverUITests.SandboxSheet testPurchaseFlow]' failed (13.283 seconds).
+### r1
+SANDBOXFLOW labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple
+SANDBOXFLOW labels=  | Scene Dev
+SANDBOXFLOW labels=  | You’re all set. | You’re all set. | Your purchase was successful.
+SANDBOXFLOW tap OK on purchase-complete alert
+SANDBOXFLOW typed password, tapped Sign In
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (12.065 seconds).
+### r2
+SANDBOXFLOW labels=  | Scene Dev
+SANDBOXFLOW tap Test Purchase at y=0.5477
+SANDBOXFLOW labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple
+SANDBOXFLOW tap Purchase
+SANDBOXFLOW labels= 
+SANDBOXFLOW labels=  | Scene Dev
+SANDBOXFLOW labels=  | You’re all set. | You’re all set. | Your purchase was successful.
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (13.328 seconds).
+
+## Receipt reads (xcrun devicectl device copy from ... StoreKit/sandboxReceipt; counts of each tx id as ASCII)
+receipt-a bytes=5180 p1(2000001265157768)=2 p2(2000001265157858)=0
+receipt-b bytes=5180 p1(2000001265157768)=2 p2(2000001265157858)=0
+receipt-c bytes=5180 p1(2000001265157768)=2 p2(2000001265157858)=0
+(a = 16:58:52, ~10s after purchase 2; b = 16:59:52; c = after relaunch at 17:00:02 + 40s)
+
+## Launch 2 (relaunch)
+2026-11-12 17:00:02.204 teak-unity-cleanroom[1542:571100] PROBE [objc] hook: rebound afp=1 fn=1 slot(s) in /private/var/containers/Bundle/Application/EB537233-A601-4A7F-A9D9-C81FD044D121/teak-unity-cleanroom.app/Frameworks/UnityFramework.framework/UnityFramework
+2026-11-12 17:00:02.205 teak-unity-cleanroom[1542:571100] PROBE [objc] hook: finish afp=0x1bc1f6720 orig=0x1bc140344 ctxSize=96 total rebound=2 json=yes
+2026-11-12 17:00:02.205 teak-unity-cleanroom[1542:571100] PROBE [objc] hook: rebound jws 1 slot(s) in /private/var/containers/Bundle/Application/EB537233-A601-4A7F-A9D9-C81FD044D121/teak-unity-cleanroom.app/Frameworks/UnityFramework.framework/UnityFramework
+2026-11-12 17:00:02.205 teak-unity-cleanroom[1542:571100] PROBE [objc] jws hook: total rebound=1
+2026-11-12 17:00:02.205 teak-unity-cleanroom[1542:571100] PROBE [objc] loader: finish slots=2 jws slots=1
+[TestDriver-UnityIAP] OnPurchasesFetched: 0 pending, 0 confirmed
+UnityEngine.Purchasing.<OnPurchasesFetched>d__77:MoveNext()
+UnityEngine.Purchasing.AppleStoreImpl:OnPurchasesFetched(String)
