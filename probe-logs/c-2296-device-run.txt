@@ -56,3 +56,37 @@ Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (22.550 seconds)
 
 ## Driver sheet labels before the Purchase tap (verbatim, purchase 1)
 2026-11-15 12:18:07.259592-0800 DriverUITests-Runner[3024:1650421] SANDBOXFLOW labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple.com/legal/ams | For testing purposes only. You will not be charged for confirming this purchase. | Account: teak.devices+sandbox@gmail.com | Vertical scroll bar, 1 page | Vertical scroll bar, 1 page | Sandbox | close | Purchase
+
+# ========================================================================
+# Re-run 2026-11-15 13:42, after teak-ios #248 dropped its local dedupe (#248 @ 2df7b2a, framework UUID 71568D71-C561-33A7-9C4E-A878A5F06B84).
+# The embedded SDK version string still reads 4.3.17-145-g75c5cb9 (stale TeakVersion.h); the binary has purchase.report_storekit2 and no dedupe strings.
+
+## Raw: TestDriver lines and Teak purchase.report_storekit2 events
+[TestDriver-UnityIAP] jwsRepresentation length=5423
+[TestDriver-UnityIAP] jwsRepresentation length=5423
+2026-11-15 13:43:05.599 teak-unity-cleanroom[3062:1701092] Teak: {"app_id":"613659812345256","event_data":{"product_id":"io.teak.app.unity.dev.dollar","transaction_identifier":"2000001266091401"},"event_type":"purchase.report_storekit2","bundle_id":"io.teak.app.unity.dev","timestamp":1794778985,"client_app_version_name":"0","sdk
+UnityEngine.P2026-11-15 13:43:05.600 teak-unity-cleanroom[3062:1701092] Teak: {"app_id":"613659812345256","event_data":{"product_id":"io.teak.app.unity.dev.dollar","transaction_identifier":"2000001266091401"},"event_type":"purchase.report_storekit2","bundle_id":"io.teak.app.unity.dev","timestamp":1794778985,"client_app_version_n
+2026-11-15 13:43:26.578 teak-unity-cleanroom[3062:1701092] Teak: {"app_id":"613659812345256","event_data":{"product_id":"io.teak.app.unity.dev.dollar","transaction_identifier":"2000001266091434"},"event_type":"purchase.report_storekit2","bundle_id":"io.teak.app.unity.dev","timestamp":1794779006,"client_app_version_name":"0","sdk
+2026-11-15 13:43:26.579 teak-unity-cleanroom[3062:1701092] Teak: {"app_id":"613659812345256","event_data":{"product_id":"io.teak.app.unity.dev.dollar","transaction_identifier":"2000001266091434"},"event_type":"purchase.report_storekit2","bundle_id":"io.teak.app.unity.dev","timestamp":1794779006,"client_app_version_name":"0","sdk
+
+## Raw: first line of each /me/purchase request.send (TeakMulti[1-16]) and each reply
+2026-11-15 13:43:05.989 teak-unity-cleanroom[3062:1701243] TeakMulti[1-16]: {"app_id":"613659812345256","event_data":{"endpoint":"\/me\/purchase","payload":{"sdk_version":{"ios":"4.3.17-145-g75c5cb9",
+2026-11-15 13:43:05.990 teak-unity-cleanroom[3062:1702794] TeakMulti[1-16]: {"app_id":"613659812345256","event_data":{"endpoint":"\/me\/purchase","payload":{"sdk_version":{"ios":"4.3.17-145-g75c5cb9",
+2026-11-15 13:43:29.793 teak-unity-cleanroom[3062:1701461] TeakMulti[1-16]: {"app_id":"613659812345256","event_data":{"endpoint":"\/me\/purchase","payload":{"sdk_version":{"ios":"4.3.17-145-g75c5cb9",
+2026-11-15 13:43:29.793 teak-unity-cleanroom[3062:1703921] TeakMulti[1-16]: {"app_id":"613659812345256","event_data":{"endpoint":"\/me\/purchase","payload":{"sdk_version":{"ios":"4.3.17-145-g75c5cb9",
+2026-11-15 13:43:25.840 teak-unity-cleanroom[3062:1702794] TeakMulti[1-2]: {"app_id":"613659812345256","event_data":{"response_time":93.751072883605957,"hostname":"gocarrot.com","response_headers":{"S
+2026-11-15 13:43:29.885 teak-unity-cleanroom[3062:1703921] TeakMulti[1-2]: {"app_id":"613659812345256","event_data":{"response_time":99.161982536315918,"hostname":"gocarrot.com","response_headers":{"S
+2026-11-15 13:43:30.127 teak-unity-cleanroom[3062:1703991] TeakMulti[1-2]: {"app_id":"613659812345256","event_data":{"response_time":334.61606502532959,"hostname":"gocarrot.com","response_headers":{"C
+2026-11-15 13:43:30.211 teak-unity-cleanroom[3062:1701461] TeakMulti[1-2]: {"app_id":"613659812345256","event_data":{"response_time":417.12188720703125,"hostname":"gocarrot.com","response_headers":{"C
+
+## Driver sheet labels before each Purchase tap
+2026-11-15 13:42:52.014201-0800 DriverUITests-Runner[3066:1701752] SANDBOXFLOW labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple.com/legal/ams | For testing purposes only. You will not be cha
+SANDBOXFLOW tap Test Purchase at y=0.5477
+SANDBOXFLOW tap Purchase
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (28.189 seconds).
+2026-11-15 13:43:22.436620-0800 DriverUITests-Runner[3068:1703503] SANDBOXFLOW labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple.com/legal/ams | For testing purposes only. You will not be cha
+SANDBOXFLOW tap Test Purchase at y=0.5477
+SANDBOXFLOW tap Purchase
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (12.903 seconds).
