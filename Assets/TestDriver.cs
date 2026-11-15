@@ -760,6 +760,11 @@ public partial class TestDriver : MonoBehaviour
 #if UNITY_IOS
             this.LogAppReceipt("confirmed");
 #endif
+            // Reported twice: Teak must send it once.
+            string jws = order.Info.Apple?.jwsRepresentation;
+            Debug.Log("[TestDriver-UnityIAP] jwsRepresentation length=" + (jws == null ? "null" : jws.Length.ToString()));
+            Teak.Instance.ReportStoreKit2Transaction(jws);
+            Teak.Instance.ReportStoreKit2Transaction(jws);
         };
         this.storeController.OnPurchaseFailed += (FailedOrder order) => {
             Debug.Log("[TestDriver-UnityIAP] OnPurchaseFailed: " + order.FailureReason + " " + order.Details);
