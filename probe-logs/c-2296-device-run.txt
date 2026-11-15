@@ -1,0 +1,43 @@
+# C-2296 device run, 2026-11-15, Teak's iPhone 14 Pro Max (iOS 18.7), Unity IAP 5.5.0, sandbox
+# teak-unity #184 @ cf78811 + teak-ios #248 @ 75c5cb9 (framework UUID F17E2987-FF84-331F-90B9-CE91AC0C9EE6), driver SandboxSheet/testResumeFlow
+
+## StoreKit 2 build (IOS_IAP=5): Teak purchase events, /me/purchase sends and replies
+purchase.report.price report_storekit2_transaction  caller
+purchase.report report_storekit2_transaction 2000001266077786 
+purchase.report.price report_storekit2_transaction  caller
+purchase.report.duplicate report_storekit2_transaction 2000001266077786 
+SEND 2000001266077786 jws_len= 5423 price= 0.99 USD request_id= CA5401336C324BBF804A4787961A3641
+REPLY 2000001266077786 {'code': 200}
+purchase.report.price report_storekit2_transaction  caller
+purchase.report report_storekit2_transaction 2000001266077914 
+purchase.report.price report_storekit2_transaction  caller
+purchase.report.duplicate report_storekit2_transaction 2000001266077914 
+SEND 2000001266077914 jws_len= 5423 price= 0.99 USD request_id= B73E6CCA8EAD445AABDC3123349BC4D3
+REPLY 2000001266077914 {'code': 200}
+[TestDriver-UnityIAP] jwsRepresentation length=5423
+[TestDriver-UnityIAP] jwsRepresentation length=5423
+
+## FORCE_SK1 control
+purchase.report.price storekit1_observer  storekit
+purchase.report storekit1_observer 2000001266078126 
+SEND 2000001266078126 jws_len= 0 price= 0.99 USD request_id= 95D69556320A40D1A20E01F814044B6E
+REPLY 2000001266078126 {'code': 200}
+[TestDriver-UnityIAP] forceStoreKit1 = true
+[TestDriver-UnityIAP] jwsRepresentation length=0
+
+## Driver taps (password never logged)
+### p1d
+SANDBOXFLOW tap Test Purchase at y=0.6921
+SANDBOXFLOW tap Purchase
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (19.826 seconds).
+### p2
+SANDBOXFLOW tap Test Purchase at y=0.6921
+SANDBOXFLOW tap Purchase
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (13.154 seconds).
+### p3
+SANDBOXFLOW tap Test Purchase at y=0.5477
+SANDBOXFLOW tap Purchase
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (22.550 seconds).
