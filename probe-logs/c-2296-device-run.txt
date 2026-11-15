@@ -59,7 +59,7 @@ Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (22.550 seconds)
 
 # ========================================================================
 # Re-run 2026-11-15 13:42, after teak-ios #248 dropped its local dedupe (#248 @ 2df7b2a, framework UUID 71568D71-C561-33A7-9C4E-A878A5F06B84).
-# The embedded SDK version string still reads 4.3.17-145-g75c5cb9 (stale TeakVersion.h); the binary has purchase.report_storekit2 and no dedupe strings.
+# The embedded SDK version reads 4.3.17-145-g75c5cb9: the framework was built from the uncommitted tree just before it was committed as 2df7b2a (Define Version writes git describe of HEAD, no dirty marker). The binary has purchase.report_storekit2 and no dedupe strings.
 
 ## Raw: TestDriver lines and Teak purchase.report_storekit2 events
 [TestDriver-UnityIAP] jwsRepresentation length=5423
