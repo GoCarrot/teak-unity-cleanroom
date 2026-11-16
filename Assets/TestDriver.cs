@@ -763,6 +763,16 @@ public partial class TestDriver : MonoBehaviour
             // Reported twice: Teak must send it once.
             string jws = order.Info.Apple?.jwsRepresentation;
             Debug.Log("[TestDriver-UnityIAP] jwsRepresentation length=" + (jws == null ? "null" : jws.Length.ToString()));
+            if (!string.IsNullOrEmpty(jws)) {
+                // Chunked: a single console line truncates long strings.
+                const int chunk = 800;
+                int n = (jws.Length + chunk - 1) / chunk;
+                Debug.Log("[TestDriver-JWS] begin txn=" + order.Info.TransactionID + " length=" + jws.Length + " chunks=" + n);
+                for (int i = 0; i < n; i++) {
+                    Debug.Log("[TestDriver-JWS] " + (i + 1) + "/" + n + " " + jws.Substring(i * chunk, Math.Min(chunk, jws.Length - i * chunk)));
+                }
+                Debug.Log("[TestDriver-JWS] end");
+            }
             Teak.Instance.ReportStoreKit2Transaction(jws);
             Teak.Instance.ReportStoreKit2Transaction(jws);
         };
