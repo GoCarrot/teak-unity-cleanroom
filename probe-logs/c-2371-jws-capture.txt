@@ -1,0 +1,27 @@
+# C-2371 JWS capture, 2026-11-16, Teak's iPhone 14 Pro Max (iOS 18.7), Unity IAP 5.5.0, sandbox
+# teak-unity 4.3.17-44-gcf78811 package + teak-ios 75c5cb9 xcframework copied from the C-2296 export (Teak binary md5 f975a2e6f55086b1fafb25798a14fde0); TestDriver chunk log at 7a01420
+# Archive needed IPHONEOS_DEPLOYMENT_TARGET=15.0 on the xcodebuild line (Xcode 27.2 rejects the pods' 9.0/12.0)
+
+## purchase 1
+tap Test Purchase at y=0.5477
+labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple.com/legal/ams | For testing purposes only. You will not be charged for confirming this purchase. | Account: teak.devices+sandbox@gmail.com | Vertical scroll bar, 1 page | Vertical scroll bar, 1 page | Sandbox | close | Purchase
+tap Purchase
+typed password, tapped Sign In
+labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple.com/legal/ams | For testing purposes only. You will not be charged for confirming this purchase. | Account: teak.devices+sandbox@gmail.com | Vertical scroll bar, 1 page | Vertical scroll bar, 1 page | Sandbox | close | Done
+tap OK on purchase-complete alert
+[TestDriver-UnityIAP] OnPurchaseConfirmed
+[TestDriver-JWS] begin txn=2000001266619543 length=5423 chunks=7
+
+## purchase 2
+tap Test Purchase at y=0.5477
+labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple.com/legal/ams | For testing purposes only. You will not be charged for confirming this purchase. | Account: teak.devices+sandbox@gmail.com | Vertical scroll bar, 1 page | Vertical scroll bar, 1 page | Sandbox | close | Purchase
+tap Purchase
+tap OK on purchase-complete alert
+[TestDriver-UnityIAP] OnPurchaseConfirmed
+[TestDriver-JWS] begin txn=2000001266619713 length=5423 chunks=7
+
+## checks on purchase 2's JWS (txn 2000001266619713), full string in c-2371-jws.txt
+length 5423, 3 base64url segments; header alg ES256, x5c 3 certs; payload environment Sandbox, bundleId io.teak.app.unity.dev, type Consumable
+openssl verify -CAfile AppleRootCA-G3.pem -untrusted x5c1.pem x5c0.pem -> c0.pem: OK
+openssl dgst -sha256 -verify leaf.pub -signature sig.der header.payload -> Verified OK
+SDK request.send /me/purchase jws_representation is byte-identical to the TestDriver log (2 sends for this txn: request_ids differ, event_ids 103/104)
