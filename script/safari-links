@@ -85,18 +85,13 @@ def lan_host
   Socket.ip_address_list.find { |a| a.ipv4_private? && !a.ipv4_loopback? }&.ip_address
 end
 
-# syslog prints a backslash as \134, and Teak JSON-escapes "/".
-def plain(line)
-  line.gsub('\\134/', '/').gsub('\\/', '/')
-end
-
 # What one tap left in the log.
 class Observation
   attr_reader :link, :lines
 
   def initialize(link, lines)
     @link = link
-    @lines = lines.map { |l| plain(l) }
+    @lines = lines
   end
 
   def delivery
@@ -104,8 +99,8 @@ class Observation
   end
 
   def a = delivery.find { |l| l.include?('type=NSUserActivityTypeBrowsingWeb') }
-  def b = lines.find { |l| l.include?(%("launch_link":"#{link.url}")) }
-  def d = lines.find { |l| l.include?('"event_type":"deep_link.request.send"') && l.include?(link.url) }
+  def b = lines.find { |l| l.include?("[Test Driver] teak event request.send launch_link=#{link.url}") }
+  def d = lines.find { |l| l.include?('[Test Driver] teak event deep_link.request.send') && l.include?(link.url) }
 
   def c
     summary = lines.find { |l| l.include?('OnPostLaunchSummary:') && l.include?("LaunchLink = '#{link.url}'") }
@@ -254,7 +249,7 @@ links.each do |link|
     else
       run!('xcrun', 'devicectl', 'device', 'process', 'launch', '--device', udid, '--terminate-existing', bundle_id)
       deadline = Time.now + 60
-      sleep 1 until Time.now > deadline || syslog_lock.synchronize { syslog.any? { |l| l.include?('"event_type":"sdk_init"') } }
+      sleep 1 until Time.now > deadline || syslog_lock.synchronize { syslog.any? { |l| l.include?('TestDriver Lifecycle: Start') } }
       sleep options[:settle]
     end
     mark = syslog_lock.synchronize { syslog.size }

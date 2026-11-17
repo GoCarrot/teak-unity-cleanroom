@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
+#import <os/log.h>
 
 // Logs which UIKit callback iOS used to hand the app a link, so a Safari tap can be read without
 // guessing. A universal link arrives as an NSUserActivity (scene:continueUserActivity:, or
@@ -9,9 +10,45 @@
 // the original, so Unity and Teak's hooks behave as before.
 //
 //   [Test Driver] link delivery path=<callback> type=<activity type | url-context> url=<url>
+//
+// It also repeats two Teak events the same way, since the device log hides Teak's own lines and
+// Unity only sees native events after its scripts have started:
+//
+//   [Test Driver] teak event request.send launch_link=<url>
+//   [Test Driver] teak event deep_link.request.send <message>
+//
+// %{public} keeps the device log from replacing the values with <private>.
 
 static void LogDelivery(NSString* path, NSString* type, NSURL* url) {
-    NSLog(@"[Test Driver] link delivery path=%@ type=%@ url=%@", path, type, url.absoluteString);
+    os_log(OS_LOG_DEFAULT, "[Test Driver] link delivery path=%{public}@ type=%{public}@ url=%{public}@", path, type, url.absoluteString);
+}
+
+static void LogTeakEvent(NSString* event, NSDictionary* payload) {
+    id data = payload[@"event_data"];
+    if ([event isEqualToString:@"request.send"] && [data isKindOfClass:[NSDictionary class]]) {
+        id launchLink = [data[@"payload"] isKindOfClass:[NSDictionary class]] ? data[@"payload"][@"launch_link"] : nil;
+        if (launchLink != nil) {
+            os_log(OS_LOG_DEFAULT, "[Test Driver] teak event request.send launch_link=%{public}@", launchLink);
+        }
+    } else if ([event isEqualToString:@"deep_link.request.send"]) {
+        os_log(OS_LOG_DEFAULT, "[Test Driver] teak event deep_link.request.send %{public}@", data);
+    }
+}
+
+// Puts LogTeakEvent in front of Teak's log listener, which Unity's bridge installs. Done from the
+// first link callback, by which time that bridge has run; the listener is called from any thread.
+static void WrapTeakLogListener(void) {
+    static BOOL wrapped = NO;
+    if (wrapped) return;
+    Class teakClass = NSClassFromString(@"Teak");
+    id teak = [teakClass respondsToSelector:@selector(sharedInstance)] ? [teakClass performSelector:@selector(sharedInstance)] : nil;
+    if (teak == nil) return;
+    void (^original)(NSString*, NSString*, NSDictionary*) = [teak valueForKey:@"logListener"];
+    [teak setValue:^(NSString* event, NSString* level, NSDictionary* payload) {
+        LogTeakEvent(event, payload);
+        if (original != nil) original(event, level, payload);
+    } forKey:@"logListener"];
+    wrapped = YES;
 }
 
 static void LogActivity(NSString* path, NSUserActivity* activity) {
@@ -39,12 +76,14 @@ static BOOL (*sAppOpenURL)(id, SEL, UIApplication*, NSURL*, NSDictionary*);
 
 API_AVAILABLE(ios(13.0))
 static void SceneConnect(id self, SEL cmd, UIScene* scene, UISceneSession* session, UISceneConnectionOptions* options) {
+    WrapTeakLogListener();
     for (NSUserActivity* activity in options.userActivities) LogActivity(@"scene:willConnectToSession:options:", activity);
     for (UIOpenURLContext* context in options.URLContexts) LogContext(@"scene:willConnectToSession:options:", context);
     sSceneConnect(self, cmd, scene, session, options);
 }
 
 static void SceneActivity(id self, SEL cmd, UIScene* scene, NSUserActivity* activity) {
+    WrapTeakLogListener();
     LogActivity(@"scene:continueUserActivity:", activity);
     sSceneActivity(self, cmd, scene, activity);
 }
@@ -56,6 +95,7 @@ static void SceneOpenContexts(id self, SEL cmd, UIScene* scene, NSSet<UIOpenURLC
 }
 
 static BOOL AppActivity(id self, SEL cmd, UIApplication* application, NSUserActivity* activity, id handler) {
+    WrapTeakLogListener();
     LogActivity(@"application:continueUserActivity:restorationHandler:", activity);
     return sAppActivity(self, cmd, application, activity, handler);
 }
