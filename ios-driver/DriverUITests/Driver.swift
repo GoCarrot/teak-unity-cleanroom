@@ -15,9 +15,7 @@ final class Driver: XCTestCase {
     private var appName = ""
 
     /// Simulator only: a host file holding how many /session_stop requests the app's current session
-    /// has sent since its last other request. When set, the driver doesn't bring a held app back until
-    /// it's above zero (or the hold runs out), because Teak drops a stop that hasn't gone out by the
-    /// time the app returns.
+    /// has sent since its last other request (see ios-suite for why).
     private var stopCountPath: String?
     private var stopHoldSeconds: TimeInterval = 0
     /// A host file that reads "1" while the running test is one the hold applies to.
@@ -81,8 +79,6 @@ final class Driver: XCTestCase {
             }
             let mayReturn = !backgrounded || stopSentOrHoldOver(since: backgroundSince!)
 
-            // A tap that reports success doesn't mean the app came back, so only the foreground
-            // check above ends this background.
             if mayReturn && tapBanner() {
                 backgroundSince = nil
                 continue
@@ -145,7 +141,7 @@ final class Driver: XCTestCase {
     /// Whether the app may be brought back: its /session_stop for this background has gone out, or
     /// the hold ran out (a stop that never comes then fails the test instead of stalling the run).
     private func stopSentOrHoldOver(since backgroundSince: Date) -> Bool {
-        guard stopCountPath != nil, stopHoldSeconds > 0, holding, !holdOver else { return true }
+        guard stopHoldSeconds > 0, holding, !holdOver else { return true }
         let waited = Date().timeIntervalSince(backgroundSince)
         if let count = readStopCount(), count > 0 {
             if !holdLogged { log(String(format: "session_stop sent after %.1fs in background", waited)) }
