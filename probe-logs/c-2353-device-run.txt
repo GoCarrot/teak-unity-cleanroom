@@ -37,6 +37,7 @@ SANDBOXFLOW labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Pu
 [TestDriver-UnityIAP] forceStoreKit1 = true
 [TestDriver-UnityIAP] jwsRepresentation length=0
 2026-11-17 14:51:09.164 SEND /me/purchase jws_len= 0 txn= 2000001267184249 sdk= "sdk_version":{"ios":"4.3.18.alpha0","unity":"4.3.17-51-gc7bfc27"}
+2026-11-17 14:51:09.692  REPLY /me/purchase (raw first chunk, endpoint, request_id, code): ['"endpoint":"\\/me\\/purchase"'] ['"request_id":"08191AF970C84260B6291FEFC3FC3110"'] ['"code":200']
 SANDBOXFLOW tap Test Purchase at y=0.5477
 SANDBOXFLOW tap Purchase
 SANDBOXFLOW typed password, tapped Sign In
