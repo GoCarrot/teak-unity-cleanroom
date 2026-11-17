@@ -18,6 +18,7 @@ using UnityEngine.Purchasing;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 
 #if !TEAK_NOT_AVAILABLE
@@ -157,19 +158,27 @@ public partial class TestDriver : MonoBehaviour
 
         this.teakInterface = GetComponent<TeakInterface>();
 
-        this.ResetTests();
-
-        if (PlayerPrefs.GetInt(TestListVersionKey, 0) == this.TestListVersion &&
-            PlayerPrefs.GetString(TestListCurrentTestKey, null) != null) {
-
-            while (this.testEnumerator != null &&
-                   !string.Equals(this.testEnumerator.Current.Name, PlayerPrefs.GetString(TestListCurrentTestKey))) {
-                // TODO: At some point should maybe serialize the tests out to JSON, with Status and debug info
-                //       but for now just set it as successful.
-                this.testEnumerator.Current.Status = Test.TestState.Passed;
-                this.AdvanceTests(true);
-            }
+        if (File.Exists(Path.Combine(Application.persistentDataPath, LinkModeMarker))) {
+            // A link tapped in Safari launches the app with no way to pass it options, so the marker
+            // file keeps the suite from starting and racing the link.
+            Debug.Log("[Test Driver] link mode, suite not started");
+            this.testList = new List<Test>();
             this.SetupUI();
+        } else {
+            this.ResetTests();
+
+            if (PlayerPrefs.GetInt(TestListVersionKey, 0) == this.TestListVersion &&
+                PlayerPrefs.GetString(TestListCurrentTestKey, null) != null) {
+
+                while (this.testEnumerator != null &&
+                       !string.Equals(this.testEnumerator.Current.Name, PlayerPrefs.GetString(TestListCurrentTestKey))) {
+                    // TODO: At some point should maybe serialize the tests out to JSON, with Status and debug info
+                    //       but for now just set it as successful.
+                    this.testEnumerator.Current.Status = Test.TestState.Passed;
+                    this.AdvanceTests(true);
+                }
+                this.SetupUI();
+            }
         }
 
 #if !TEAK_NOT_AVAILABLE
@@ -530,6 +539,7 @@ public partial class TestDriver : MonoBehaviour
 
     // Debug builds only: hard-crash the player when the named test is about to begin, so a test
     // runner's crash detection can be exercised on demand.
+    private const string LinkModeMarker = "safari-link-mode";
     private const string CrashAtEnvironmentVariable = "TEAK_CLEANROOM_CRASH_AT";
     private static void CrashIfRequested(string testName) {
         if (!Debug.isDebugBuild) {
