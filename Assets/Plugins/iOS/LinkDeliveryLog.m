@@ -14,8 +14,8 @@
 // It also repeats two Teak events the same way, since the device log hides Teak's own lines and
 // Unity only sees native events after its scripts have started:
 //
-//   [Test Driver] teak event request.send launch_link=<url>
-//   [Test Driver] teak event deep_link.request.send <message>
+//   [Test Driver] teak event request.send users.json launch_link=<url | (none)>
+//   [Test Driver] teak event deep_link.<name> <message or event data as JSON>
 //
 // %{public} keeps the device log from replacing the values with <private>.
 
@@ -23,15 +23,23 @@ static void LogDelivery(NSString* path, NSString* type, NSURL* url) {
     os_log(OS_LOG_DEFAULT, "[Test Driver] link delivery path=%{public}@ type=%{public}@ url=%{public}@", path, type, url.absoluteString);
 }
 
+// event_data as one line: a string as is, a dictionary as JSON.
+static NSString* OneLine(id data) {
+    if (![NSJSONSerialization isValidJSONObject:data]) return [data description];
+    NSData* json = [NSJSONSerialization dataWithJSONObject:data options:0 error:nil];
+    return json ? [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding] : [data description];
+}
+
 static void LogTeakEvent(NSString* event, NSDictionary* payload) {
     id data = payload[@"event_data"];
     if ([event isEqualToString:@"request.send"] && [data isKindOfClass:[NSDictionary class]]) {
-        id launchLink = [data[@"payload"] isKindOfClass:[NSDictionary class]] ? data[@"payload"][@"launch_link"] : nil;
-        if (launchLink != nil) {
-            os_log(OS_LOG_DEFAULT, "[Test Driver] teak event request.send launch_link=%{public}@", launchLink);
+        if ([data[@"endpoint"] hasSuffix:@"/users.json"] && [data[@"payload"] isKindOfClass:[NSDictionary class]]) {
+            id launchLink = data[@"payload"][@"launch_link"];
+            os_log(OS_LOG_DEFAULT, "[Test Driver] teak event request.send users.json launch_link=%{public}@", launchLink ?: @"(none)");
         }
-    } else if ([event isEqualToString:@"deep_link.request.send"]) {
-        os_log(OS_LOG_DEFAULT, "[Test Driver] teak event deep_link.request.send %{public}@", data);
+    } else if ([event hasPrefix:@"deep_link."]) {
+        id message = [data isKindOfClass:[NSDictionary class]] && data[@"message"] != nil ? data[@"message"] : data;
+        os_log(OS_LOG_DEFAULT, "[Test Driver] teak event %{public}@ %{public}@", event, OneLine(message));
     }
 }
 
@@ -49,6 +57,7 @@ static void WrapTeakLogListener(void) {
         if (original != nil) original(event, level, payload);
     } forKey:@"logListener"];
     wrapped = YES;
+    os_log(OS_LOG_DEFAULT, "[Test Driver] teak log listener wrapped, had one: %{public}@", original != nil ? @"yes" : @"no");
 }
 
 static void LogActivity(NSString* path, NSUserActivity* activity) {

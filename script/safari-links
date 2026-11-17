@@ -45,6 +45,7 @@ OptionParser.new do |o|
   o.on('--settle SECONDS', Integer, "Warm: wait this long after the app starts (default #{options[:settle]})") { |v| options[:settle] = v }
   o.on('--wait SECONDS', Integer, "Wait this long for a tap's log lines (default #{options[:wait]})") { |v| options[:wait] = v }
   o.on('--out DIR', 'Where logs go (default build/safari-links/<time>)') { |v| options[:out] = File.expand_path(v) }
+  o.on('--skip-driver-build', 'Use the driver already built under build/DriverDerivedData') { options[:skip_driver_build] = true }
   o.on('--allow-provisioning-updates', 'Let Xcode register the device and create profiles on the shared Apple team') do
     options[:allow_provisioning_updates] = true
   end
@@ -99,7 +100,7 @@ class Observation
   end
 
   def a = delivery.find { |l| l.include?('type=NSUserActivityTypeBrowsingWeb') }
-  def b = lines.find { |l| l.include?("[Test Driver] teak event request.send launch_link=#{link.url}") }
+  def b = lines.find { |l| l.include?("[Test Driver] teak event request.send users.json launch_link=#{link.url}") }
   def d = lines.find { |l| l.include?('[Test Driver] teak event deep_link.request.send') && l.include?(link.url) }
 
   def c
@@ -184,12 +185,14 @@ abort "the page isn't reachable at #{page_url}, see #{File.join(out_dir, 'server
 
 # Driver
 driver_data = File.join(ROOT, 'build', 'DriverDerivedData')
-say 'building driver'
 extra = options[:allow_provisioning_updates] ? %w[-allowProvisioningUpdates -allowProvisioningDeviceRegistration] : []
-build_out, build_status = run('xcodebuild', 'build-for-testing', '-project', DRIVER_PROJECT, '-scheme', 'Driver',
-                              '-destination', "id=#{udid}", '-derivedDataPath', driver_data, *extra)
-File.write(File.join(out_dir, 'driver-build.log'), build_out)
-abort "driver build failed, see #{File.join(out_dir, 'driver-build.log')}" unless build_status.success?
+unless options[:skip_driver_build]
+  say 'building driver'
+  build_out, build_status = run('xcodebuild', 'build-for-testing', '-project', DRIVER_PROJECT, '-scheme', 'Driver',
+                                '-destination', "id=#{udid}", '-derivedDataPath', driver_data, *extra)
+  File.write(File.join(out_dir, 'driver-build.log'), build_out)
+  abort "driver build failed, see #{File.join(out_dir, 'driver-build.log')}" unless build_status.success?
+end
 xctestrun = Dir.glob(File.join(driver_data, 'Build', 'Products', '*.xctestrun')).max_by { |f| File.mtime(f) }
 
 # App: fresh install, with the marker that keeps the suite from starting.
