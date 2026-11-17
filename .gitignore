@@ -50,6 +50,8 @@ Packages/packages-lock.json*
 
 # Firebase plugin generated files
 Assets/StreamingAssets/google-services-desktop.json*
+# Copied from Templates/google-services.<build type>.json by config:settings
+Assets/google-services.json
 
 # Play Services Resolver
 Assets/Plugins/Android/FirebaseApp.androidlib*

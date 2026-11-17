@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "684769573210",
+    "project_id": "demoproject-fa1cf",
+    "storage_bucket": "demoproject-fa1cf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684769573210:android:413eedf69c64337437db63",
+        "android_client_info": {
+          "package_name": "com.teak.test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBa55e7eIJKA4kzwZjf3Gf_MrnH2lODiho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684769573210:android:052e0514ae70a27c37db63",
+        "android_client_info": {
+          "package_name": "io.teak.app.unity.prod"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBa55e7eIJKA4kzwZjf3Gf_MrnH2lODiho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
