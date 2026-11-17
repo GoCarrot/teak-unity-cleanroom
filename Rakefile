@@ -373,6 +373,33 @@ def with_kms_decrypt(file, &block)
   File.delete file
 end
 
+# Xcode 27 rejects pods that target below iOS 15.0, and some of the Firebase pods still declare 9-13.
+# Raises those in the Pods project; targets already at or above the floor are left alone.
+POD_MIN_IOS = '15.0'.freeze
+POD_TARGETS_MARKER = '# teak-cleanroom: raise pod deployment targets'.freeze
+
+def raise_pod_deployment_targets(podfile)
+  contents = File.read(podfile)
+  return if contents.include?(POD_TARGETS_MARKER)
+
+  raise "#{podfile} already has a post_install; merge the deployment-target raise into it by hand" if contents =~ /^\s*post_install\b/
+
+  File.write(podfile, contents.chomp + <<~RUBY)
+
+    #{POD_TARGETS_MARKER}
+    post_install do |installer|
+      installer.pods_project.targets.each do |target|
+        target.build_configurations.each do |config|
+          current = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+          next if current && Gem::Version.new(current) >= Gem::Version.new('#{POD_MIN_IOS}')
+
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '#{POD_MIN_IOS}'
+        end
+      end
+    end
+  RUBY
+end
+
 def print_build_msg(platform, args = nil)
   require_unity!
   build_msg = <<~BUILD_MSG
@@ -754,7 +781,10 @@ namespace :ios do
     unity '-buildTarget', 'iOS', '-executeMethod', 'BuildPlayer.iOS', *additional_args
 
     cd 'Unity-iPhone', verbose: false do
-      sh 'pod install' if File.file?('Podfile')
+      if File.file?('Podfile')
+        raise_pod_deployment_targets('Podfile')
+        sh 'pod install'
+      end
     end
   end
 
