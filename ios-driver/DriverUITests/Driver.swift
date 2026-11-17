@@ -14,6 +14,20 @@ final class Driver: XCTestCase {
     private var app: XCUIApplication!
     private var appName = ""
 
+    /// Simulator only: a host file holding how many /session_stop requests the app's current session
+    /// has sent since its last other request (see ios-suite for why).
+    private var stopCountPath: String?
+    private var stopHoldSeconds: TimeInterval = 0
+    /// A host file that reads "1" while the running test is one the hold applies to.
+    private var stopHoldPath: String?
+    /// Whether this background is held. Checked every tick until it is, since ios-suite flags the
+    /// test from the app's log, which can trail the app going to the background.
+    private var holding = false
+    /// This background's hold ran out with no stop. It stays out until the app is seen in the
+    /// foreground, so a return that doesn't take can't start a second full hold.
+    private var holdOver = false
+    private var holdLogged = false
+
     /// Alert buttons the driver taps, in preference order. Anything else is logged, not tapped.
     private let acceptButtons = ["Allow", "Open"]
 
@@ -22,9 +36,13 @@ final class Driver: XCTestCase {
         let env = ProcessInfo.processInfo.environment
         let bundleId = env["CLEANROOM_BUNDLE_ID"] ?? "io.teak.app.unity.dev"
         appName = env["CLEANROOM_APP_NAME"] ?? ""
+        stopCountPath = env["CLEANROOM_STOP_COUNT_PATH"]
+        stopHoldSeconds = TimeInterval(env["CLEANROOM_STOP_HOLD_SECONDS"] ?? "") ?? 0
+        stopHoldPath = env["CLEANROOM_STOP_HOLD_PATH"]
         let seconds = TimeInterval(env["CLEANROOM_DRIVER_SECONDS"] ?? "") ?? 1800
         app = XCUIApplication(bundleIdentifier: bundleId)
-        log("config bundle=\(bundleId) app_name=\(appName.isEmpty ? "(none)" : appName) seconds=\(Int(seconds))")
+        log("config bundle=\(bundleId) app_name=\(appName.isEmpty ? "(none)" : appName) seconds=\(Int(seconds)) " +
+            "stop_hold=\(Int(stopHoldSeconds)) stop_count_path=\(stopCountPath != nil) stop_hold_path=\(stopHoldPath != nil)")
         // An empty name would match every app's notifications, so refuse to start.
         guard !appName.isEmpty else { throw ConfigurationError.missingAppName }
         log("ready")
@@ -47,27 +65,43 @@ final class Driver: XCTestCase {
                 }
             }
 
-            if tapBanner() {
+            let backgrounded = isBackgrounded(app)
+            if backgrounded {
+                backgroundSince = backgroundSince ?? Date()
+                // ios-suite zeroes the count at the session's last send before backgrounding, so any
+                // stop it shows is this background's, even one sent before this tick noticed.
+                if !holding && holdApplies() {
+                    holding = true
+                    log("holding the background for session_stop")
+                }
+            } else {
+                resetBackground(&backgroundSince)
+            }
+            let mayReturn = !backgrounded || stopSentOrHoldOver(since: backgroundSince!)
+
+            if mayReturn && tapBanner() {
                 backgroundSince = nil
                 continue
             }
 
             if settings.state == .runningForeground {
                 settingsSince = settingsSince ?? Date()
-                if Date().timeIntervalSince(settingsSince!) > 3 {
+                if Date().timeIntervalSince(settingsSince!) > 3 && mayReturn {
                     log("Settings in foreground, returning to app")
                     app.activate()
                     settingsSince = nil
+                    // The app takes a moment to come up. Restart the background clock so the next
+                    // tick doesn't read a long background and pull Notification Center over it.
+                    backgroundSince = nil
                 }
             } else {
                 settingsSince = nil
             }
 
-            if isBackgrounded(app) {
-                backgroundSince = backgroundSince ?? Date()
+            if backgrounded && mayReturn {
                 // Banners go to Notification Center after a few seconds, so look there too, but not
                 // every tick: each pull-down is slow and noisy.
-                if Date().timeIntervalSince(backgroundSince!) > 8 &&
+                if let since = backgroundSince, Date().timeIntervalSince(since) > 8,
                     Date().timeIntervalSince(lastNotificationCenterCheck) > 10 {
                     lastNotificationCenterCheck = Date()
                     if tapNotificationCenterCell() {
@@ -75,13 +109,52 @@ final class Driver: XCTestCase {
                         continue
                     }
                 }
-            } else {
-                backgroundSince = nil
             }
 
             Thread.sleep(forTimeInterval: 1)
         }
         log("time cap reached")
+    }
+
+    // MARK: - Session stop hold
+
+    /// The app is in the foreground: the next background starts a fresh hold.
+    private func resetBackground(_ backgroundSince: inout Date?) {
+        backgroundSince = nil
+        holding = false
+        holdOver = false
+        holdLogged = false
+    }
+
+    private func holdApplies() -> Bool {
+        guard let path = stopHoldPath,
+              let text = try? String(contentsOfFile: path, encoding: .utf8) else { return false }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines) == "1"
+    }
+
+    private func readStopCount() -> Int? {
+        guard let path = stopCountPath,
+              let text = try? String(contentsOfFile: path, encoding: .utf8) else { return nil }
+        return Int(text.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    /// Whether the app may be brought back: its /session_stop for this background has gone out, or
+    /// the hold ran out (a stop that never comes then fails the test instead of stalling the run).
+    private func stopSentOrHoldOver(since backgroundSince: Date) -> Bool {
+        guard stopHoldSeconds > 0, holding, !holdOver else { return true }
+        let waited = Date().timeIntervalSince(backgroundSince)
+        if let count = readStopCount(), count > 0 {
+            if !holdLogged { log(String(format: "session_stop sent after %.1fs in background", waited)) }
+            holdLogged = true
+            return true
+        }
+        if waited > stopHoldSeconds {
+            holdOver = true
+            if !holdLogged { log("no session_stop after \(Int(stopHoldSeconds))s in background, returning anyway") }
+            holdLogged = true
+            return true
+        }
+        return false
     }
 
     // MARK: - Alerts
