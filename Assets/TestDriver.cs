@@ -221,7 +221,7 @@ public partial class TestDriver : MonoBehaviour
     // True once a users.json that carried the push token has been answered, i.e. the server has the
     // token. Tracked here, not on a test, because the token can register during any earlier test.
     // Never reset: the token belongs to the device.
-    public bool PushTokenAtServer { get; private set; }
+    private bool PushTokenAtServer { get; set; }
     private readonly HashSet<string> pushTokenRequestIds = new HashSet<string>();
 
     private void TrackPushTokenAtServer(TeakLogEvent teakLogEvent) {
@@ -250,6 +250,15 @@ public partial class TestDriver : MonoBehaviour
                 this.pushTokenRequestIds.Add(requestId);
             }
         } else if ("request.reply".Equals(teakLogEvent.EventType) && this.pushTokenRequestIds.Contains(requestId)) {
+            // request.reply is also logged for failed requests; a successful identify carries the
+            // player's opt-out states.
+            Dictionary<string, object> reply = null;
+            if (teakLogEvent.EventData.TryGetValue("payload", out value)) {
+                reply = value as Dictionary<string, object>;
+            }
+            if (reply == null || !reply.ContainsKey("opt_out_states")) {
+                return;
+            }
             this.PushTokenAtServer = true;
             Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] push token at server");
         }
