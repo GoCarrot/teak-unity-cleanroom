@@ -105,7 +105,6 @@ class Observation
   def missing
     { 'a delivery' => a, 'b launch_link' => b, 'c summary' => c, 'd resolve' => d }.select { |_, v| v.nil? }.keys
   end
-
 end
 
 # Streams a child's merged output to a log file and a block.
