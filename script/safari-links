@@ -1,22 +1,12 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Taps Teak universal links in Safari on an iOS device, cold and warm, and reports which path
-# delivered each one. Reads the links from safari-links/index.html, serves that page from this Mac
-# (it has to be on a different host than the links, or iOS opens them in Safari), and checks the
-# app's log for, per tap:
-#
-#   a. a "link delivery" line (Assets/Plugins/iOS/LinkDeliveryLog.m) with an NSUserActivity for the URL
-#   b. a users.json request whose launch_link is the URL
-#   c. OnPostLaunchSummary, whose DeepLink ends with the link's data-deeplink when it has one
-#   d. deep_link.request.send for the URL (only the universal-link resolve sends it)
+# Taps the links on safari-links/index.html in Safari on an iOS device, cold and warm, and checks
+# the app's log for what each tap did (see the README). The page is served from this Mac, which has
+# to be on the device's network. The app is installed fresh, with the marker that keeps the TestDriver
+# suite from starting.
 #
 #   script/safari-links --app path/to/App.app --device <udid>
-#
-# The app must be a build of this project. The run installs it fresh (iOS caches the AASA per
-# install) and leaves a marker so the TestDriver suite doesn't start. The Mac and the device have to
-# be on the same network. Cold: the app is killed, then Safari opens the page and the tap launches
-# it. Warm: the app is running, Safari opens over it, the tap brings it back.
 #
 # Exit status: 0 every tap passed, 1 a tap failed or the run couldn't be set up.
 
@@ -38,7 +28,7 @@ options = { port: 8404, settle: 10, wait: 60 }
 OptionParser.new do |o|
   o.banner = 'Usage: script/safari-links --app App.app --device UDID [options]'
   o.on('--app PATH', 'Built .app to install') { |v| options[:app] = File.expand_path(v) }
-  o.on('--device UDID', 'Physical device (explicit UDID, never a default)') { |v| options[:device] = v }
+  o.on('--device UDID', 'Physical device UDID') { |v| options[:device] = v }
   o.on('--port PORT', Integer, "Page server port (default #{options[:port]})") { |v| options[:port] = v }
   o.on('--host HOST', 'Address the device reaches this Mac at (default: its LAN address)') { |v| options[:host] = v }
   o.on('--only LABEL', 'Run just the link with this text') { |v| options[:only] = v }
@@ -116,7 +106,6 @@ class Observation
     { 'a delivery' => a, 'b launch_link' => b, 'c summary' => c, 'd resolve' => d }.select { |_, v| v.nil? }.keys
   end
 
-  def done? = pass?
 end
 
 # Streams a child's merged output to a log file and a block.
@@ -268,7 +257,7 @@ links.each do |link|
     deadline = Time.now + options[:wait]
     loop do
       observation = Observation.new(link, syslog_lock.synchronize { syslog[mark..] })
-      break if observation.done? || Time.now > deadline
+      break if observation.pass? || Time.now > deadline
 
       sleep 1
     end

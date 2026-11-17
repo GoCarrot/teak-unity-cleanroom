@@ -137,24 +137,22 @@ final class Driver: XCTestCase {
         log("tap: tapping \"\(label)\"")
         link.tap()
 
-        // A universal link opens the app with no prompt. Look for a short while in case one shows.
-        let until = Date().addingTimeInterval(5)
-        while Date() < until {
+        // A universal link opens the app with no prompt, but answer one if it shows.
+        let bundleId = ProcessInfo.processInfo.environment["CLEANROOM_BUNDLE_ID"] ?? "io.teak.app.unity.dev"
+        let target = XCUIApplication(bundleIdentifier: bundleId)
+        let until = Date().addingTimeInterval(10)
+        while target.state != .runningForeground && Date() < until {
             if let alert = visibleAlert(), tapAccept(alert) { break }
             Thread.sleep(forTimeInterval: 0.5)
         }
 
         // Say where the tap ended up, so a link that opened in Safari instead of the app is visible.
-        let bundleId = ProcessInfo.processInfo.environment["CLEANROOM_BUNDLE_ID"] ?? "io.teak.app.unity.dev"
-        let target = XCUIApplication(bundleIdentifier: bundleId)
-        let appUntil = Date().addingTimeInterval(10)
-        while target.state != .runningForeground && Date() < appUntil { Thread.sleep(forTimeInterval: 0.5) }
-        log("tap: app state \(target.state.rawValue) (4 is foreground), safari state \(safari.state.rawValue)")
-        if target.state != .runningForeground {
+        let opened = target.state == .runningForeground
+        log("tap: app in foreground \(opened), safari state \(safari.state.rawValue)")
+        if !opened {
             let labels = (safari.buttons.allElementsBoundByIndex + safari.links.allElementsBoundByIndex).prefix(25).map(\.label)
             log("tap: Safari shows \(labels)")
         }
-        log("tap: done")
     }
 
     // MARK: - Session stop hold

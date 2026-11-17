@@ -2,22 +2,16 @@
 #import <objc/runtime.h>
 #import <os/log.h>
 
-// Logs which UIKit callback iOS used to hand the app a link, so a Safari tap can be read without
-// guessing. A universal link arrives as an NSUserActivity (scene:continueUserActivity:, or
-// scene:willConnectToSession:options: on a cold start); a custom-scheme open arrives as a
-// UIOpenURLContext. Unity folds both into one open-URL notification and Teak's own logs don't name
-// the path, so this wraps the UnityScene / UnityAppController methods directly. Each wrapper calls
-// the original, so Unity and Teak's hooks behave as before.
+// Logs which UIKit callback delivered a link (NSUserActivity for a universal link, UIOpenURLContext
+// for a custom scheme), which Unity's single open-URL notification hides. Each hook calls the
+// original.
 //
 //   [Test Driver] link delivery path=<callback> type=<activity type | url-context> url=<url>
 //
-// It also repeats two Teak events the same way, since the device log hides Teak's own lines and
-// Unity only sees native events after its scripts have started:
+// Teak's own log lines show as <private> in the device log, so two of its events are repeated here:
 //
 //   [Test Driver] teak event request.send users.json launch_link=<url | (none)>
 //   [Test Driver] teak event deep_link.<name> <message or event data as JSON>
-//
-// %{public} keeps the device log from replacing the values with <private>.
 
 static void LogDelivery(NSString* path, NSString* type, NSURL* url) {
     os_log(OS_LOG_DEFAULT, "[Test Driver] link delivery path=%{public}@ type=%{public}@ url=%{public}@", path, type, url.absoluteString);
@@ -46,8 +40,6 @@ static void LogTeakEvent(NSString* event, NSDictionary* payload) {
 // Puts LogTeakEvent in front of Teak's log listener, which Unity's bridge installs in a constructor.
 // Run from the main queue so that has happened; the listener is called from any thread.
 static void WrapTeakLogListener(void) {
-    static BOOL wrapped = NO;
-    if (wrapped) return;
     Class teakClass = NSClassFromString(@"Teak");
     id teak = [teakClass respondsToSelector:@selector(sharedInstance)] ? [teakClass performSelector:@selector(sharedInstance)] : nil;
     if (teak == nil) return;
@@ -56,7 +48,6 @@ static void WrapTeakLogListener(void) {
         LogTeakEvent(event, payload);
         if (original != nil) original(event, level, payload);
     } forKey:@"logListener"];
-    wrapped = YES;
     os_log(OS_LOG_DEFAULT, "[Test Driver] teak log listener wrapped, had one: %{public}@", original != nil ? @"yes" : @"no");
 }
 
@@ -139,7 +130,6 @@ static BOOL HookAppDelegate(Class klass) {
         scene = HookScene(NSClassFromString(@"UnityScene"));
     }
     BOOL appDelegate = HookAppDelegate(NSClassFromString(@"UnityAppController"));
-    // Says which hooks took, so a missing delivery line can be told apart from a hook that never installed.
     NSLog(@"[Test Driver] link delivery hooks: UnityScene=%@ UnityAppController=%@", scene ? @"yes" : @"no", appDelegate ? @"yes" : @"no");
     dispatch_async(dispatch_get_main_queue(), ^{ WrapTeakLogListener(); });
 }
