@@ -143,6 +143,17 @@ final class Driver: XCTestCase {
             if let alert = visibleAlert(), tapAccept(alert) { break }
             Thread.sleep(forTimeInterval: 0.5)
         }
+
+        // Say where the tap ended up, so a link that opened in Safari instead of the app is visible.
+        let bundleId = ProcessInfo.processInfo.environment["CLEANROOM_BUNDLE_ID"] ?? "io.teak.app.unity.dev"
+        let target = XCUIApplication(bundleIdentifier: bundleId)
+        let appUntil = Date().addingTimeInterval(10)
+        while target.state != .runningForeground && Date() < appUntil { Thread.sleep(forTimeInterval: 0.5) }
+        log("tap: app state \(target.state.rawValue) (4 is foreground), safari state \(safari.state.rawValue)")
+        if target.state != .runningForeground {
+            let labels = (safari.buttons.allElementsBoundByIndex + safari.links.allElementsBoundByIndex).prefix(25).map(\.label)
+            log("tap: Safari shows \(labels)")
+        }
         log("tap: done")
     }
 
