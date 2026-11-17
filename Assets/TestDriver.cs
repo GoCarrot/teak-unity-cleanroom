@@ -86,6 +86,11 @@ public partial class TestDriver : MonoBehaviour
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
 
+    // When this file exists in the persistent data path the suite doesn't start, so a link opened
+    // from outside the app (which can't pass launch options) isn't raced by it.
+    private const string LinkModeMarker = "safari-link-mode";
+    private bool linkMode;
+
     // Per-test watchdog: a test whose completion callback never fires would otherwise stall the
     // whole suite indefinitely. Force-fail after a time budget so the run advances. The longest
     // legitimate test waits ~15s (numeric/string attributes), so 90s is a wide margin.
@@ -159,8 +164,6 @@ public partial class TestDriver : MonoBehaviour
         this.teakInterface = GetComponent<TeakInterface>();
 
         if (File.Exists(Path.Combine(Application.persistentDataPath, LinkModeMarker))) {
-            // A link tapped in Safari launches the app with no way to pass it options, so the marker
-            // file keeps the suite from starting and racing the link.
             Debug.Log("[Test Driver] link mode, suite not started");
             this.testList = new List<Test>();
             this.SetupUI();
@@ -194,11 +197,12 @@ public partial class TestDriver : MonoBehaviour
         Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
 #endif
 
+#if TEAK_4_2_OR_NEWER
         if (this.linkMode) {
-            // The suite's first test is what identifies the user, and without one Teak sends nothing
-            // for the link.
+            // The suite's first test identifies the user; with it off, Teak sends nothing for the link.
             Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, new Teak.UserConfiguration {});
         }
+#endif
 #endif // TEAK_NOT_AVAILABLE
     }
 
@@ -314,7 +318,7 @@ public partial class TestDriver : MonoBehaviour
         }
 
         // In-progress test notification
-        if (this.testEnumerator == null) {
+        if (this.testEnumerator == null && !this.linkMode) {
             // Reset test
             Button button = this.CreateButton("Reset Tests");
             button.onClick.AddListener(() => {
@@ -546,8 +550,6 @@ public partial class TestDriver : MonoBehaviour
 
     // Debug builds only: hard-crash the player when the named test is about to begin, so a test
     // runner's crash detection can be exercised on demand.
-    private bool linkMode;
-    private const string LinkModeMarker = "safari-link-mode";
     private const string CrashAtEnvironmentVariable = "TEAK_CLEANROOM_CRASH_AT";
     private static void CrashIfRequested(string testName) {
         if (!Debug.isDebugBuild) {
