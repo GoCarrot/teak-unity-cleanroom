@@ -38,8 +38,11 @@ static void LogTeakEvent(NSString* event, NSDictionary* payload) {
 }
 
 // Puts LogTeakEvent in front of Teak's log listener, which Unity's bridge installs in a constructor.
-// Run from the main queue so that has happened; the listener is called from any thread.
+// Called first thing in every link hook: on a cold start Teak sends its deep_link request while it
+// handles the link, so a wrapper installed any later (a main-queue block was) misses it.
 static void WrapTeakLogListener(void) {
+    static BOOL wrapped = NO;
+    if (wrapped) return;
     Class teakClass = NSClassFromString(@"Teak");
     id teak = [teakClass respondsToSelector:@selector(sharedInstance)] ? [teakClass performSelector:@selector(sharedInstance)] : nil;
     if (teak == nil) return;
@@ -48,6 +51,7 @@ static void WrapTeakLogListener(void) {
         LogTeakEvent(event, payload);
         if (original != nil) original(event, level, payload);
     } forKey:@"logListener"];
+    wrapped = YES;
     os_log(OS_LOG_DEFAULT, "[Test Driver] teak log listener wrapped, had one: %{public}@", original != nil ? @"yes" : @"no");
 }
 
@@ -76,28 +80,33 @@ static BOOL (*sAppOpenURL)(id, SEL, UIApplication*, NSURL*, NSDictionary*);
 
 API_AVAILABLE(ios(13.0))
 static void SceneConnect(id self, SEL cmd, UIScene* scene, UISceneSession* session, UISceneConnectionOptions* options) {
+    WrapTeakLogListener();
     for (NSUserActivity* activity in options.userActivities) LogActivity(@"scene:willConnectToSession:options:", activity);
     for (UIOpenURLContext* context in options.URLContexts) LogContext(@"scene:willConnectToSession:options:", context);
     sSceneConnect(self, cmd, scene, session, options);
 }
 
 static void SceneActivity(id self, SEL cmd, UIScene* scene, NSUserActivity* activity) {
+    WrapTeakLogListener();
     LogActivity(@"scene:continueUserActivity:", activity);
     sSceneActivity(self, cmd, scene, activity);
 }
 
 API_AVAILABLE(ios(13.0))
 static void SceneOpenContexts(id self, SEL cmd, UIScene* scene, NSSet<UIOpenURLContext*>* contexts) {
+    WrapTeakLogListener();
     for (UIOpenURLContext* context in contexts) LogContext(@"scene:openURLContexts:", context);
     sSceneOpenContexts(self, cmd, scene, contexts);
 }
 
 static BOOL AppActivity(id self, SEL cmd, UIApplication* application, NSUserActivity* activity, id handler) {
+    WrapTeakLogListener();
     LogActivity(@"application:continueUserActivity:restorationHandler:", activity);
     return sAppActivity(self, cmd, application, activity, handler);
 }
 
 static BOOL AppOpenURL(id self, SEL cmd, UIApplication* application, NSURL* url, NSDictionary* options) {
+    WrapTeakLogListener();
     LogDelivery(@"application:openURL:options:", @"url", url);
     return sAppOpenURL(self, cmd, application, url, options);
 }
@@ -131,7 +140,6 @@ static BOOL HookAppDelegate(Class klass) {
     }
     BOOL appDelegate = HookAppDelegate(NSClassFromString(@"UnityAppController"));
     NSLog(@"[Test Driver] link delivery hooks: UnityScene=%@ UnityAppController=%@", scene ? @"yes" : @"no", appDelegate ? @"yes" : @"no");
-    dispatch_async(dispatch_get_main_queue(), ^{ WrapTeakLogListener(); });
 }
 
 @end
