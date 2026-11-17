@@ -138,7 +138,9 @@ Installs the app fresh, then for each link on `safari-links/index.html` runs a c
 * `OnPostLaunchSummary` with that `LaunchLink`, and a `DeepLink` ending in the link's `data-deeplink`, if it has one
 * `deep_link.request.send` for the link, which only the universal-link resolve sends
 
-The page is served from this Mac (`ruby -run -e httpd`, port `--port`, default 8404) and has to stay on a different host than the links: iOS doesn't open a universal link tapped from a page on its own domain. The device must reach `http://<this Mac's LAN address>:8404/` (the run prints it; `--host` overrides). To tap by hand, run `ruby -run -e httpd safari-links -p 8404` and open that URL in Safari on the device.
+Teak only takes a universal link in a Unity 6 scene build when the native SDK has teak-ios #251 (after 4.3.17). With 4.3.17 from the CDN, (a) shows but (b), (c) and (d) don't. To test an unreleased native SDK, compile `Teak.xcframework` in a teak-ios checkout (`./compile_xc_framework`) and, after `rake ios:build`, replace `Unity-iPhone/Frameworks/Teak/Plugins/iOS/Teak.xcframework` with it before archiving.
+
+The page is served from this Mac (`ruby -run -e httpd`, which needs the `webrick` gem; port `--port`, default 8404) and has to stay on a different host than the links: iOS doesn't open a universal link tapped from a page on its own domain. The device must reach `http://<this Mac's LAN address>:8404/` (the run prints it; `--host` overrides). To tap by hand, run `ruby -run -e httpd safari-links -p 8404` and open that URL in Safari on the device.
 
 To add a link, add an `<a>` with unique text to `safari-links/index.html`. Add `data-deeplink="<path>"` if the dashboard link has a DeepLink to check. The suite stays off for these runs: the script leaves `Documents/safari-link-mode` in the app's container, and `TestDriver` skips starting the suite while it's there. Logs and `results.json` go to `build/safari-links/<time>/`.
 

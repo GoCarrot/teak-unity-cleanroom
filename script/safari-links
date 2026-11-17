@@ -18,7 +18,7 @@
 # be on the same network. Cold: the app is killed, then Safari opens the page and the tap launches
 # it. Warm: the app is running, Safari opens over it, the tap brings it back.
 #
-# Exit status: 0 every tap passed, 1 a tap failed, 2 the run couldn't be set up.
+# Exit status: 0 every tap passed, 1 a tap failed or the run couldn't be set up.
 
 require 'fileutils'
 require 'json'
@@ -171,6 +171,7 @@ at_exit { children.each { |child| stop(child) } }
 %w[INT TERM].each { |signal| trap(signal) { exit 130 } }
 
 # Page
+abort 'the page server needs the webrick gem (gem install webrick)' unless system('ruby', '-e', 'require "webrick"', out: File::NULL, err: File::NULL)
 server_wait, = spawn_streaming(['ruby', '-run', '-e', 'httpd', PAGE_DIR, '-p', options[:port].to_s, '-b', '0.0.0.0'], {},
                                File.join(out_dir, 'server.log'))
 children << server_wait
@@ -193,7 +194,8 @@ unless options[:skip_driver_build]
   File.write(File.join(out_dir, 'driver-build.log'), build_out)
   abort "driver build failed, see #{File.join(out_dir, 'driver-build.log')}" unless build_status.success?
 end
-xctestrun = Dir.glob(File.join(driver_data, 'Build', 'Products', '*.xctestrun')).max_by { |f| File.mtime(f) }
+xctestrun = Dir.glob(File.join(driver_data, 'Build', 'Products', '*iphoneos*.xctestrun')).max_by { |f| File.mtime(f) }
+abort "no device driver under #{driver_data}, run without --skip-driver-build" unless xctestrun
 
 # App: fresh install, with the marker that keeps the suite from starting.
 say 'installing app'
@@ -218,7 +220,9 @@ children << syslog_wait
 
 def kill_app(udid, executable)
   json = File.join(Dir.tmpdir, "safari-links-procs-#{Process.pid}.json")
-  run('xcrun', 'devicectl', 'device', 'info', 'processes', '--device', udid, '--json-output', json)
+  out, status = run('xcrun', 'devicectl', 'device', 'info', 'processes', '--device', udid, '--json-output', json)
+  abort "couldn't list the device's processes:\n#{out}" unless status.success? && File.exist?(json)
+
   procs = JSON.parse(File.read(json)).dig('result', 'runningProcesses') || []
   procs.select { |p| p['executable'].to_s.include?("/#{executable}") }.each do |p|
     run('xcrun', 'devicectl', 'device', 'process', 'terminate', '--device', udid, '--pid', p['processIdentifier'].to_s, '--kill')
@@ -250,9 +254,10 @@ links.each do |link|
     if mode == 'cold'
       kill_app(udid, executable)
     else
+      launched_at = syslog_lock.synchronize { syslog.size }
       run!('xcrun', 'devicectl', 'device', 'process', 'launch', '--device', udid, '--terminate-existing', bundle_id)
       deadline = Time.now + 60
-      sleep 1 until Time.now > deadline || syslog_lock.synchronize { syslog.any? { |l| l.include?('TestDriver Lifecycle: Start') } }
+      sleep 1 until Time.now > deadline || syslog_lock.synchronize { syslog[launched_at..].any? { |l| l.include?('TestDriver Lifecycle: Start') } }
       sleep options[:settle]
     end
     mark = syslog_lock.synchronize { syslog.size }
