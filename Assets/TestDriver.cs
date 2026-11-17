@@ -164,6 +164,7 @@ public partial class TestDriver : MonoBehaviour
             Debug.Log("[Test Driver] link mode, suite not started");
             this.testList = new List<Test>();
             this.SetupUI();
+            this.linkMode = true;
         } else {
             this.ResetTests();
 
@@ -192,6 +193,12 @@ public partial class TestDriver : MonoBehaviour
         Teak.Instance.OnUserData += OnUserData;
         Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
 #endif
+
+        if (this.linkMode) {
+            // The suite's first test is what identifies the user, and without one Teak sends nothing
+            // for the link.
+            Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, new Teak.UserConfiguration {});
+        }
 #endif // TEAK_NOT_AVAILABLE
     }
 
@@ -539,6 +546,7 @@ public partial class TestDriver : MonoBehaviour
 
     // Debug builds only: hard-crash the player when the named test is about to begin, so a test
     // runner's crash detection can be exercised on demand.
+    private bool linkMode;
     private const string LinkModeMarker = "safari-link-mode";
     private const string CrashAtEnvironmentVariable = "TEAK_CLEANROOM_CRASH_AT";
     private static void CrashIfRequested(string testName) {
