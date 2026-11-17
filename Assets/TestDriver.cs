@@ -165,9 +165,9 @@ public partial class TestDriver : MonoBehaviour
 
         if (File.Exists(Path.Combine(Application.persistentDataPath, LinkModeMarker))) {
             Debug.Log("[Test Driver] link mode, suite not started");
+            this.linkMode = true;
             this.testList = new List<Test>();
             this.SetupUI();
-            this.linkMode = true;
         } else {
             this.ResetTests();
 
