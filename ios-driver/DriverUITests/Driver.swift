@@ -25,6 +25,9 @@ final class Driver: XCTestCase {
     /// Whether this background is held. Checked every tick until it is, since ios-suite flags the
     /// test from the app's log, which can trail the app going to the background.
     private var holding = false
+    /// This background's hold ran out with no stop. It stays out until the app is seen in the
+    /// foreground, so a return that doesn't take can't start a second full hold.
+    private var holdOver = false
     private var holdLogged = false
 
     /// Alert buttons the driver taps, in preference order. Anything else is logged, not tapped.
@@ -40,7 +43,8 @@ final class Driver: XCTestCase {
         stopHoldPath = env["CLEANROOM_STOP_HOLD_PATH"]
         let seconds = TimeInterval(env["CLEANROOM_DRIVER_SECONDS"] ?? "") ?? 1800
         app = XCUIApplication(bundleIdentifier: bundleId)
-        log("config bundle=\(bundleId) app_name=\(appName.isEmpty ? "(none)" : appName) seconds=\(Int(seconds))")
+        log("config bundle=\(bundleId) app_name=\(appName.isEmpty ? "(none)" : appName) seconds=\(Int(seconds)) " +
+            "stop_hold=\(Int(stopHoldSeconds)) stop_count_path=\(stopCountPath != nil) stop_hold_path=\(stopHoldPath != nil)")
         // An empty name would match every app's notifications, so refuse to start.
         guard !appName.isEmpty else { throw ConfigurationError.missingAppName }
         log("ready")
@@ -77,8 +81,8 @@ final class Driver: XCTestCase {
             }
             let mayReturn = !backgrounded || stopSentOrHoldOver(since: backgroundSince!)
 
-            // A tap that reports success doesn't mean the app came back. Keep the hold
-            // until the app is seen in the foreground, or a failed return re-arms a full hold.
+            // A tap that reports success doesn't mean the app came back, so only the foreground
+            // check above ends this background.
             if mayReturn && tapBanner() {
                 backgroundSince = nil
                 continue
@@ -122,6 +126,7 @@ final class Driver: XCTestCase {
     private func resetBackground(_ backgroundSince: inout Date?) {
         backgroundSince = nil
         holding = false
+        holdOver = false
         holdLogged = false
     }
 
@@ -140,7 +145,7 @@ final class Driver: XCTestCase {
     /// Whether the app may be brought back: its /session_stop for this background has gone out, or
     /// the hold ran out (a stop that never comes then fails the test instead of stalling the run).
     private func stopSentOrHoldOver(since backgroundSince: Date) -> Bool {
-        guard stopCountPath != nil, stopHoldSeconds > 0, holding else { return true }
+        guard stopCountPath != nil, stopHoldSeconds > 0, holding, !holdOver else { return true }
         let waited = Date().timeIntervalSince(backgroundSince)
         if let count = readStopCount(), count > 0 {
             if !holdLogged { log(String(format: "session_stop sent after %.1fs in background", waited)) }
@@ -148,6 +153,7 @@ final class Driver: XCTestCase {
             return true
         }
         if waited > stopHoldSeconds {
+            holdOver = true
             if !holdLogged { log("no session_stop after \(Int(stopHoldSeconds))s in background, returning anyway") }
             holdLogged = true
             return true
