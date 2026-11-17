@@ -1,0 +1,47 @@
+# C-2353 device run, 2026-11-17, Teak's iPhone 14 Pro Max (iOS 18.7), Unity IAP 5.5.0, sandbox
+# teak-unity #184 @ c7bfc27 (unity sdk 4.3.17-51-gc7bfc27) + native 4.3.18.alpha0 from sdks.teakcdn.com, cleanroom maint/c-2353-alpha0-run, driver SandboxSheet/testResumeFlow
+
+## Framework provenance
+CDN Teak-4.3.18.alpha0.xcframework.zip, ios-arm64 Teak binary sha256: e3a62677e2b655f722bd14ecde64fd5ca27d8842b0c148b25ff666ec679f1a21
+Exported Unity-iPhone/Frameworks/.../ios-arm64/Teak.framework/Teak sha256:      e3a62677e2b655f722bd14ecde64fd5ca27d8842b0c148b25ff666ec679f1a21
+Console sdk_version (both runs): "sdk_version":{"ios":"4.3.18.alpha0","unity":"4.3.17-51-gc7bfc27"}
+
+## StoreKit 2 build (IOS_IAP=5): two sandbox consumables, game calls ReportStoreKit2Transaction twice each
+2026-11-17 13:42:41.389 EVENT purchase.report_storekit2 {'product_id': 'io.teak.app.unity.dev.dollar', 'transaction_identifier': '2000001267171500'}
+2026-11-17 13:42:41.391 EVENT purchase.report_storekit2 {'product_id': 'io.teak.app.unity.dev.dollar', 'transaction_identifier': '2000001267171500'}
+2026-11-17 13:42:43.756 SEND /me/purchase jws_len= 5423 txn= 2000001267171500 sdk= "sdk_version":{"ios":"4.3.18.alpha0","unity":"4.3.17-51-gc7bfc27"}
+2026-11-17 13:42:43.756 SEND /me/purchase jws_len= 5423 txn= 2000001267171500 sdk= "sdk_version":{"ios":"4.3.18.alpha0","unity":"4.3.17-51-gc7bfc27"}
+2026-11-17 13:42:43.915 REPLY 200
+2026-11-17 13:42:56.878 EVENT purchase.report_storekit2 {'product_id': 'io.teak.app.unity.dev.dollar', 'transaction_identifier': '2000001267171531'}
+UnityEngine.P2026-11-17 13:42:56.881 EVENT purchase.report_storekit2 {'product_id': 'io.teak.app.unity.dev.dollar', 'transaction_identifier': '2000001267171531'}
+2026-11-17 13:43:00.236 SEND /me/purchase jws_len= 5423 txn= 2000001267171531 sdk= "sdk_version":{"ios":"4.3.18.alpha0","unity":"4.3.17-51-gc7bfc27"}
+2026-11-17 13:43:00.237 SEND /me/purchase jws_len= 5423 txn= 2000001267171531 sdk= "sdk_version":{"ios":"4.3.18.alpha0","unity":"4.3.17-51-gc7bfc27"}
+2026-11-17 13:43:00.425 REPLY 200
+2026-11-17 13:43:00.449 REPLY 200
+[TestDriver-UnityIAP] jwsRepresentation length=5423
+[TestDriver-UnityIAP] jwsRepresentation length=5423
+
+## Driver taps (password never logged)
+SANDBOXFLOW tap Test Purchase at y=0.5477
+SANDBOXFLOW tap Purchase
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (13.294 seconds).
+SANDBOXFLOW typed password, tapped Sign In
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (12.243 seconds).
+
+## Sandbox sheet labels before the Purchase tap (verbatim, purchase 2; screenshot checked: Sandbox title, 'You will not be charged', sandbox account)
+SANDBOXFLOW labels=  | Test Purchase | teak-unity-cleanroom UNRATED | In-App Purchase | $0.99 | One-time charge | You will be purchasing a license. For more information about the license, go to: apple.com/legal/ams | For testing purposes only. You will not be charged for confirming this purchase. | Account: teak.devices+sandbox@gmail.com | Vertical scroll bar, 1 page | Vertical scroll bar, 1 page | Sandbox | close | Purchase
+
+## FORCE_SK1 control (TEAK_FORCE_SK1 export, same framework)
+[TestDriver-UnityIAP] forceStoreKit1 = true
+[TestDriver-UnityIAP] jwsRepresentation length=0
+2026-11-17 14:51:09.164 SEND /me/purchase jws_len= 0 txn= 2000001267184249 sdk= "sdk_version":{"ios":"4.3.18.alpha0","unity":"4.3.17-51-gc7bfc27"}
+SANDBOXFLOW tap Test Purchase at y=0.5477
+SANDBOXFLOW tap Purchase
+SANDBOXFLOW typed password, tapped Sign In
+SANDBOXFLOW tap OK on purchase-complete alert
+Test Case '-[DriverUITests.SandboxSheet testResumeFlow]' passed (28.240 seconds).
+
+## Android (debug APK, Pixel): bundled teak.aar sha256 a744b818f82e79b59671c94b8bf977e25e78f22f3e1f88d98a55734ef2cab031 == CDN android/teak-4.3.18.alpha0.aar; dex contains 4.3.18.alpha0; launch: Teak.InitProvider ran, process alive 4+ min, 0 FATAL EXCEPTION in logcat
+# Note: my reassembler printed one REPLY for txn ...171500; the console has 13 "code":200 reply lines in total across the SK2 run and no non-200.
