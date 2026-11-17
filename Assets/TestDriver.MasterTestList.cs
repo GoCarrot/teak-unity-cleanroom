@@ -151,6 +151,22 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                     })
                     .ExpectDeepLink(),
 
+#if UNITY_IOS
+                // A link opened from outside the app, the way Safari or another app would. The host
+                // runner (script/ios-suite) sees the marker and opens the URL.
+                TestBuilder.Build("Open Teak link from outside the app", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.testContext["externalLinkToken"] = "external-" + Guid.NewGuid().ToString("N");
+                        Debug.Log("[Test Driver] external open teak" + Teak.AppId + ":///test/" + this.testContext["externalLinkToken"]);
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectDeepLink((Dictionary<string, object> parameters, Action<Test.TestState> state) => {
+                        object data;
+                        state(parameters.TryGetValue("data", out data) && this.testContext["externalLinkToken"].Equals(data) ?
+                            Test.TestState.Passed : Test.TestState.Pending);
+                    }),
+#endif
+
                 TestBuilder.Build("CanOpenNotificationSettings", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         state(Teak.Instance.CanOpenNotificationSettings == ShouldBeAbleToOpenNotificationSettings ?

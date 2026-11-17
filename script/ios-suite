@@ -133,6 +133,11 @@ class DeviceDestination < Destination
     @allow_provisioning_updates ? %w[-allowProvisioningUpdates -allowProvisioningDeviceRegistration] : []
   end
 
+  # Opens url in the running app, as a link from another app would.
+  def open_url(url, bundle_id)
+    run('xcrun', 'devicectl', 'device', 'process', 'launch', '--device', udid, '--payload-url', url, bundle_id)
+  end
+
   def reinstall(app, bundle_id)
     run('xcrun', 'devicectl', 'device', 'uninstall', 'app', '--device', udid, bundle_id)
     run!('xcrun', 'devicectl', 'device', 'install', 'app', '--device', udid, app)
@@ -186,6 +191,10 @@ class SimulatorDestination < Destination
       abort "more than one booted simulator, pass a UDID: #{devices.map { |d| d['udid'] }.join(', ')}" if devices.size > 1
       devices.first['udid']
     end
+  end
+
+  def open_url(url, _bundle_id)
+    run('xcrun', 'simctl', 'openurl', udid, url)
   end
 
   def reinstall(app, bundle_id)
@@ -369,6 +378,12 @@ say "launching app: #{launch_cmd.shelljoin}"
 app_wait, app_reader = spawn_streaming(launch_cmd, launch_env, app_log) do |line|
   app_pid ||= Regexp.last_match(1).to_i if line =~ /^#{Regexp.escape(bundle_id)}: (\d+)$/
   suite.feed(line)
+  # A test that needs a link opened from outside the app asks for it by name.
+  if line =~ /\[Test Driver\] external open (\S+)/
+    url = Regexp.last_match(1)
+    say "opening #{url}"
+    destination.open_url(url, bundle_id)
+  end
   puts "[app] #{line[/\[Test Driver\] .*/]}" if line =~ /\[Test Driver\] (tests:|begin|result|suite complete|crashing)/
 end
 children << app_wait
