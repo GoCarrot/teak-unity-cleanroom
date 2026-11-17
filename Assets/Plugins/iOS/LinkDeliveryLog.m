@@ -43,8 +43,8 @@ static void LogTeakEvent(NSString* event, NSDictionary* payload) {
     }
 }
 
-// Puts LogTeakEvent in front of Teak's log listener, which Unity's bridge installs. Done from the
-// first link callback, by which time that bridge has run; the listener is called from any thread.
+// Puts LogTeakEvent in front of Teak's log listener, which Unity's bridge installs in a constructor.
+// Run from the main queue so that has happened; the listener is called from any thread.
 static void WrapTeakLogListener(void) {
     static BOOL wrapped = NO;
     if (wrapped) return;
@@ -85,14 +85,12 @@ static BOOL (*sAppOpenURL)(id, SEL, UIApplication*, NSURL*, NSDictionary*);
 
 API_AVAILABLE(ios(13.0))
 static void SceneConnect(id self, SEL cmd, UIScene* scene, UISceneSession* session, UISceneConnectionOptions* options) {
-    WrapTeakLogListener();
     for (NSUserActivity* activity in options.userActivities) LogActivity(@"scene:willConnectToSession:options:", activity);
     for (UIOpenURLContext* context in options.URLContexts) LogContext(@"scene:willConnectToSession:options:", context);
     sSceneConnect(self, cmd, scene, session, options);
 }
 
 static void SceneActivity(id self, SEL cmd, UIScene* scene, NSUserActivity* activity) {
-    WrapTeakLogListener();
     LogActivity(@"scene:continueUserActivity:", activity);
     sSceneActivity(self, cmd, scene, activity);
 }
@@ -104,7 +102,6 @@ static void SceneOpenContexts(id self, SEL cmd, UIScene* scene, NSSet<UIOpenURLC
 }
 
 static BOOL AppActivity(id self, SEL cmd, UIApplication* application, NSUserActivity* activity, id handler) {
-    WrapTeakLogListener();
     LogActivity(@"application:continueUserActivity:restorationHandler:", activity);
     return sAppActivity(self, cmd, application, activity, handler);
 }
@@ -144,6 +141,7 @@ static BOOL HookAppDelegate(Class klass) {
     BOOL appDelegate = HookAppDelegate(NSClassFromString(@"UnityAppController"));
     // Says which hooks took, so a missing delivery line can be told apart from a hook that never installed.
     NSLog(@"[Test Driver] link delivery hooks: UnityScene=%@ UnityAppController=%@", scene ? @"yes" : @"no", appDelegate ? @"yes" : @"no");
+    dispatch_async(dispatch_get_main_queue(), ^{ WrapTeakLogListener(); });
 }
 
 @end
