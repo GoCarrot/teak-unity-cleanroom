@@ -26,7 +26,7 @@ ROOT = File.expand_path('..', __dir__)
 DRIVER_PROJECT = File.join(ROOT, 'ios-driver', 'CleanroomDriver.xcodeproj')
 CRASH_AT_ENV = 'TEAK_CLEANROOM_CRASH_AT'
 
-options = { timeout: 2400, crash_at: nil, out: nil, allow_provisioning_updates: false }
+options = { timeout: 2400, crash_at: nil, out: nil, allow_provisioning_updates: false, stop_hold: 60 }
 OptionParser.new do |o|
   o.banner = 'Usage: script/ios-suite --app App.app (--device UDID | --simulator UDID|booted) [options]'
   o.on('--app PATH', 'Built .app to install') { |v| options[:app] = File.expand_path(v) }
@@ -34,6 +34,9 @@ OptionParser.new do |o|
   o.on('--simulator UDID', 'Simulator UDID, or "booted"') { |v| options[:simulator] = v }
   o.on('--crash-at NAME', 'Debug builds: crash just before this test begins') { |v| options[:crash_at] = v }
   o.on('--timeout SECONDS', Integer, "Whole-run cap (default #{options[:timeout]})") { |v| options[:timeout] = v }
+  o.on('--stop-hold SECONDS', Integer,
+       "Simulator: hold the app in the background until Teak sends /session_stop, up to this many seconds " \
+       "(default #{options[:stop_hold]}, 0 turns the hold off)") { |v| options[:stop_hold] = v }
   o.on('--out DIR', 'Where logs and results go (default build/ios-suite/<time>)') { |v| options[:out] = File.expand_path(v) }
   o.on('--allow-provisioning-updates',
        'Device: let Xcode register the device and create profiles on the shared Apple team') do
@@ -346,6 +349,35 @@ driver_env = {
   'TEST_RUNNER_CLEANROOM_APP_NAME' => app_name.to_s,
   'TEST_RUNNER_CLEANROOM_DRIVER_SECONDS' => options[:timeout].to_s
 }
+
+# Teak cancels a pending /session_stop when the app comes back before it goes out, and sends
+# /session_resume only after a stop. On a loaded host the stop can take far longer than the driver's
+# return, so the driver can hold a background until a stop has gone out. This file counts stops for
+# the session the app is on now (the one behind its latest other send) since that send: an expired
+# session can still send its stop late, and the stop can beat the driver noticing the background.
+# The simulator's test runner reads it straight off the host; a device can't, so the hold is
+# simulator-only.
+stop_count_path = File.join(out_dir, 'session-stop-count')
+stop_count = 0
+current_session = nil
+write_stop_count = lambda do
+  File.write("#{stop_count_path}.tmp", stop_count.to_s)
+  File.rename("#{stop_count_path}.tmp", stop_count_path)
+end
+if options[:simulator] && options[:stop_hold].positive?
+  File.write(stop_count_path, '0')
+  driver_env['TEST_RUNNER_CLEANROOM_STOP_COUNT_PATH'] = stop_count_path
+  driver_env['TEST_RUNNER_CLEANROOM_STOP_HOLD_SECONDS'] = options[:stop_hold].to_s
+end
+# Only the resume test waits on it: it returns through Settings, which always works. Every other
+# test, Session Stop included, returns by tapping its notification and keeps the quick return, since
+# a late tap lands in Notification Center and doesn't bring the app back.
+STOP_HOLD_TESTS = ['Session Resume on Returning'].freeze
+stop_hold_path = File.join(out_dir, 'session-stop-hold')
+if driver_env.key?('TEST_RUNNER_CLEANROOM_STOP_COUNT_PATH')
+  File.write(stop_hold_path, '0')
+  driver_env['TEST_RUNNER_CLEANROOM_STOP_HOLD_PATH'] = stop_hold_path
+end
 driver_ready = Queue.new
 driver_cmd = ['xcodebuild', 'test-without-building', '-xctestrun', xctestrun,
               '-destination', destination.xcodebuild_destination, '-only-testing:DriverUITests/Driver/testDrive',
@@ -378,6 +410,21 @@ say "launching app: #{launch_cmd.shelljoin}"
 app_wait, app_reader = spawn_streaming(launch_cmd, launch_env, app_log) do |line|
   app_pid ||= Regexp.last_match(1).to_i if line =~ /^#{Regexp.escape(bundle_id)}: (\d+)$/
   suite.feed(line)
+  if driver_env.key?('TEST_RUNNER_CLEANROOM_STOP_COUNT_PATH') && line.include?('"event_type":"request.send"')
+    session = line[/"session":"([^"]+)"/, 1]
+    if !line.include?('session_stop"')
+      current_session = session
+      stop_count = 0
+      write_stop_count.call
+    elsif session && session == current_session
+      stop_count += 1
+      write_stop_count.call
+    end
+  end
+  if driver_env.key?('TEST_RUNNER_CLEANROOM_STOP_HOLD_PATH') && line =~ /\[Test Driver\] begin (.+)$/
+    File.write("#{stop_hold_path}.tmp", STOP_HOLD_TESTS.include?(Regexp.last_match(1).strip) ? '1' : '0')
+    File.rename("#{stop_hold_path}.tmp", stop_hold_path)
+  end
   # A test that needs a link opened from outside the app asks for it by name.
   if line =~ /\[Test Driver\] external open (\S+)/
     url = Regexp.last_match(1)
