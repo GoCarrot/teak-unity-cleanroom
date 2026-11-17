@@ -619,6 +619,9 @@ namespace :config do
     template = File.read(File.join(PROJECT_PATH, 'Templates', 'TeakSettings.asset.template'))
     File.write(File.join(PROJECT_PATH, 'Assets', 'Resources', 'TeakSettings.asset'), Mustache.render(template, template_parameters))
 
+    # Each Firebase project has its own google-services.json. Prod is on its own project; dev and Play dev share one.
+    cp File.join(PROJECT_PATH, 'Templates', "google-services.#{prod? ? 'prod' : 'dev'}.json"), File.join(PROJECT_PATH, 'Assets', 'google-services.json')
+
     if use_facebook?
       mkdir_p File.join(PROJECT_PATH, 'Assets', 'FacebookSDK', 'SDK', 'Resources')
       template = File.read(File.join(PROJECT_PATH, 'Templates', 'FacebookSettings.asset.template'))
