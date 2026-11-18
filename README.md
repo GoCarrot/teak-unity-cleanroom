@@ -96,7 +96,7 @@ For iOS, `IOS_LIFECYCLE` picks the app lifecycle:
 * `scene` (default) Unity's UIScene export as-is. The build fails if Unity stops emitting `UIApplicationSceneManifest`. Use on iOS 27.
 * `legacy` removes `UIApplicationSceneManifest` for an app-delegate build. Use as the iOS 26 and earlier control; it traps at launch on the iOS 27 SDK.
 
-`IOS_SDK` is `device` (default) or `simulator`; use `simulator` to export a project that builds for the iOS Simulator.
+`IOS_SDK` is `device` (default) or `simulator`; use `simulator` to export a project that builds for the iOS Simulator. The simulator export is arm64-only and turns the Firebase iOS plugins off (their static libs have no arm64 simulator slice); a device export turns them back on.
 
 After the Unity export, `ios:build` appends a `post_install` to `Unity-iPhone/Podfile` that raises pods targeting below iOS 15.0 to 15.0 (Xcode 27 rejects anything lower). Pods already at 15.0 or higher are left alone.
 

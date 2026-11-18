@@ -307,6 +307,22 @@ public class BuildPlayer
     }
 #endif
 
+    // Importer state persists in the .meta files, so a device export has to turn these back on.
+    static void SetFirebaseEnabledOnIOS(bool enabled)
+    {
+        foreach (string folder in new[] { "Assets/Plugins/iOS/Firebase", "Assets/Firebase/Plugins/iOS" })
+        {
+            if (!Directory.Exists(folder)) continue;
+            foreach (string guid in AssetDatabase.FindAssets("", new[] { folder }))
+            {
+                PluginImporter importer = AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(guid)) as PluginImporter;
+                if (importer == null || importer.GetCompatibleWithPlatform(BuildTarget.iOS) == enabled) continue;
+                importer.SetCompatibleWithPlatform(BuildTarget.iOS, enabled);
+                importer.SaveAndReimport();
+            }
+        }
+    }
+
     static void iOS()
     {
 #if !TEAK_NOT_AVAILABLE
@@ -319,8 +335,12 @@ public class BuildPlayer
 
         PlayerSettings.SetScriptingBackend(BuildTargetGroup.iOS, ScriptingImplementation.IL2CPP);
 
-        PlayerSettings.iOS.sdkVersion = GetStringArg(parsedArgs, "ios-sdk", "device") == "simulator" ?
-            iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
+        bool simulator = GetStringArg(parsedArgs, "ios-sdk", "device") == "simulator";
+        PlayerSettings.iOS.sdkVersion = simulator ? iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
+        // x86_64 simulator builds won't install on an arm64 host.
+        if (simulator) PlayerSettings.iOS.simulatorSdkArchitecture = AppleMobileArchitectureSimulator.ARM64;
+        // Firebase's static libs carry no arm64 simulator slice, so they can't link into a simulator build.
+        SetFirebaseEnabledOnIOS(!simulator);
 
         // Debug build?
         bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
