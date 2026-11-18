@@ -104,8 +104,10 @@ final class Driver: XCTestCase {
                 // every tick: each pull-down is slow and noisy.
                 if let since = backgroundSince, Date().timeIntervalSince(since) > 8,
                     Date().timeIntervalSince(lastNotificationCenterCheck) > 10 {
+                    let opened = tapNotificationCenterCell()
+                    // Stamp after: a failed attempt can take 10s+, and the next shouldn't follow at once.
                     lastNotificationCenterCheck = Date()
-                    if tapNotificationCenterCell() {
+                    if opened {
                         backgroundSince = nil
                         continue
                     }
@@ -232,7 +234,7 @@ final class Driver: XCTestCase {
     }
 
     private func tapBanner() -> Bool {
-        guard !coverSheetShowing(), let banner = notificationElement() else { return false }
+        guard let banner = notificationElement(), !coverSheetShowing() else { return false }
         log("tap notification \"\(banner.label)\"")
         return tapCenter(of: banner)
     }
@@ -259,8 +261,7 @@ final class Driver: XCTestCase {
         }
         guard let cell, cell.isHittable else {
             log("no notification from \(appName) on screen in Notification Center, frame \(cell?.frame ?? .zero)")
-            XCUIDevice.shared.press(.home)
-            return false
+            return leaveNotificationCenter()
         }
 
         log("open notification \"\(cell.label)\" from Notification Center")
@@ -274,11 +275,24 @@ final class Driver: XCTestCase {
         }
         guard open.exists, tapCenter(of: open) else {
             log("no Open action on the notification")
-            XCUIDevice.shared.press(.home)
-            return false
+            return leaveNotificationCenter()
         }
-        if app.wait(for: .runningForeground, timeout: 5) { return true }
-        log("Open tapped but the app didn't come to the foreground")
+        // A loaded host can take a while to bring the app up; the wait returns as soon as it's there.
+        guard app.wait(for: .runningForeground, timeout: 15) else {
+            log("Open tapped but the app didn't come to the foreground")
+            return leaveNotificationCenter()
+        }
+        log("app in foreground after Notification Center open")
+        return true
+    }
+
+    /// Closes Notification Center after a failed open, unless the app came up anyway: pressing Home
+    /// then would background it with its notification already used up.
+    private func leaveNotificationCenter() -> Bool {
+        if app.state == .runningForeground {
+            log("app in foreground after Notification Center open")
+            return true
+        }
         XCUIDevice.shared.press(.home)
         return false
     }
