@@ -224,12 +224,21 @@ final class Driver: XCTestCase {
         return element.exists ? element : nil
     }
 
+    /// The pull-down shows the Cover Sheet (the lock screen's notification list). Our cell sits in it
+    /// with a hittable frame, but a tap there only slides the cell to show its swipe actions, so a
+    /// cell on the Cover Sheet isn't a banner.
+    private func coverSheetShowing() -> Bool {
+        springboard.windows["SBCoverSheetWindow"].exists
+    }
+
     private func tapBanner() -> Bool {
-        guard let banner = notificationElement() else { return false }
+        guard !coverSheetShowing(), let banner = notificationElement() else { return false }
         log("tap notification \"\(banner.label)\"")
         return tapCenter(of: banner)
     }
 
+    /// Opens our notification from the Cover Sheet: scroll it out from under the "N Notifications"
+    /// pill, swipe it right, and tap Open. Succeeds only once the app is in the foreground.
     private func tapNotificationCenterCell() -> Bool {
         log("app backgrounded with no banner, checking Notification Center")
         let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.0))
@@ -237,11 +246,39 @@ final class Driver: XCTestCase {
         top.press(forDuration: 0.1, thenDragTo: down)
         Thread.sleep(forTimeInterval: 1.5)
 
-        if let cell = notificationElement() {
-            log("tap notification \"\(cell.label)\"")
-            return tapCenter(of: cell)
+        var cell = notificationElement()
+        var scrolls = 0
+        while let hidden = cell, !hidden.isHittable, scrolls < 2 {
+            scrolls += 1
+            // Start mid-screen: a drag up from near the bottom edge closes the Cover Sheet instead.
+            let from = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            let to = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+            from.press(forDuration: 0.1, thenDragTo: to)
+            Thread.sleep(forTimeInterval: 1)
+            cell = notificationElement()
         }
-        log("no notification from \(appName) in Notification Center")
+        guard let cell, cell.isHittable else {
+            log("no notification from \(appName) on screen in Notification Center, frame \(cell?.frame ?? .zero)")
+            XCUIDevice.shared.press(.home)
+            return false
+        }
+
+        log("open notification \"\(cell.label)\" from Notification Center")
+        let open = springboard.buttons.matching(identifier: "swipe-action-button-identifier")["Open"]
+        if !open.exists {
+            let frame = cell.frame
+            let origin = springboard.coordinate(withNormalizedOffset: .zero)
+            origin.withOffset(CGVector(dx: frame.minX + 30, dy: frame.midY))
+                .press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: frame.minX + 200, dy: frame.midY)))
+            Thread.sleep(forTimeInterval: 1)
+        }
+        guard open.exists, tapCenter(of: open) else {
+            log("no Open action on the notification")
+            XCUIDevice.shared.press(.home)
+            return false
+        }
+        if app.wait(for: .runningForeground, timeout: 5) { return true }
+        log("Open tapped but the app didn't come to the foreground")
         XCUIDevice.shared.press(.home)
         return false
     }
