@@ -18,6 +18,7 @@ using UnityEngine.Purchasing;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 
 #if !TEAK_NOT_AVAILABLE
@@ -84,6 +85,11 @@ public partial class TestDriver : MonoBehaviour
 
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
+
+    // When this file exists in the persistent data path the suite doesn't start, so a link opened
+    // from outside the app (which can't pass launch options) isn't raced by it.
+    private const string LinkModeMarker = "safari-link-mode";
+    private bool linkMode;
 
     // Per-test watchdog: a test whose completion callback never fires would otherwise stall the
     // whole suite indefinitely. Force-fail after a time budget so the run advances. The longest
@@ -157,19 +163,26 @@ public partial class TestDriver : MonoBehaviour
 
         this.teakInterface = GetComponent<TeakInterface>();
 
-        this.ResetTests();
-
-        if (PlayerPrefs.GetInt(TestListVersionKey, 0) == this.TestListVersion &&
-            PlayerPrefs.GetString(TestListCurrentTestKey, null) != null) {
-
-            while (this.testEnumerator != null &&
-                   !string.Equals(this.testEnumerator.Current.Name, PlayerPrefs.GetString(TestListCurrentTestKey))) {
-                // TODO: At some point should maybe serialize the tests out to JSON, with Status and debug info
-                //       but for now just set it as successful.
-                this.testEnumerator.Current.Status = Test.TestState.Passed;
-                this.AdvanceTests(true);
-            }
+        if (File.Exists(Path.Combine(Application.persistentDataPath, LinkModeMarker))) {
+            Debug.Log("[Test Driver] link mode, suite not started");
+            this.linkMode = true;
+            this.testList = new List<Test>();
             this.SetupUI();
+        } else {
+            this.ResetTests();
+
+            if (PlayerPrefs.GetInt(TestListVersionKey, 0) == this.TestListVersion &&
+                PlayerPrefs.GetString(TestListCurrentTestKey, null) != null) {
+
+                while (this.testEnumerator != null &&
+                       !string.Equals(this.testEnumerator.Current.Name, PlayerPrefs.GetString(TestListCurrentTestKey))) {
+                    // TODO: At some point should maybe serialize the tests out to JSON, with Status and debug info
+                    //       but for now just set it as successful.
+                    this.testEnumerator.Current.Status = Test.TestState.Passed;
+                    this.AdvanceTests(true);
+                }
+                this.SetupUI();
+            }
         }
 
 #if !TEAK_NOT_AVAILABLE
@@ -182,6 +195,13 @@ public partial class TestDriver : MonoBehaviour
 #if TEAK_4_2_OR_NEWER
         Teak.Instance.OnUserData += OnUserData;
         Teak.Instance.OnPostLaunchSummary += OnPostLaunchSummary;
+#endif
+
+#if TEAK_4_2_OR_NEWER
+        if (this.linkMode) {
+            // The suite's first test identifies the user; with it off, Teak sends nothing for the link.
+            Teak.Instance.IdentifyUser(this.teakInterface.TeakUserId, new Teak.UserConfiguration {});
+        }
 #endif
 #endif // TEAK_NOT_AVAILABLE
     }
@@ -298,7 +318,7 @@ public partial class TestDriver : MonoBehaviour
         }
 
         // In-progress test notification
-        if (this.testEnumerator == null) {
+        if (this.testEnumerator == null && !this.linkMode) {
             // Reset test
             Button button = this.CreateButton("Reset Tests");
             button.onClick.AddListener(() => {
