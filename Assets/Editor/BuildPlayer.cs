@@ -319,8 +319,10 @@ public class BuildPlayer
 
         PlayerSettings.SetScriptingBackend(BuildTargetGroup.iOS, ScriptingImplementation.IL2CPP);
 
-        PlayerSettings.iOS.sdkVersion = GetStringArg(parsedArgs, "ios-sdk", "device") == "simulator" ?
-            iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
+        bool simulator = GetStringArg(parsedArgs, "ios-sdk", "device") == "simulator";
+        PlayerSettings.iOS.sdkVersion = simulator ? iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
+        // The project default is x86_64, which current simulators refuse to install on an arm64 host.
+        if (simulator) PlayerSettings.iOS.simulatorSdkArchitecture = AppleMobileArchitectureSimulator.ARM64;
 
         // Debug build?
         bool isDevelopmentBuild = parsedArgs.ContainsKey("debug");
