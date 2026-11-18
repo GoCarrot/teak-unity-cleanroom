@@ -307,7 +307,7 @@ public class BuildPlayer
     }
 #endif
 
-    // Persisted in the .meta files, like the settings above, so a device export turns them back on.
+    // Importer state persists in the .meta files, so a device export has to turn these back on.
     static void SetFirebaseEnabledOnIOS(bool enabled)
     {
         foreach (string folder in new[] { "Assets/Plugins/iOS/Firebase", "Assets/Firebase/Plugins/iOS" })
