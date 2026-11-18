@@ -105,7 +105,7 @@ final class Driver: XCTestCase {
                 if let since = backgroundSince, Date().timeIntervalSince(since) > 8,
                     Date().timeIntervalSince(lastNotificationCenterCheck) > 10 {
                     let opened = tapNotificationCenterCell()
-                    // Stamp after: a failed attempt can take 10s+, and the next shouldn't follow at once.
+                    // A failed attempt can take 10s+; time the gap from its end.
                     lastNotificationCenterCheck = Date()
                     if opened {
                         backgroundSince = nil
