@@ -123,7 +123,9 @@ Installs the build.
   * `ios:device_app` signs with Xcode-managed profiles. `ios:fastlane` signs with match's profiles, which only carry devices match knows about; use it for builds that go out, not for this.
 * Simulator: `IOS_SDK=simulator rake ios:build ios:simulator_app test:ios`, with one simulator booted (or `IOS_SIMULATOR=<udid>`).
 
-A test that fails for a reason its runtime is known to cause reports `Expected` with that reason instead of `Failed`, and doesn't fail the run. Today that's the tests that need a push token, on an iOS 27 simulator that has no token, because some 27.2 simulators never give an app one (an app that asks gets neither `didRegister` nor `didFail`): "Wait For Push Token", "Notification with Emoji", and the three that background the app and wait for a pushed notification, which are skipped as Expected when they begin without a token. If a token does arrive they run and pass; devices and other simulators still fail.
+A test that fails for a reason its runtime is known to cause reports `Expected` with that reason instead of `Failed`, and doesn't fail the run.
+
+Today that's the tests that need a push token, on an iOS 27 simulator that has no token, because some 27.2 simulators never give an app one (an app that asks gets neither `didRegister` nor `didFail`): "Wait For Push Token", "Notification with Emoji", and the three that background the app and wait for a pushed notification, which are skipped as Expected when they begin without a token. If a token does arrive they run and pass; devices and other simulators still fail.
 
 A test that needs a link opened from outside the app logs `[Test Driver] external open <url>`; the runner opens it (`simctl openurl` on a simulator, `devicectl --payload-url` on a device) and the driver taps "Open in…?".
 
