@@ -237,8 +237,78 @@ public partial class TestDriver : MonoBehaviour
         }
     }
 
+#if UNITY_IOS
+    // True once a users.json that carried the push token has been answered, i.e. the server has the
+    // token. Tracked here, not on a test, because the token can register during any earlier test.
+    // Never reset: the token belongs to the device.
+    private bool PushTokenAtServer { get; set; }
+    private readonly HashSet<string> pushTokenRequestIds = new HashSet<string>();
+
+    private void TrackPushTokenAtServer(TeakLogEvent teakLogEvent) {
+        if (this.PushTokenAtServer) {
+            return;
+        }
+
+        string endpoint = null, requestId = null;
+        object value;
+        if (teakLogEvent.EventData.TryGetValue("endpoint", out value)) {
+            endpoint = value as string;
+        }
+        if (teakLogEvent.EventData.TryGetValue("request_id", out value)) {
+            requestId = value as string;
+        }
+        if (endpoint == null || requestId == null || !endpoint.EndsWith("/users.json")) {
+            return;
+        }
+
+        if ("request.send".Equals(teakLogEvent.EventType)) {
+            Dictionary<string, object> payload = null;
+            if (teakLogEvent.EventData.TryGetValue("payload", out value)) {
+                payload = value as Dictionary<string, object>;
+            }
+            if (payload != null && payload.TryGetValue("apns_push_key", out value) && !string.IsNullOrEmpty(value as string)) {
+                this.pushTokenRequestIds.Add(requestId);
+            }
+        } else if ("request.reply".Equals(teakLogEvent.EventType) && this.pushTokenRequestIds.Contains(requestId)) {
+            // request.reply is also logged for failed requests; a successful identify carries the
+            // player's opt-out states.
+            Dictionary<string, object> reply = null;
+            if (teakLogEvent.EventData.TryGetValue("payload", out value)) {
+                reply = value as Dictionary<string, object>;
+            }
+            if (reply == null || !reply.ContainsKey("opt_out_states")) {
+                return;
+            }
+            this.PushTokenAtServer = true;
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] push token at server");
+        }
+    }
+
+    // Completes `state` once the server has the push token, or fails it after the time budget.
+    // Kept under TestTimeoutSeconds so a missing token fails here, named, not as a generic timeout.
+    private const float PushTokenWaitSeconds = 45.0f;
+    private IEnumerator WaitForPushTokenAtServer(Action<Test.TestState> state) {
+        float start = Time.realtimeSinceStartup;
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] waiting for push token (already at server: {0})", this.PushTokenAtServer);
+        while (!this.PushTokenAtServer && Time.realtimeSinceStartup - start < PushTokenWaitSeconds) {
+            yield return null;
+        }
+        float waited = Time.realtimeSinceStartup - start;
+        if (this.PushTokenAtServer) {
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] push token wait {0:F1}s", waited);
+            state(Test.TestState.Passed);
+        } else {
+            Debug.LogError("[Test Driver] push token never reached the server after " + PushTokenWaitSeconds + "s");
+            state(Test.TestState.Failed);
+        }
+    }
+#endif // UNITY_IOS
+
     void OnLogEvent(Dictionary<string, object> logEvent) {
         TeakLogEvent teakLogEvent = new TeakLogEvent(logEvent);
+#if UNITY_IOS
+        this.TrackPushTokenAtServer(teakLogEvent);
+#endif
         Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] log {0} -> {1}", teakLogEvent.EventType,
                         this.testEnumerator != null ? this.testEnumerator.Current.Name : "(no test)");
         if (this.testEnumerator != null) {

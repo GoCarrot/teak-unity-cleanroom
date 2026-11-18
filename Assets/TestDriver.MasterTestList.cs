@@ -274,6 +274,15 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 #endif // TEAK_4_3_OR_NEWER
 #endif // TEAK_4_2_OR_NEWER
 
+#if UNITY_IOS
+                // The Emoji test schedules for "now". A schedule that lands before the server has this
+                // device's push token is accepted and then never sent, so wait for the token first.
+                TestBuilder.Build("Wait For Push Token", this)
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.StartCoroutine(this.WaitForPushTokenAtServer(state));
+                    }),
+#endif
+
 #if !UNITY_WEBGL
                 TestBuilder.Build("Notification with Emoji", this)
                     .WhenStarted((Action<Test.TestState> state) => {
