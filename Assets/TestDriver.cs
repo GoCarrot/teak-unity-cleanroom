@@ -620,8 +620,10 @@ public partial class TestDriver : MonoBehaviour
         if (this.testEnumerator.MoveNext()) {
             Test current = this.testEnumerator.Current;
             CrashIfRequested(current.Name);
-            current.Begin();
+            // Before Begin: a test that reports its result inside Begin advances to the next test, which
+            // replaces this handle with its own watchdog.
             this.testTimeoutCoroutine = this.StartCoroutine(this.TestWatchdog(current));
+            current.Begin();
         } else {
             this.testEnumerator = null;
             Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] suite complete");

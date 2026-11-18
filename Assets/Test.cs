@@ -125,10 +125,13 @@ class Test {
         UnityEngine.Debug.LogFormat(UnityEngine.LogType.Log, UnityEngine.LogOption.NoStacktrace, null, "[Test Driver] begin {0}", this.Name);
         this.ResetTest();
         this.Status = TestState.Running;
-        if (this.SkipWhenFailureExpected && this.ExpectedFailureReason != null && this.ExpectedFailureReason() != null) {
-            this.Status = TestState.Failed;
-            this.ReportResult();
-            return;
+        if (this.SkipWhenFailureExpected && this.ExpectedFailureReason != null) {
+            string reason = this.ExpectedFailureReason();
+            if (reason != null) {
+                this.Status = TestState.Expected;
+                this.ReportResult(reason);
+                return;
+            }
         }
         this.EvaluatePredicate(this.OnBegin, (TestState state) => {
             this.began = state;
@@ -204,17 +207,22 @@ class Test {
     }
 
     private void ReportResult() {
-        if (this.resultReported) {
-            return;
-        }
-        this.resultReported = true;
         string reason = null;
-        if (this.Status == TestState.Failed && this.ExpectedFailureReason != null) {
+        if (this.Status == TestState.Failed && this.ExpectedFailureReason != null && !this.resultReported) {
             reason = this.ExpectedFailureReason();
             if (reason != null) {
                 this.Status = TestState.Expected;
             }
         }
+        this.ReportResult(reason);
+    }
+
+    // A non-null reason says why this runtime is expected to fail the test, which reports Expected.
+    private void ReportResult(string reason) {
+        if (this.resultReported) {
+            return;
+        }
+        this.resultReported = true;
         UnityEngine.Debug.Log("[Test Driver] result " + this.Name + ": " + this.Status +
                               (reason == null ? "" : " (" + reason + ")"));
         if (this.OnResult != null) {
