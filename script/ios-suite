@@ -49,7 +49,7 @@ abort 'missing --app' unless options[:app] && File.directory?(options[:app])
 abort 'pass exactly one of --device or --simulator' unless options[:device].nil? ^ options[:simulator].nil?
 
 # One test in run order. Names can repeat ("Delete Email" runs twice), so lines match by position.
-Entry = Struct.new(:name, :status, keyword_init: true)
+Entry = Struct.new(:name, :status, :reason, keyword_init: true)
 
 # Reads TestDriver's log lines into per-test results.
 class SuiteLog
@@ -81,10 +81,13 @@ class SuiteLog
       name = Regexp.last_match(1).strip
       @current = @entries.find { |e| e.name == name && e.status.nil? }
       @current.status = 'Running' if @current
-    when /\[Test Driver\] result (.+): (Passed|Failed)/
+    when /\[Test Driver\] result (.+?): (Passed|Failed|Expected)(?: \((.*)\))?$/
       name = Regexp.last_match(1).strip
       entry = @entries.find { |e| e.name == name && (e.status.nil? || e.status == 'Running') }
-      entry.status = Regexp.last_match(2) if entry
+      if entry
+        entry.status = Regexp.last_match(2)
+        entry.reason = Regexp.last_match(3)
+      end
       @current = nil if entry.equal?(@current)
     when /\[Test Driver\] suite complete/
       @complete = true
@@ -498,6 +501,7 @@ suite.entries.each_with_index { |e, i| puts format('%3d  %-10s %s', i + 1, e.sta
 puts '-' * 72
 counts = suite.entries.group_by(&:status).transform_values(&:size)
 puts counts.map { |k, v| "#{k}: #{v}" }.join(', ')
+suite.entries.select { |e| e.status == 'Expected' }.each { |e| puts "Expected: #{e.name}: #{e.reason}" }
 puts
 
 case outcome
@@ -534,5 +538,6 @@ File.write(File.join(out_dir, 'results.json'), JSON.pretty_generate(
 
 exit 2 unless outcome == :complete
 exit 2 if options[:crash_at]
-exit 1 if suite.entries.any? { |e| e.status != 'Passed' }
+# Expected is a failure this runtime is known to cause, so it doesn't fail the run.
+exit 1 if suite.entries.any? { |e| !%w[Passed Expected].include?(e.status) }
 exit 0

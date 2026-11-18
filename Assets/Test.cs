@@ -12,13 +12,19 @@ class Test {
         Pending,
         Passed,
         Failed,
-        Running
+        Running,
+        // A failure this runtime is known to cause. Reported apart from Failed, with its reason.
+        Expected
     }
 
     public string Name { get; set; }
     public TestState Status { get; set; }
     public HashSet<UnityEngine.RuntimePlatform> ExcludedPlatforms { get; set; }
     public int OnRewardCalls { get; set; }
+
+    // Asked when the test would report Failed. A non-null answer is why this runtime is expected to
+    // fail it, and the test reports Expected instead. Never turns a pass into anything else.
+    public Func<string> ExpectedFailureReason { get; set; }
 
     // State, this could probably be done better
     private TestState began, background, reward, deepLink, launchedFromNotification, foregroundNotification,
@@ -193,7 +199,15 @@ class Test {
             return;
         }
         this.resultReported = true;
-        UnityEngine.Debug.Log("[Test Driver] result " + this.Name + ": " + this.Status);
+        string reason = null;
+        if (this.Status == TestState.Failed && this.ExpectedFailureReason != null) {
+            reason = this.ExpectedFailureReason();
+            if (reason != null) {
+                this.Status = TestState.Expected;
+            }
+        }
+        UnityEngine.Debug.Log("[Test Driver] result " + this.Name + ": " + this.Status +
+                              (reason == null ? "" : " (" + reason + ")"));
         if (this.OnResult != null) {
             this.OnResult();
         }

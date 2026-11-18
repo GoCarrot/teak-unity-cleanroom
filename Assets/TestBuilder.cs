@@ -49,6 +49,11 @@ class TestBuilder {
         return this;
     }
 
+    public TestBuilder ExpectedFailure(Func<string> reason) {
+        test.ExpectedFailureReason = reason;
+        return this;
+    }
+
     public TestBuilder WhenBackgrounded(Action<Action<Test.TestState>> action) {
         test.OnBackground = action;
         return this;
