@@ -162,7 +162,7 @@ public partial class TestDriver : MonoBehaviour
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
         this.teakInterface = GetComponent<TeakInterface>();
-#if UNITY_IOS
+#if UNITY_IOS && !TEAK_NOT_AVAILABLE
         Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] platform os={0} model={1} simulator={2}",
                         SystemInfo.operatingSystem, SystemInfo.deviceModel, IsIOSSimulator);
 #endif
