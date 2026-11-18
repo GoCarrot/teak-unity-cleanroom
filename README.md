@@ -98,6 +98,8 @@ For iOS, `IOS_LIFECYCLE` picks the app lifecycle:
 
 `IOS_SDK` is `device` (default) or `simulator`; use `simulator` to export a project that builds for the iOS Simulator.
 
+After the Unity export, `ios:build` appends a `post_install` to `Unity-iPhone/Podfile` that raises pods targeting below iOS 15.0 to 15.0 (Xcode 27 rejects anything lower). Pods already at 15.0 or higher are left alone.
+
 The installed app is named `<Lifecycle> <BuildType>` (e.g. `Scene Dev`) so you can tell which build you're running.
 
 ## install ##
