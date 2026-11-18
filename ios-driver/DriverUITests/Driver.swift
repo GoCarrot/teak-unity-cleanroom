@@ -104,8 +104,10 @@ final class Driver: XCTestCase {
                 // every tick: each pull-down is slow and noisy.
                 if let since = backgroundSince, Date().timeIntervalSince(since) > 8,
                     Date().timeIntervalSince(lastNotificationCenterCheck) > 10 {
+                    let opened = tapNotificationCenterCell()
+                    // A failed attempt can take 10s+; time the gap from its end.
                     lastNotificationCenterCheck = Date()
-                    if tapNotificationCenterCell() {
+                    if opened {
                         backgroundSince = nil
                         continue
                     }
@@ -224,12 +226,21 @@ final class Driver: XCTestCase {
         return element.exists ? element : nil
     }
 
+    /// The pull-down shows the Cover Sheet (the lock screen's notification list). Our cell sits in it
+    /// with a hittable frame, but a tap there only slides the cell to show its swipe actions, so a
+    /// cell on the Cover Sheet isn't a banner.
+    private func coverSheetShowing() -> Bool {
+        springboard.windows["SBCoverSheetWindow"].exists
+    }
+
     private func tapBanner() -> Bool {
-        guard let banner = notificationElement() else { return false }
+        guard let banner = notificationElement(), !coverSheetShowing() else { return false }
         log("tap notification \"\(banner.label)\"")
         return tapCenter(of: banner)
     }
 
+    /// Opens our notification from the Cover Sheet: scroll it out from under the "N Notifications"
+    /// pill, swipe it right, and tap Open. Succeeds only once the app is in the foreground.
     private func tapNotificationCenterCell() -> Bool {
         log("app backgrounded with no banner, checking Notification Center")
         let top = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.0))
@@ -237,11 +248,51 @@ final class Driver: XCTestCase {
         top.press(forDuration: 0.1, thenDragTo: down)
         Thread.sleep(forTimeInterval: 1.5)
 
-        if let cell = notificationElement() {
-            log("tap notification \"\(cell.label)\"")
-            return tapCenter(of: cell)
+        var cell = notificationElement()
+        var scrolls = 0
+        while let hidden = cell, !hidden.isHittable, scrolls < 2 {
+            scrolls += 1
+            // Start mid-screen: a drag up from near the bottom edge closes the Cover Sheet instead.
+            let from = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            let to = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+            from.press(forDuration: 0.1, thenDragTo: to)
+            Thread.sleep(forTimeInterval: 1)
+            cell = notificationElement()
         }
-        log("no notification from \(appName) in Notification Center")
+        guard let cell, cell.isHittable else {
+            log("no notification from \(appName) on screen in Notification Center, frame \(cell?.frame ?? .zero)")
+            return leaveNotificationCenter()
+        }
+
+        log("open notification \"\(cell.label)\" from Notification Center")
+        let open = springboard.buttons.matching(identifier: "swipe-action-button-identifier")["Open"]
+        if !open.exists {
+            let frame = cell.frame
+            let origin = springboard.coordinate(withNormalizedOffset: .zero)
+            origin.withOffset(CGVector(dx: frame.minX + 30, dy: frame.midY))
+                .press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: frame.minX + 200, dy: frame.midY)))
+            Thread.sleep(forTimeInterval: 1)
+        }
+        guard open.exists, tapCenter(of: open) else {
+            log("no Open action on the notification")
+            return leaveNotificationCenter()
+        }
+        // A loaded host can take a while to bring the app up; the wait returns as soon as it's there.
+        guard app.wait(for: .runningForeground, timeout: 15) else {
+            log("Open tapped but the app didn't come to the foreground")
+            return leaveNotificationCenter()
+        }
+        log("app in foreground after Notification Center open")
+        return true
+    }
+
+    /// Closes Notification Center after a failed open, unless the app came up anyway: pressing Home
+    /// then would background it with its notification already used up.
+    private func leaveNotificationCenter() -> Bool {
+        if app.state == .runningForeground {
+            log("app in foreground after Notification Center open")
+            return true
+        }
         XCUIDevice.shared.press(.home)
         return false
     }

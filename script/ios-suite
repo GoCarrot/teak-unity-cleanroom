@@ -368,10 +368,9 @@ stop_hold = options[:simulator] && options[:stop_hold].positive?
 stop_count_path = File.join(out_dir, 'session-stop-count')
 stop_count = 0
 current_session = nil
-# Only the resume test waits on it: it returns through Settings, which always works. Every other
-# test, Session Stop included, returns by tapping its notification and keeps the quick return, since
-# a late tap lands in Notification Center and doesn't bring the app back.
-STOP_HOLD_TESTS = ['Session Resume on Returning'].freeze
+# Tests that wait on it. Resume returns through Settings; Stop returns by tapping its notification,
+# which by the time the stop is out has moved to Notification Center.
+STOP_HOLD_TESTS = ['Session Resume on Returning', 'Session Stop on Backgrounding'].freeze
 stop_hold_path = File.join(out_dir, 'session-stop-hold')
 listed_tests = []
 hold_names_checked = false
