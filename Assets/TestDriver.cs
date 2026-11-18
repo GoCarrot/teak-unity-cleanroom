@@ -310,8 +310,9 @@ public partial class TestDriver : MonoBehaviour
     // iOS 27 simulators don't reliably give an app a push token: on some, even a minimal app that asks
     // gets neither didRegister nor didFail, with notifications allowed. Asked when a test that needs the
     // token fails or is about to start; a reason means this runtime is why, null means it's a real failure.
+    // Once a users.json has carried a token the OS did hand one out, so a failure after that stays red.
     private string ExpectedWithoutPushToken() {
-        if (this.PushTokenAtServer || !IsIOSSimulator || IOSMajorVersion != 27) {
+        if (this.PushTokenAtServer || this.pushTokenRequestIds.Count > 0 || !IsIOSSimulator || IOSMajorVersion != 27) {
             return null;
         }
         return "no push token on this iOS 27 simulator, which doesn't reliably get one";

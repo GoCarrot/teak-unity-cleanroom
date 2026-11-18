@@ -326,7 +326,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }
 #endif
                     }).ExpectReward()
-                    .ExpectedFailure(this.ExpectedWithoutPushToken),
+                    .ExpectedFailure(this.ExpectedWithoutPushToken, true),
 #endif // !UNITY_WEBGL
 
                 TestBuilder.Build("Cancel Notification", this)
