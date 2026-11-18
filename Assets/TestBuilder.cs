@@ -49,8 +49,9 @@ class TestBuilder {
         return this;
     }
 
-    public TestBuilder ExpectedFailure(Func<string> reason) {
+    public TestBuilder ExpectedFailure(Func<string> reason, bool skipWhenExpectedAtStart = false) {
         test.ExpectedFailureReason = reason;
+        test.SkipWhenFailureExpected = skipWhenExpectedAtStart;
         return this;
     }
 

@@ -26,6 +26,10 @@ class Test {
     // fail it, and the test reports Expected instead. Never turns a pass into anything else.
     public Func<string> ExpectedFailureReason { get; set; }
 
+    // Also asked as the test begins. A non-null answer then means it can't pass here and might hang
+    // waiting, so it reports Expected at once without running.
+    public bool SkipWhenFailureExpected { get; set; }
+
     // State, this could probably be done better
     private TestState began, background, reward, deepLink, launchedFromNotification, foregroundNotification,
         logEvent, postLaunchSummary, userData;
@@ -121,6 +125,11 @@ class Test {
         UnityEngine.Debug.LogFormat(UnityEngine.LogType.Log, UnityEngine.LogOption.NoStacktrace, null, "[Test Driver] begin {0}", this.Name);
         this.ResetTest();
         this.Status = TestState.Running;
+        if (this.SkipWhenFailureExpected && this.ExpectedFailureReason != null && this.ExpectedFailureReason() != null) {
+            this.Status = TestState.Failed;
+            this.ReportResult();
+            return;
+        }
         this.EvaluatePredicate(this.OnBegin, (TestState state) => {
             this.began = state;
         });

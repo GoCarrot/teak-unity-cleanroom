@@ -404,6 +404,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                     .ExcludeWebGL()
 #endif
                     .ScheduleBackgroundNotification("test_nonteak_deeplink")
+                    .ExpectedFailure(this.ExpectedWithoutPushToken, true)
 #if UNITY_IOS
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
                         if ("test.delegate".Equals(logEvent.EventType)) {
@@ -426,6 +427,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 
 #if TEAK_4_3_OR_NEWER && !UNITY_WEBGL
                     TestBuilder.Build("Session Stop on Backgrounding", this)
+                        .ExpectedFailure(this.ExpectedWithoutPushToken, true)
                         .WhenStarted((Action<Test.TestState> state) => {
                             this.globalContext["templatedString"] = Utils.RandomNonConfusingCharacterString(20);
                             this.StartCoroutine(Teak.Notification.Schedule("test_incentivized_templated", 5, new Dictionary<string, object> { {"templatedString", this.globalContext["templatedString"] } }, (Teak.Notification.Reply reply) => {
@@ -458,6 +460,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }),
 
                     TestBuilder.Build("Notification Send on Backgrounding", this)
+                        .ExpectedFailure(this.ExpectedWithoutPushToken, true)
                         .WhenStarted((Action<Test.TestState> state) => {
                             Utils.BackgroundApp();
                             state(Test.TestState.Passed);
