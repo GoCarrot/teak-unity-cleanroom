@@ -2,6 +2,7 @@ import XCTest
 
 enum ConfigurationError: Error {
     case missingAppName
+    case missingTapLabel
 }
 
 /// Answers the system UI the cleanroom suite can't: notification permission and "Open in…?"
@@ -114,6 +115,44 @@ final class Driver: XCTestCase {
             Thread.sleep(forTimeInterval: 1)
         }
         log("time cap reached")
+    }
+
+    // MARK: - Safari link tap
+
+    /// Taps the link named CLEANROOM_TAP_LABEL on the page Safari already has open, as a player
+    /// would, then answers an "Open in…?" alert if one shows. script/safari-links opens the page
+    /// and reads the app's log; this only does the tap.
+    func testTapLink() throws {
+        let label = ProcessInfo.processInfo.environment["CLEANROOM_TAP_LABEL"] ?? ""
+        guard !label.isEmpty else { throw ConfigurationError.missingTapLabel }
+        let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+        safari.activate()
+
+        let link = safari.links[label]
+        guard link.waitForExistence(timeout: 30) else {
+            log("tap: no link \"\(label)\" in Safari")
+            XCTFail("no link \"\(label)\" in Safari")
+            return
+        }
+        log("tap: tapping \"\(label)\"")
+        link.tap()
+
+        // A universal link opens the app with no prompt, but answer one if it shows.
+        let bundleId = ProcessInfo.processInfo.environment["CLEANROOM_BUNDLE_ID"] ?? "io.teak.app.unity.dev"
+        let target = XCUIApplication(bundleIdentifier: bundleId)
+        let until = Date().addingTimeInterval(10)
+        while target.state != .runningForeground && Date() < until {
+            if let alert = visibleAlert(), tapAccept(alert) { break }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+
+        // Say where the tap ended up, so a link that opened in Safari instead of the app is visible.
+        let opened = target.state == .runningForeground
+        log("tap: app in foreground \(opened), safari state \(safari.state.rawValue)")
+        if !opened {
+            let labels = (safari.buttons.allElementsBoundByIndex + safari.links.allElementsBoundByIndex).prefix(25).map(\.label)
+            log("tap: Safari shows \(labels)")
+        }
     }
 
     // MARK: - Session stop hold
