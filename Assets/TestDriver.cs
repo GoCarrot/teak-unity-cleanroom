@@ -162,6 +162,10 @@ public partial class TestDriver : MonoBehaviour
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
         this.teakInterface = GetComponent<TeakInterface>();
+#if UNITY_IOS
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] platform os={0} model={1} simulator={2}",
+                        SystemInfo.operatingSystem, SystemInfo.deviceModel, IsIOSSimulator);
+#endif
 
         if (File.Exists(Path.Combine(Application.persistentDataPath, LinkModeMarker))) {
             Debug.Log("[Test Driver] link mode, suite not started");
@@ -301,6 +305,34 @@ public partial class TestDriver : MonoBehaviour
             Debug.LogError("[Test Driver] push token never reached the server after " + PushTokenWaitSeconds + "s");
             state(Test.TestState.Failed);
         }
+    }
+
+    // The iOS 27 simulator never gives an app a push token: a minimal app that asks for one gets neither
+    // didRegister nor didFail, even with notifications allowed. Asked when a test that needs the token
+    // fails; a reason means this runtime is why, null means it's a real failure.
+    private string ExpectedWithoutPushToken() {
+        if (this.PushTokenAtServer || !IsIOSSimulator || IOSMajorVersion != 27) {
+            return null;
+        }
+        return "the iOS 27 simulator never gives an app a push token";
+    }
+
+    // Simulator processes carry SIMULATOR_UDID; devices don't.
+    private static bool IsIOSSimulator {
+        get { return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SIMULATOR_UDID")); }
+    }
+
+    private static int IOSMajorVersion {
+        get {
+            System.Text.RegularExpressions.Match match =
+                System.Text.RegularExpressions.Regex.Match(SystemInfo.operatingSystem, @"(?:iOS|iPadOS) (\d+)");
+            int major;
+            return match.Success && int.TryParse(match.Groups[1].Value, out major) ? major : 0;
+        }
+    }
+#else
+    private string ExpectedWithoutPushToken() {
+        return null;
     }
 #endif // UNITY_IOS
 

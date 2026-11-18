@@ -280,7 +280,8 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 TestBuilder.Build("Wait For Push Token", this)
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.StartCoroutine(this.WaitForPushTokenAtServer(state));
-                    }),
+                    })
+                    .ExpectedFailure(this.ExpectedWithoutPushToken),
 #endif
 
 #if !UNITY_WEBGL
@@ -324,7 +325,8 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                             state(Test.TestState.Failed);
                         }
 #endif
-                    }).ExpectReward(),
+                    }).ExpectReward()
+                    .ExpectedFailure(this.ExpectedWithoutPushToken),
 #endif // !UNITY_WEBGL
 
                 TestBuilder.Build("Cancel Notification", this)
