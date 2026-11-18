@@ -337,7 +337,7 @@ public class BuildPlayer
 
         bool simulator = GetStringArg(parsedArgs, "ios-sdk", "device") == "simulator";
         PlayerSettings.iOS.sdkVersion = simulator ? iOSSdkVersion.SimulatorSDK : iOSSdkVersion.DeviceSDK;
-        // The project default is x86_64, which current simulators refuse to install on an arm64 host.
+        // x86_64 simulator builds won't install on an arm64 host.
         if (simulator) PlayerSettings.iOS.simulatorSdkArchitecture = AppleMobileArchitectureSimulator.ARM64;
         // Firebase's static libs carry no arm64 simulator slice, so they can't link into a simulator build.
         SetFirebaseEnabledOnIOS(!simulator);
