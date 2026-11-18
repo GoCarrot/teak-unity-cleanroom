@@ -127,6 +127,23 @@ If the app dies before the suite finishes, the run stops, the test it died in is
 
 Logs, the driver's result bundle and `results.json` go to `build/ios-suite/<time>/`. `script/ios-suite --help` has the options.
 
+## Tapping universal links in Safari ##
+
+`script/safari-links --app <built .app> --device <udid>` (UDID as in `xcrun xctrace list devices`; build with `IOS_DEVICE=<udid> rake ios:build ios:device_app`, as for `test:ios`).
+
+Installs the app fresh, then for each link on `safari-links/index.html` runs a cold tap (app killed) and a warm one (app running, Safari opened over it): Safari opens the page, the XCUITest driver taps the link, and the run reads the app's log (`idevicesyslog`). Each tap has to show all four, or the run says which is missing:
+
+* a `[Test Driver] link delivery path=… type=NSUserActivityTypeBrowsingWeb url=<link>` line, which names the UIKit callback iOS used (`scene:willConnectToSession:options:` cold, `scene:continueUserActivity:` warm; a custom-scheme open shows `type=url-context`)
+* `launch_link` = the link on Teak's users.json request
+* `OnPostLaunchSummary` with that `LaunchLink`, and a `DeepLink` ending in the link's `data-deeplink`, if it has one
+* `deep_link.request.send` for the link, which only the universal-link resolve sends
+
+The native SDK needs teak-ios #251 for Teak to take a universal link in a Unity 6 scene build. To test an unreleased native SDK, compile `Teak.xcframework` in a teak-ios checkout (`./compile_xc_framework`) and, after `rake ios:build`, replace `Unity-iPhone/Frameworks/Teak/Plugins/iOS/Teak.xcframework` with it before archiving.
+
+The page is served from this Mac (`ruby -run -e httpd`, which needs the `webrick` gem; port `--port`, default 8404) and has to stay on a different host than the links: iOS doesn't open a universal link tapped from a page on its own domain. The device must reach `http://<this Mac's LAN address>:8404/` (the run prints it; `--host` overrides). To tap by hand, run `ruby -run -e httpd safari-links -p 8404` and open that URL in Safari on the device.
+
+To add a link, add an `<a>` with unique text to `safari-links/index.html`. Add `data-deeplink="<path>"` if the dashboard link has a DeepLink to check. The suite stays off for these runs: the script leaves `Documents/safari-link-mode` in the app's container, and `TestDriver` skips starting the suite while it's there. Logs and `results.json` go to `build/safari-links/<time>/`.
+
 ## deploy ##
 
 Deploys the build.
