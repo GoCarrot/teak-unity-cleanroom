@@ -396,16 +396,17 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }));
                     }),
 
+#if !UNITY_EDITOR
                 // Each /me/profile payload carries profile_seq, one more than the last. Two values set in
                 // separate batch windows: the second is set only once the first has gone out.
                 TestBuilder.Build("Profile Sequence Increments", this)
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
-                        this.testContext["profileSeqFirstValue"] = (double) UnityEngine.Random.Range(100000, 1000000);
-                        Teak.Instance.SetNumericAttribute(ProfileSeqAttribute, (double) this.testContext["profileSeqFirstValue"]);
+                        this.SetProfileSeqValue("profileSeqFirstValue", UnityEngine.Random.Range(100000, 1000000));
                         state(Test.TestState.Passed);
                     })
                     .ExpectLogEvent(this.ProfileSeqLogPredicate),
+#endif
 
                 // A comma-decimal culture must not change what Teak reads or writes. The reward arrives the
                 // way native delivers it, as a JSON string into the SDK's own parse path.
@@ -413,12 +414,16 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                     .ExcludeWebGL()
                     .WhenStarted((Action<Test.TestState> state) => {
                         this.testContext["originalCulture"] = CultureInfo.CurrentCulture;
-                        CultureInfo.CurrentCulture = new CultureInfo("de-DE");
+                        try {
+                            CultureInfo.CurrentCulture = new CultureInfo("de-DE");
+                        } catch (Exception e) {
+                            this.FailCurrentTest("couldn't switch to de-DE: " + e.Message);
+                            return;
+                        }
                         string separator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
                         Debug.Log("[TestDriver] Culture " + CultureInfo.CurrentCulture.Name + ", decimal separator '" + separator + "'");
                         if (separator != ",") {
-                            UnityEngine.Debug.LogError("[TestDriver] de-DE didn't take, decimal separator is '" + separator + "'");
-                            state(Test.TestState.Failed);
+                            this.FailCurrentTest("de-DE didn't take, decimal separator is '" + separator + "'");
                             return;
                         }
 
@@ -430,9 +435,8 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         state(sent == "{\"" + DecimalPersonalizationKey + "\":0.1}" ? Test.TestState.Passed : Test.TestState.Failed);
 #else
                         this.StartCoroutine(Teak.Notification.Schedule("test_none", 600, this.DecimalPersonalizationData, (Teak.Notification.Reply reply) => {
-                            if (reply.Error) {
-                                UnityEngine.Debug.LogError("[TestDriver] Schedule with decimal personalization failed: " + reply);
-                                state(Test.TestState.Failed);
+                            if (reply.Error || reply.ScheduleIds == null || reply.ScheduleIds.Count == 0) {
+                                this.FailCurrentTest("schedule with decimal personalization failed: " + reply);
                                 return;
                             }
                             // Nothing should fire from this later in the suite.
@@ -453,7 +457,8 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                     })
 #if !UNITY_EDITOR
                     .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
-                        Dictionary<string, object> payload = LocalNotifyRequestPayload(logEvent);
+                        // iOS logs the endpoint without ".json", Android with it.
+                        Dictionary<string, object> payload = RequestPayload(logEvent, "/me/local_notify", "/me/local_notify.json");
                         if (payload == null) {
                             state(Test.TestState.Pending);
                             return;
@@ -694,20 +699,26 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
         return logEvent.EventData.GetValueOrDefault("payload") as Dictionary<string, object>;
     }
 
-    // iOS logs the endpoint without ".json", Android with it.
-    static Dictionary<string, object> LocalNotifyRequestPayload(TeakLogEvent logEvent) {
-        return RequestPayload(logEvent, "/me/local_notify", "/me/local_notify.json");
-    }
-
     static string DescribeNumber(object value) {
         return value == null ? "(missing)" : Convert.ToString(value, CultureInfo.InvariantCulture) + " (" + value.GetType().Name + ")";
     }
 
-    // Must exist on the dashboard: Android drops attributes it doesn't already know.
+    /// <summary>Fails the running test now with a reason, rather than at the watchdog.</summary>
+    void FailCurrentTest(string reason) {
+        if (this.testEnumerator != null) {
+            this.testEnumerator.Current.ForceFailure(reason);
+        }
+    }
+
+#if !UNITY_EDITOR
+    // Must exist on the dashboard: Android drops attributes it doesn't already know. The values are
+    // whole numbers, so they read back exactly after native's JSON round trip.
     const string ProfileSeqAttribute = "automated_test_number";
 
-    // Whole numbers, so the value reads back the same after native's JSON round trip on either platform.
-    const double ProfileSeqTolerance = 1e-6;
+    void SetProfileSeqValue(string contextKey, double value) {
+        this.testContext[contextKey] = value;
+        Teak.Instance.SetNumericAttribute(ProfileSeqAttribute, value);
+    }
 
     // Decides only on the sends carrying this test's values. Earlier tests' profile sends and retries
     // stay Pending.
@@ -721,10 +732,9 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
         }
 
         double value = Convert.ToDouble(raw, CultureInfo.InvariantCulture);
-        double first = (double) this.testContext["profileSeqFirstValue"];
-        bool isFirst = Math.Abs(value - first) <= ProfileSeqTolerance;
+        bool isFirst = value == (double) this.testContext["profileSeqFirstValue"];
         bool isSecond = this.testContext.ContainsKey("profileSeqSecondValue") &&
-                        Math.Abs(value - (double) this.testContext["profileSeqSecondValue"]) <= ProfileSeqTolerance;
+                        value == (double) this.testContext["profileSeqSecondValue"];
         if (!isFirst && !isSecond) {
             state(Test.TestState.Pending);
             return;
@@ -743,9 +753,7 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
             // A retry of the first send logs again with the same payload; only the first one counts.
             if (!this.testContext.ContainsKey("profileSeqFirst")) {
                 this.testContext["profileSeqFirst"] = seq;
-                double second = first + 1;
-                this.testContext["profileSeqSecondValue"] = second;
-                Teak.Instance.SetNumericAttribute(ProfileSeqAttribute, second);
+                this.SetProfileSeqValue("profileSeqSecondValue", value + 1);
             }
             state(Test.TestState.Pending);
             return;
@@ -753,8 +761,20 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 
         long expected = (long) this.testContext["profileSeqFirst"] + 1;
         Debug.Log("[TestDriver] profile_seq " + seq + ", expected " + expected);
+        if (seq == 1 && expected != 1 && !this.testContext.ContainsKey("profileSeqReanchored")) {
+            // An identify reply in between gives the player a new profile, whose count starts over.
+            // Start again from this send; a count stuck at 1 still fails on the next pair.
+            Debug.Log("[TestDriver] profile_seq restarted at 1, re-anchoring on this send");
+            this.testContext["profileSeqReanchored"] = true;
+            this.testContext["profileSeqFirstValue"] = value;
+            this.testContext["profileSeqFirst"] = seq;
+            this.SetProfileSeqValue("profileSeqSecondValue", value + 1);
+            state(Test.TestState.Pending);
+            return;
+        }
         state(seq == expected ? Test.TestState.Passed : Test.TestState.Failed);
     }
+#endif // !UNITY_EDITOR
 
     const string DecimalPersonalizationKey = "cleanroom_decimal";
 

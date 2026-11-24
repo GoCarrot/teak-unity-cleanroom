@@ -176,10 +176,17 @@ class Test {
     /// the suite can advance, unless it has already reported a result.
     /// </summary>
     public void ForceTimeout() {
+        this.ForceFailure("still pending: " + string.Join(", ", this.PendingStateNames));
+    }
+
+    /// <summary>
+    /// Fails the test now, unless it has already reported a result.
+    /// </summary>
+    public void ForceFailure(string reason) {
         if (this.resultReported) {
             return;
         }
-        UnityEngine.Debug.LogError("[Test Driver] " + this.Name + " still pending: " + string.Join(", ", this.PendingStateNames));
+        UnityEngine.Debug.LogError("[Test Driver] " + this.Name + " " + reason);
         this.Status = TestState.Failed;
         this.ReportResult();
     }
