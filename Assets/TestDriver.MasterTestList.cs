@@ -503,6 +503,10 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 #endif
                     }),
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+                this.RedisplayedAnimatedNotificationTest(),
+#endif
+
 #if TEAK_4_3_OR_NEWER && !UNITY_WEBGL
                     TestBuilder.Build("Session Stop on Backgrounding", this)
                         .WhenStarted((Action<Test.TestState> state) => {
@@ -775,6 +779,118 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
         state(seq == expected ? Test.TestState.Passed : Test.TestState.Failed);
     }
 #endif // !UNITY_EDITOR
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+    const string RedisplayTestName = "Re-displayed Animated Notification Opens Game";
+
+    // Android 12+ re-posts an animated notification after the screen turns off, and a tap on the
+    // re-posted one has to open the game. script/android-redisplay turns the screen off, waits for the
+    // re-display and taps it; this side posts the notification and checks the attribution.
+    Test RedisplayedAnimatedNotificationTest() {
+        string skipReason = null;
+        if (!this.adbHostAttached) {
+            skipReason = "no adb host (run script/android-redisplay)";
+        } else if (this.AndroidAPILevel < 31) {
+            skipReason = "Android API " + this.AndroidAPILevel + ", re-display needs 31+";
+        }
+        if (skipReason != null) {
+            return TestBuilder.Build(RedisplayTestName, this)
+                .WhenStarted((Action<Test.TestState> state) => {
+                    Debug.Log("[Test Driver] skipped " + RedisplayTestName + ": " + skipReason);
+                    state(Test.TestState.Passed);
+                });
+        }
+
+        return TestBuilder.Build(RedisplayTestName, this)
+            .WhenStarted((Action<Test.TestState> state) => {
+                // Teak parses teakNotifId as a number.
+                string teakNotifId = ((long) UnityEngine.Random.Range(100000000, int.MaxValue)).ToString(CultureInfo.InvariantCulture);
+                this.testContext["redisplayTeakNotifId"] = teakNotifId;
+                Utils.ClearAllNotifications();
+                Debug.Log("[Test Driver] host redisplay " + teakNotifId);
+                try {
+                    PostAnimatedNotificationOnceBackgrounded(teakNotifId);
+                } catch (Exception e) {
+                    // A minified host that renamed Teak's internals lands here.
+                    UnityEngine.Debug.LogError("[Test Driver] couldn't post the animated notification: " + e);
+                    state(Test.TestState.Failed);
+                    return;
+                }
+                Utils.BackgroundApp();
+                state(Test.TestState.Passed);
+            })
+            .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                Dictionary<string, object> payload = UsersJsonRequestPayload(logEvent);
+                object attributed = payload == null ? null : payload.GetValueOrDefault("teak_notif_id");
+                if (attributed == null) {
+                    state(Test.TestState.Pending);
+                    return;
+                }
+                string expected = this.testContext["redisplayTeakNotifId"] as string;
+                Debug.Log("[Test Driver] users.json teak_notif_id=" + attributed + ", expected " + expected);
+                state(expected.Equals(Convert.ToString(attributed, CultureInfo.InvariantCulture)) ?
+                      Test.TestState.Passed : Test.TestState.Failed);
+            });
+    }
+
+    // Same shape as teak-android's example "Simulate Animated": a four-frame sprite sheet in the big
+    // view. A foregrounded game suppresses display, so it posts a few seconds after backgrounding.
+    // Both views carry the id as text, so the host finds the notification collapsed or expanded. A
+    // frame lasts 2s because uiautomator can only dump the shade while it's idle between frames.
+    static void PostAnimatedNotificationOnceBackgrounded(string teakNotifId) {
+        string text = "Cleanroom animated " + teakNotifId;
+        string display = MiniJSON.Teak.Json.Serialize(new Dictionary<string, object> {
+            { "contentView", "teak_notif_no_title" },
+            { "teak_notif_no_title", new Dictionary<string, object> { { "left_image", "BUILTIN_APP_ICON" }, { "text", text } } },
+            { "bigContentView", "teak_big_notif_animated" },
+            { "teak_big_notif_animated", new Dictionary<string, object> {
+                { "text", text },
+                { "view_animator", new Dictionary<string, object> {
+                    { "sprite_sheet", "assets:///cleanroom-animated.png" },
+                    { "display_ms", 2000 },
+                    { "width", 128 },
+                    { "height", 128 }
+                } }
+            } }
+        });
+
+        using (UnityEngine.AndroidJavaClass unityPlayer = new UnityEngine.AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        using (UnityEngine.AndroidJavaObject activity = unityPlayer.GetStatic<UnityEngine.AndroidJavaObject>("currentActivity")) {
+            UnityEngine.AndroidJavaObject context = activity.Call<UnityEngine.AndroidJavaObject>("getApplicationContext");
+            UnityEngine.AndroidJavaObject intent = new UnityEngine.AndroidJavaObject("android.content.Intent");
+            intent.Call<UnityEngine.AndroidJavaObject>("putExtra", "teakNotifId", teakNotifId);
+            intent.Call<UnityEngine.AndroidJavaObject>("putExtra", "version", "1");
+            intent.Call<UnityEngine.AndroidJavaObject>("putExtra", "message", text);
+            intent.Call<UnityEngine.AndroidJavaObject>("putExtra", "display", display);
+
+            // Resolve the classes now, on the Unity thread, so a renamed class fails the test here.
+            string received;
+            using (UnityEngine.AndroidJavaClass eventClass = new UnityEngine.AndroidJavaClass("io.teak.sdk.event.PushNotificationEvent")) {
+                received = eventClass.GetStatic<string>("Received");
+            }
+            UnityEngine.AndroidJavaObject pushEvent = new UnityEngine.AndroidJavaObject("io.teak.sdk.event.PushNotificationEvent", received, context, intent);
+
+            using (UnityEngine.AndroidJavaObject looper = new UnityEngine.AndroidJavaClass("android.os.Looper").CallStatic<UnityEngine.AndroidJavaObject>("getMainLooper"))
+            using (UnityEngine.AndroidJavaObject handler = new UnityEngine.AndroidJavaObject("android.os.Handler", looper)) {
+                handler.Call<bool>("postDelayed", new PostTeakEvent(pushEvent), 3000L);
+            }
+        }
+    }
+
+    class PostTeakEvent : UnityEngine.AndroidJavaProxy {
+        readonly UnityEngine.AndroidJavaObject teakEvent;
+
+        public PostTeakEvent(UnityEngine.AndroidJavaObject teakEvent) : base("java.lang.Runnable") {
+            this.teakEvent = teakEvent;
+        }
+
+        public void run() {
+            using (UnityEngine.AndroidJavaClass teakEventClass = new UnityEngine.AndroidJavaClass("io.teak.sdk.TeakEvent")) {
+                teakEventClass.CallStatic<bool>("postEvent", this.teakEvent);
+            }
+        }
+    }
+#endif // UNITY_ANDROID && !UNITY_EDITOR
 
     const string DecimalPersonalizationKey = "cleanroom_decimal";
 
