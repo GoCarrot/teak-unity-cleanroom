@@ -131,14 +131,16 @@ Logs, the driver's result bundle and `results.json` go to `build/ios-suite/<time
 
 ## Re-displayed animated notifications on Android ##
 
-`script/android-redisplay` drives the device side of "Re-displayed Animated Notification Opens Game". Install a build (`rake install:android`), then run it with the device attached. It relaunches the app with the `teak_cleanroom_host` extra, follows logcat and, when the test asks:
+`script/android-redisplay` drives the device side of "Re-displayed Animated Notification Opens Game". Install a development build (`rake install:android`; the script reads Teak's log lines, which a release build doesn't write), then run it with the device attached. It relaunches the app with the `teak_cleanroom_host` extra, follows logcat and, when the test asks:
 
-* waits for the animated notification the test posts, then turns the screen off (`KEYCODE_SLEEP`)
+* waits for Teak's `notification.display` for the animated notification the test posts, then turns the screen off (`KEYCODE_SLEEP`)
 * waits for Teak's `notification.animation.redisplay` for that notification, up to `--redisplay-timeout` (180s)
 * wakes the device, dismisses the keyguard, opens the shade and taps the re-posted notification
-* checks the app comes to the front within 10s
+* checks logcat for the app's activity starting within 10s of the tap
 
-The test passes when the next `users.json` carries that notification's `teak_notif_id`. If the re-display never comes or the tap doesn't open the app, the script prints why, relaunches the app with `teak<appId>:///test/host-failed`, which fails the test, and exits 1. If the app died in the meantime the suite starts over instead, so the exit code is the result to trust.
+The test passes when the next `users.json` carries that notification's `teak_notif_id`. If any step fails, or logcat ends, the script prints why, relaunches the app with `teak<appId>:///test/host-failed-<teakNotifId>`, which fails the test, and exits 1.
+
+The script's exit status is the result. The app's verdict can't see every way the host fails: the app may have died and started the suite over, or a users.json can arrive before the failure link.
 
 Without the extra, as in a hand run, the test logs `[Test Driver] skipped` and passes without backgrounding the app. It also skips below Android 12 (API 31). The rest of the suite still needs its usual taps. The device needs no lock screen PIN.
 

@@ -134,9 +134,19 @@ public partial class TestDriver : MonoBehaviour
 #if !TEAK_NOT_AVAILABLE
         Debug.Log("[Teak Unity Cleanroom] TestDriver Lifecycle: Awake");
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
-            // An adb host that couldn't finish its part of a test relaunches the app with this link.
-            if (HostFailedLinkData.Equals(parameters["data"] as string)) {
-                this.FailCurrentTest("failed on the adb host (see its output)");
+            // An adb host that couldn't finish its part of a test relaunches the app with this link,
+            // followed by "-<teakNotifId>" once it has one. An id fails only the test that posted it
+            // (testContext is per test); a late link for a finished test is left to the host's exit code.
+            string linkData = parameters["data"] as string;
+            if (linkData != null && linkData.StartsWith(HostFailedLinkData, StringComparison.Ordinal)) {
+                string hostId = linkData.Length > HostFailedLinkData.Length ? linkData.Substring(HostFailedLinkData.Length + 1) : null;
+                object postedId;
+                this.testContext.TryGetValue("redisplayTeakNotifId", out postedId);
+                if (hostId == null || hostId.Equals(postedId as string)) {
+                    this.FailCurrentTest("failed on the adb host (see its output)");
+                } else {
+                    Debug.Log("[Test Driver] adb host failed for " + hostId + ", which isn't the current test's; see the host's output");
+                }
                 return;
             }
 

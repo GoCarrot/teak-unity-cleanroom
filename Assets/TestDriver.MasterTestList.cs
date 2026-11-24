@@ -807,15 +807,15 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                 string teakNotifId = ((long) UnityEngine.Random.Range(100000000, int.MaxValue)).ToString(CultureInfo.InvariantCulture);
                 this.testContext["redisplayTeakNotifId"] = teakNotifId;
                 Utils.ClearAllNotifications();
-                Debug.Log("[Test Driver] host redisplay " + teakNotifId);
                 try {
                     PostAnimatedNotificationOnceBackgrounded(teakNotifId);
                 } catch (Exception e) {
                     // A minified host that renamed Teak's internals lands here.
-                    UnityEngine.Debug.LogError("[Test Driver] couldn't post the animated notification: " + e);
-                    state(Test.TestState.Failed);
+                    this.FailCurrentTest("couldn't post the animated notification: " + e);
                     return;
                 }
+                // The host starts on this line, so it goes out only once the post is queued.
+                Debug.Log("[Test Driver] host redisplay " + teakNotifId);
                 Utils.BackgroundApp();
                 state(Test.TestState.Passed);
             })
@@ -826,10 +826,12 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                     state(Test.TestState.Pending);
                     return;
                 }
+                // Another notification's attribution (say, the previous test's, on a later request in
+                // that session) isn't this test's answer. A real miss is failed by the host's link.
                 string expected = this.testContext["redisplayTeakNotifId"] as string;
-                Debug.Log("[Test Driver] users.json teak_notif_id=" + attributed + ", expected " + expected);
-                state(expected.Equals(Convert.ToString(attributed, CultureInfo.InvariantCulture)) ?
-                      Test.TestState.Passed : Test.TestState.Failed);
+                string actual = Convert.ToString(attributed, CultureInfo.InvariantCulture);
+                Debug.Log("[Test Driver] users.json teak_notif_id=" + actual + ", expected " + expected);
+                state(expected.Equals(actual) ? Test.TestState.Passed : Test.TestState.Pending);
             });
     }
 
