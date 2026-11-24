@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 using TeakCleanroomExtensions;
@@ -395,6 +396,81 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
                         }));
                     }),
 
+                // Each /me/profile payload carries profile_seq, one more than the last. Two values set in
+                // separate batch windows: the second is set only once the first has gone out.
+                TestBuilder.Build("Profile Sequence Increments", this)
+                    .ExcludeWebGL()
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.testContext["profileSeqFirstValue"] = (double) UnityEngine.Random.Range(100000, 1000000);
+                        Teak.Instance.SetNumericAttribute(ProfileSeqAttribute, (double) this.testContext["profileSeqFirstValue"]);
+                        state(Test.TestState.Passed);
+                    })
+                    .ExpectLogEvent(this.ProfileSeqLogPredicate),
+
+                // A comma-decimal culture must not change what Teak reads or writes. The reward arrives the
+                // way native delivers it, as a JSON string into the SDK's own parse path.
+                TestBuilder.Build("Decimal Parse and Send in de-DE", this)
+                    .ExcludeWebGL()
+                    .WhenStarted((Action<Test.TestState> state) => {
+                        this.testContext["originalCulture"] = CultureInfo.CurrentCulture;
+                        CultureInfo.CurrentCulture = new CultureInfo("de-DE");
+                        string separator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+                        Debug.Log("[TestDriver] Culture " + CultureInfo.CurrentCulture.Name + ", decimal separator '" + separator + "'");
+                        if (separator != ",") {
+                            UnityEngine.Debug.LogError("[TestDriver] de-DE didn't take, decimal separator is '" + separator + "'");
+                            state(Test.TestState.Failed);
+                            return;
+                        }
+
+                        Teak.Instance.SendMessage("RewardClaimAttempt", DecimalRewardJson);
+#if UNITY_EDITOR
+                        // Schedule is a no-op in the editor, so check the serializer it would hand to native.
+                        string sent = MiniJSON.Teak.Json.Serialize(this.DecimalPersonalizationData);
+                        Debug.Log("[TestDriver] Personalization data serialized as " + sent);
+                        state(sent == "{\"" + DecimalPersonalizationKey + "\":0.1}" ? Test.TestState.Passed : Test.TestState.Failed);
+#else
+                        this.StartCoroutine(Teak.Notification.Schedule("test_none", 600, this.DecimalPersonalizationData, (Teak.Notification.Reply reply) => {
+                            if (reply.Error) {
+                                UnityEngine.Debug.LogError("[TestDriver] Schedule with decimal personalization failed: " + reply);
+                                state(Test.TestState.Failed);
+                                return;
+                            }
+                            // Nothing should fire from this later in the suite.
+                            this.StartCoroutine(TeakNotification.CancelScheduledNotification(reply.ScheduleIds[0], (TeakNotification.Reply cancelReply) => {}));
+                            state(Test.TestState.Passed);
+                        }));
+#endif
+                    })
+                    .ExpectReward((TeakReward reward, Action<Test.TestState> state) => {
+                        object small = null, large = null;
+                        if (reward.Reward != null) {
+                            reward.Reward.TryGetValue("coins", out small);
+                            reward.Reward.TryGetValue("gems", out large);
+                        }
+                        Debug.Log("[TestDriver] Decimal reward read coins=" + DescribeNumber(small) + " gems=" + DescribeNumber(large));
+                        state(small is double && (double) small == 0.1 && large is double && (double) large == 1000.0 ?
+                              Test.TestState.Passed : Test.TestState.Failed);
+                    })
+#if !UNITY_EDITOR
+                    .ExpectLogEvent((TeakLogEvent logEvent, Action<Test.TestState> state) => {
+                        Dictionary<string, object> payload = LocalNotifyRequestPayload(logEvent);
+                        if (payload == null) {
+                            state(Test.TestState.Pending);
+                            return;
+                        }
+                        Dictionary<string, object> personalization = payload.GetValueOrDefault("personalization_data") as Dictionary<string, object>;
+                        object sent = personalization == null ? null : personalization.GetValueOrDefault(DecimalPersonalizationKey);
+                        Debug.Log("[TestDriver] local_notify sent " + DecimalPersonalizationKey + "=" + DescribeNumber(sent));
+                        state(sent is double && (double) sent == 0.1 ? Test.TestState.Passed : Test.TestState.Failed);
+                    })
+#endif
+                    .WhenFinished(() => {
+                        object original;
+                        if (this.testContext.TryGetValue("originalCulture", out original)) {
+                            CultureInfo.CurrentCulture = original as CultureInfo;
+                        }
+                    }),
+
                 TestBuilder.Build("Notification with Non-Teak Deep Link (backgrounded)", this)
 #if !TEAK_4_1_OR_NEWER
                     .OnlyIOS()
@@ -603,15 +679,93 @@ public partial class TestDriver : UnityEngine.MonoBehaviour {
 #if !TEAK_NOT_AVAILABLE
     /// <summary>The payload of a users.json request.send log event, or null for any other event.</summary>
     static Dictionary<string, object> UsersJsonRequestPayload(TeakLogEvent logEvent) {
+        return RequestPayload(logEvent, "/users.json");
+    }
+
+    /// <summary>The payload of a request.send log event for the given endpoint, or null for any other event.</summary>
+    static Dictionary<string, object> RequestPayload(TeakLogEvent logEvent, params string[] endpoints) {
         if (!"request.send".Equals(logEvent.EventType) || logEvent.EventData == null) {
             return null;
         }
         string endpoint = logEvent.EventData.GetValueOrDefault("endpoint") as string;
-        if (endpoint == null || !endpoint.EndsWith("/users.json")) {
+        if (endpoint == null || !endpoints.Any(e => endpoint.EndsWith(e))) {
             return null;
         }
         return logEvent.EventData.GetValueOrDefault("payload") as Dictionary<string, object>;
     }
+
+    // iOS logs the endpoint without ".json", Android with it.
+    static Dictionary<string, object> LocalNotifyRequestPayload(TeakLogEvent logEvent) {
+        return RequestPayload(logEvent, "/me/local_notify", "/me/local_notify.json");
+    }
+
+    static string DescribeNumber(object value) {
+        return value == null ? "(missing)" : Convert.ToString(value, CultureInfo.InvariantCulture) + " (" + value.GetType().Name + ")";
+    }
+
+    // Must exist on the dashboard: Android drops attributes it doesn't already know.
+    const string ProfileSeqAttribute = "automated_test_number";
+
+    // Whole numbers, so the value reads back the same after native's JSON round trip on either platform.
+    const double ProfileSeqTolerance = 1e-6;
+
+    // Decides only on the sends carrying this test's values. Earlier tests' profile sends and retries
+    // stay Pending.
+    void ProfileSeqLogPredicate(TeakLogEvent logEvent, Action<Test.TestState> state) {
+        Dictionary<string, object> payload = RequestPayload(logEvent, "/me/profile");
+        Dictionary<string, object> numbers = payload == null ? null : payload.GetValueOrDefault("number_attributes") as Dictionary<string, object>;
+        object raw = numbers == null ? null : numbers.GetValueOrDefault(ProfileSeqAttribute);
+        if (raw == null) {
+            state(Test.TestState.Pending);
+            return;
+        }
+
+        double value = Convert.ToDouble(raw, CultureInfo.InvariantCulture);
+        double first = (double) this.testContext["profileSeqFirstValue"];
+        bool isFirst = Math.Abs(value - first) <= ProfileSeqTolerance;
+        bool isSecond = this.testContext.ContainsKey("profileSeqSecondValue") &&
+                        Math.Abs(value - (double) this.testContext["profileSeqSecondValue"]) <= ProfileSeqTolerance;
+        if (!isFirst && !isSecond) {
+            state(Test.TestState.Pending);
+            return;
+        }
+
+        object seqRaw = payload.GetValueOrDefault("profile_seq");
+        Debug.Log("[TestDriver] /me/profile " + ProfileSeqAttribute + "=" + DescribeNumber(raw) + " profile_seq=" + DescribeNumber(seqRaw));
+        if (seqRaw == null) {
+            UnityEngine.Debug.LogError("[TestDriver] /me/profile carried no profile_seq");
+            state(Test.TestState.Failed);
+            return;
+        }
+        long seq = Convert.ToInt64(seqRaw, CultureInfo.InvariantCulture);
+
+        if (isFirst) {
+            // A retry of the first send logs again with the same payload; only the first one counts.
+            if (!this.testContext.ContainsKey("profileSeqFirst")) {
+                this.testContext["profileSeqFirst"] = seq;
+                double second = first + 1;
+                this.testContext["profileSeqSecondValue"] = second;
+                Teak.Instance.SetNumericAttribute(ProfileSeqAttribute, second);
+            }
+            state(Test.TestState.Pending);
+            return;
+        }
+
+        long expected = (long) this.testContext["profileSeqFirst"] + 1;
+        Debug.Log("[TestDriver] profile_seq " + seq + ", expected " + expected);
+        state(seq == expected ? Test.TestState.Passed : Test.TestState.Failed);
+    }
+
+    const string DecimalPersonalizationKey = "cleanroom_decimal";
+
+    Dictionary<string, object> DecimalPersonalizationData {
+        get { return new Dictionary<string, object> { { DecimalPersonalizationKey, 0.1 } }; }
+    }
+
+    // Shaped like the claim reply native hands to Teak.RewardClaimAttempt, with decimal quantities.
+    const string DecimalRewardJson = "{\"teakRewardId\":\"cleanroom-decimal-reward\",\"status\":\"grant_reward\"," +
+        "\"teakScheduleName\":\"cleanroom_decimal\",\"teakCreativeName\":\"cleanroom_decimal\",\"teakChannelName\":\"android_push\"," +
+        "\"reward\":{\"coins\":0.1,\"gems\":1e3}}";
 
     // Identify requests that don't carry an email (e.g. the earlier push-token refresh) aren't the
     // one under test, so they stay Pending rather than throwing on a missing key.

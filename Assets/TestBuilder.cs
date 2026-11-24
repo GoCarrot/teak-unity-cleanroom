@@ -71,8 +71,15 @@ class TestBuilder {
     }
 
     public TestBuilder ExpectReward() {
-        return this.ExpectReward(null);
+        return this.ExpectReward((string) null);
     }
+
+#if !TEAK_NOT_AVAILABLE
+    public TestBuilder ExpectReward(Action<TeakReward, Action<Test.TestState>> predicate) {
+        test.OnReward = predicate;
+        return this;
+    }
+#endif
 
     public TestBuilder ExpectReward(string rewardItem) {
         // TODO: rewardItem
