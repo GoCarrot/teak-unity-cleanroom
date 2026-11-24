@@ -142,7 +142,7 @@ The test passes when the next `users.json` carries that notification's `teak_not
 
 The script's exit status is the result. The app's verdict can't see every way the host fails: the app may have died and started the suite over, or a users.json can arrive before the failure link.
 
-Without the extra, as in a hand run, the test logs `[Test Driver] skipped` and passes without backgrounding the app. It also skips below Android 12 (API 31). The rest of the suite still needs its usual taps. The device needs no lock screen PIN.
+Without the extra, as in a hand run, the test logs `[Test Driver] skipped` and passes without backgrounding the app. It also skips below Android 12 (API 31). The rest of the suite still needs its usual taps. The device mustn't have a lock screen PIN.
 
 ## Tapping universal links in Safari ##
 

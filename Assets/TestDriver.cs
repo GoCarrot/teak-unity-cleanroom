@@ -140,8 +140,10 @@ public partial class TestDriver : MonoBehaviour
             string linkData = parameters["data"] as string;
             if (linkData != null && linkData.StartsWith(HostFailedLinkData, StringComparison.Ordinal)) {
                 string hostId = linkData.Length > HostFailedLinkData.Length ? linkData.Substring(HostFailedLinkData.Length + 1) : null;
-                object postedId;
-                this.testContext.TryGetValue("redisplayTeakNotifId", out postedId);
+                object postedId = null;
+                if (this.testContext != null) {
+                    this.testContext.TryGetValue("redisplayTeakNotifId", out postedId);
+                }
                 if (hostId == null || hostId.Equals(postedId as string)) {
                     this.FailCurrentTest("failed on the adb host (see its output)");
                 } else {
