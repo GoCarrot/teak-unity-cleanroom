@@ -89,7 +89,7 @@ Performs the build.
 For Android the following environment variables are available:
 
 * `USE_IL2CPP_ON_ANDROID` with 'true' or 'false' defaults to 'true' (IL2CPP + arm64-v8a; set 'false' for a Mono/armeabi-v7a build)
-* `TARGET_API` to set the targetSdkLevel for Android, defaults to 33
+* `TARGET_API` to set the targetSdkLevel for Android, defaults to 36
 
 For iOS, `IOS_LIFECYCLE` picks the app lifecycle:
 
@@ -128,6 +128,21 @@ A test that needs a link opened from outside the app logs `[Test Driver] externa
 If the app dies before the suite finishes, the run stops, the test it died in is marked Crashed, and the crash report path and faulting frames are printed. The rest are marked Not run. If no report can be found, it prints the signal the app died from instead (from the device console, or the simulator's log). `CRASH_AT="<test name>"` makes a debug build crash just before that test, to check this works.
 
 Logs, the driver's result bundle and `results.json` go to `build/ios-suite/<time>/`. `script/ios-suite --help` has the options.
+
+## Re-displayed animated notifications on Android ##
+
+`script/android-redisplay` drives the device side of "Re-displayed Animated Notification Opens Game". Install a development build (`rake install:android`; the script reads Teak's log lines, which a release build doesn't write), then run it with the device attached. It relaunches the app with the `teak_cleanroom_host` extra, follows logcat and, when the test asks:
+
+* waits for Teak's `notification.display` for the animated notification the test posts, then turns the screen off (`KEYCODE_SLEEP`)
+* waits for Teak's `notification.animation.redisplay` for that notification, up to `--redisplay-timeout` (180s)
+* wakes the device, dismisses the keyguard, opens the shade and taps the re-posted notification
+* checks logcat for the app's activity starting within 10s of the tap
+
+The test passes when the next `users.json` carries that notification's `teak_notif_id`. If any step fails, or logcat ends, the script prints why, relaunches the app with `teak<appId>:///test/host-failed-<teakNotifId>`, which fails the test, and exits 1.
+
+The script's exit status is the result. The app's verdict can't see every way the host fails: the app may have died and started the suite over, or a users.json can arrive before the failure link.
+
+Without the extra, as in a hand run, the test logs `[Test Driver] skipped` and passes without backgrounding the app. It also skips below Android 12 (API 31). The rest of the suite still needs its usual taps. The device mustn't have a lock screen PIN.
 
 ## Tapping universal links in Safari ##
 

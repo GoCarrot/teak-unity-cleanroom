@@ -86,6 +86,12 @@ public partial class TestDriver : MonoBehaviour
     List<Test> testList;
     IEnumerator<Test> testEnumerator;
 
+    // script/android-redisplay launches the app with this extra. Tests that need it to drive the
+    // device (screen off, notification taps) run only then, and skip with a log line otherwise.
+    private const string AdbHostExtra = "teak_cleanroom_host";
+    private const string HostFailedLinkData = "host-failed";
+    private bool adbHostAttached;
+
     // When this file exists in the persistent data path the suite doesn't start, so a link opened
     // from outside the app (which can't pass launch options) isn't raced by it.
     private const string LinkModeMarker = "safari-link-mode";
@@ -128,6 +134,24 @@ public partial class TestDriver : MonoBehaviour
 #if !TEAK_NOT_AVAILABLE
         Debug.Log("[Teak Unity Cleanroom] TestDriver Lifecycle: Awake");
         Teak.Instance.RegisterRoute("/test/:data", "Test", "Deep link for automated tests", (Dictionary<string, object> parameters) => {
+            // An adb host that couldn't finish its part of a test relaunches the app with this link,
+            // followed by "-<teakNotifId>" once it has one. An id fails only the test that posted it
+            // (testContext is per test); a late link for a finished test is left to the host's exit code.
+            string linkData = parameters["data"] as string;
+            if (linkData != null && linkData.StartsWith(HostFailedLinkData, StringComparison.Ordinal)) {
+                string hostId = linkData.Length > HostFailedLinkData.Length ? linkData.Substring(HostFailedLinkData.Length + 1) : null;
+                object postedId = null;
+                if (this.testContext != null) {
+                    this.testContext.TryGetValue("redisplayTeakNotifId", out postedId);
+                }
+                if (hostId == null || hostId.Equals(postedId as string)) {
+                    this.FailCurrentTest("failed on the adb host (see its output)");
+                } else {
+                    Debug.Log("[Test Driver] adb host failed for " + hostId + ", which isn't the current test's; see the host's output");
+                }
+                return;
+            }
+
             this.LaunchedFromDeepLinkPath = parameters["__incoming_url"] as string;
             Debug.Log(this.LaunchedFromDeepLinkPath);
 
@@ -162,6 +186,8 @@ public partial class TestDriver : MonoBehaviour
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
         this.teakInterface = GetComponent<TeakInterface>();
+        this.adbHostAttached = ReadAdbHostExtra();
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[Test Driver] adb host attached: {0}", this.adbHostAttached);
 
         if (File.Exists(Path.Combine(Application.persistentDataPath, LinkModeMarker))) {
             Debug.Log("[Test Driver] link mode, suite not started");
@@ -204,6 +230,18 @@ public partial class TestDriver : MonoBehaviour
         }
 #endif
 #endif // TEAK_NOT_AVAILABLE
+    }
+
+    private static bool ReadAdbHostExtra() {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        using (AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+        using (AndroidJavaObject intent = activity.Call<AndroidJavaObject>("getIntent")) {
+            return intent != null && intent.Call<bool>("getBooleanExtra", AdbHostExtra, false);
+        }
+#else
+        return false;
+#endif
     }
 
     void OnValidate() {

@@ -1,0 +1,190 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Drives the device side of the cleanroom's "Re-displayed Animated Notification Opens Game" test on
+# Android: turns the screen off, waits for Teak to re-post the animated notification, wakes the device
+# and taps the re-posted notification.
+#
+# It launches the app with the host extra (without it the test skips), then follows logcat. The rest
+# of the suite runs as usual; the other tests are still driven by hand.
+#
+#   script/android-redisplay [--serial SERIAL] [--package io.teak.app.unity.dev] [--app-id 613659812345256]
+#
+# Exit status: 0 the tap opened the app; 1 anything else failed (no display, no re-display, logcat
+# ended, no START after the tap); 2 the test never started. The exit status is the result: the
+# app's own verdict can't see every way the host fails.
+
+require 'open3'
+require 'optparse'
+
+options = { package: 'io.teak.app.unity.dev', app_id: '613659812345256', serial: nil,
+            display_timeout: 30, redisplay_timeout: 180, open_timeout: 10, marker_timeout: 2400 }
+OptionParser.new do |o|
+  o.banner = 'Usage: script/android-redisplay [options]'
+  o.on('--serial SERIAL', 'adb device serial (default: the only one attached)') { |v| options[:serial] = v }
+  # The script reads Teak's own log lines, which only a development build writes to logcat.
+  o.on('--package NAME', "App package, a development build (default #{options[:package]})") { |v| options[:package] = v }
+  o.on('--app-id ID', "Teak app id, for the failure link (default #{options[:app_id]})") { |v| options[:app_id] = v }
+  o.on('--redisplay-timeout SECONDS', Integer,
+       "How long the screen stays off waiting for the re-display (default #{options[:redisplay_timeout]})") do |v|
+    options[:redisplay_timeout] = v
+  end
+  o.on('--marker-timeout SECONDS', Integer,
+       "How long to wait for the test to start (default #{options[:marker_timeout]})") { |v| options[:marker_timeout] = v }
+end.parse!
+
+ADB = ['adb', *(options[:serial] ? ['-s', options[:serial]] : [])].freeze
+ACTIVITY = 'com.unity3d.player.UnityPlayerActivity'
+HOST_EXTRA = 'teak_cleanroom_host'
+
+def adb(*args)
+  out, status = Open3.capture2e(*ADB, *args)
+  warn "adb #{args.join(' ')} failed: #{out}" unless status.success?
+  out
+end
+
+def log(message)
+  puts "[android-redisplay] #{message}"
+  $stdout.flush
+end
+
+# Finds the notification by its text, which carries the teakNotifId in both the collapsed and the
+# expanded view. uiautomator only dumps once the UI is idle, so a frame flip can make it fail; try again a few
+# times, and remove the old dump first so a failure can't be read as a stale success.
+def notification_bounds(text)
+  node = nil
+  5.times do
+    adb('shell', 'rm', '-f', '/sdcard/redisplay.xml')
+    adb('shell', 'uiautomator', 'dump', '/sdcard/redisplay.xml')
+    xml = adb('exec-out', 'cat', '/sdcard/redisplay.xml')
+    node = xml.scan(/<node [^>]*>/).find { |n| n.include?("text=\"#{text}\"") }
+    break if node
+
+    sleep 1
+  end
+  return nil unless node
+
+  m = node.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/)
+  m && [(m[1].to_i + m[3].to_i) / 2, (m[2].to_i + m[4].to_i) / 2]
+end
+
+# Follows logcat and yields each line, scrubbed because logcat cuts long lines mid-character, or nil
+# when half a second passes with no line, so the block can check its own deadlines. Returns the
+# block's first truthy value, or :eof if logcat ended. `before` runs once the stream is open.
+def follow_logcat(*filter, before: nil)
+  Open3.popen2(*ADB, 'logcat', '-v', 'brief', *filter) do |stdin, stdout, waiter|
+    stdin.close
+    before&.call
+    loop do
+      line = nil
+      if IO.select([stdout], nil, nil, 0.5)
+        line = stdout.gets
+        return :eof unless line
+      end
+      result = yield line&.scrub
+      return result if result
+    end
+  ensure
+    begin
+      Process.kill('TERM', waiter.pid)
+    rescue Errno::ESRCH
+      nil
+    end
+  end
+end
+
+def fail_back(options, reason, teak_notif_id = nil)
+  log "FAIL: #{reason}"
+  adb('shell', 'input', 'keyevent', 'KEYCODE_WAKEUP')
+  adb('shell', 'wm', 'dismiss-keyguard')
+  data = teak_notif_id ? "host-failed-#{teak_notif_id}" : 'host-failed'
+  adb('shell', 'am', 'start', '-a', 'android.intent.action.VIEW',
+      '-d', "teak#{options[:app_id]}:///test/#{data}", options[:package])
+  exit 1
+end
+
+# Teak logs the id as a string in some events and a number in others.
+def teak_event?(line, event, teak_notif_id)
+  line.include?("\"event_type\":\"#{event}\"") && line =~ /"teakNotifId":"?#{teak_notif_id}"?[,}]/
+end
+
+adb('logcat', '-c')
+adb('shell', 'am', 'force-stop', options[:package])
+adb('shell', 'am', 'start', '-n', "#{options[:package]}/#{ACTIVITY}", '--ez', HOST_EXTRA, 'true')
+log "launched #{options[:package]} with #{HOST_EXTRA}"
+
+marker = /\[Test Driver\] host redisplay (\d+)/
+deadline = Time.now + options[:marker_timeout]
+result = follow_logcat do |line|
+  next :timeout if Time.now > deadline
+
+  line && (m = line.match(marker)) && m[1]
+end
+case result
+when :timeout
+  log 'the test never asked for the re-display'
+  exit 2
+when :eof
+  fail_back(options, 'logcat ended before the test asked for the re-display')
+end
+teak_notif_id = result
+log "test posted #{teak_notif_id}; waiting for Teak to display it"
+
+# One stream for both waits, so the re-display can't land between two logcat sessions.
+stage = :display
+deadline = Time.now + options[:display_timeout]
+result = follow_logcat do |line|
+  if Time.now > deadline
+    :timeout
+  elsif line.nil?
+    nil
+  elsif stage == :display && teak_event?(line, 'notification.display', teak_notif_id)
+    # SLEEP and WAKEUP are one-way; POWER (26) toggles, and the screen may already be off.
+    adb('shell', 'input', 'keyevent', 'KEYCODE_SLEEP')
+    log 'screen off'
+    stage = :redisplay
+    deadline = Time.now + options[:redisplay_timeout]
+    nil
+  elsif stage == :redisplay && teak_event?(line, 'notification.animation.redisplay', teak_notif_id)
+    :redisplayed
+  end
+end
+case [result, stage]
+in [:redisplayed, _]
+  log "saw notification.animation.redisplay for #{teak_notif_id}"
+in [:eof, _]
+  fail_back(options, "logcat ended while waiting for the #{stage == :display ? 'display' : 're-display'}", teak_notif_id)
+in [:timeout, :display]
+  fail_back(options, "Teak never displayed #{teak_notif_id} within #{options[:display_timeout]}s", teak_notif_id)
+in [:timeout, :redisplay]
+  fail_back(options, "no notification.animation.redisplay for #{teak_notif_id} within " \
+                     "#{options[:redisplay_timeout]}s of screen off", teak_notif_id)
+end
+
+adb('shell', 'input', 'keyevent', 'KEYCODE_WAKEUP')
+adb('shell', 'wm', 'dismiss-keyguard')
+sleep 1
+adb('shell', 'cmd', 'statusbar', 'expand-notifications')
+sleep 2
+
+point = notification_bounds("Cleanroom animated #{teak_notif_id}")
+fail_back(options, "no notification for #{teak_notif_id} in the shade", teak_notif_id) unless point
+
+# Read the START from the tap on. Polling focus misses it: the next test can background the app
+# within a second.
+tap = lambda do
+  adb('shell', 'input', 'tap', point[0].to_s, point[1].to_s)
+  log "tapped (#{point.join(', ')})"
+end
+deadline = Time.now + options[:open_timeout]
+started = follow_logcat('-T', '1', 'ActivityTaskManager:I', '*:S', before: tap) do |line|
+  if Time.now > deadline
+    :timeout
+  elsif line&.include?('START u0') && line.include?("cmp=#{options[:package]}/")
+    :started
+  end
+end
+fail_back(options, "tapping the re-displayed notification didn't start #{options[:package]}", teak_notif_id) unless started == :started
+
+log 'PASS: the re-displayed notification opened the app'
+exit 0
